@@ -6,7 +6,7 @@ The NucleusDriver.py class contains all the basic functionality of the driver an
 
 An executable of the Nucleus Driver is also created as part of the continuous integration in the firmware development, the intention of this executable is to make it easy for anyone in Nortek to use a Fusion device and the executable is based on the FusionDriverNortek.py class. 
 
-## Running the Fusion Driver
+## Running the Nucleus Driver
 
 ### Connection
 
@@ -39,74 +39,6 @@ The basic driver supports the following commands:
 * status: This outputs the current status of the connection
 * terminal: This opens a direct link to the device which let's the user send and receive commands directly to the device
 * logging: This let's the user log data from the device
-
-### NortekDriverNortek.py and executable functionality
-
-The extended driver supports the following commands:
-
-* status: This outputs the current status of the connection
-* terminal: This opens a direct link to the device which let's the user send and receive commands directly to the device
-* logging: This let's the user log data from the device
-* flash: Let's the user flash the Nucleus and DVL firmware unto the device
-* calibration: This allows for reading and writing calibration data to and from the device and to read and write this data to .csv files
-* asserts: Read out asserts from device and save them to file
-* syslog: Read out syslog from device and save it to file
-
-## AME specific commands
-
-Certain functionality are designed to optimize the  procedures for AME. These procedures are covered here and it is assumed that the user is running the executable version of the driver.
-
-### Setup
-
-Preparations:
-* Have SEGGER J-Link connected between the PC and Fusion device.
-* Have JLinkExe installed on the PC: https://www.segger.com/products/debug-probes/j-link/tools/j-link-commander/
-* Ensure that mcuboot.hex is located in the setup folder next to the executable
-* Ensure that uns_fw.signed.hex is located in the setup folder next to the executable
-
-Procedure:
-* Connect to device through serial. If this is the first time the device is being used the status field will NOT containing information about ID and firmware
-* Navigate to setup (type "setup" or "s")
-* Execute ame_setup command (type "ame_setup" or "a")
-* Input serial number, bootloader file, and flash file on the drivers request
-
-What is happening:
-* option bytes is written to device through J-Link
-* bootloader is flashed unto device through J-Link
-* firmware is flashed unto device through J-Link
-* Imprints are written to device through serial (This step sets serial number)
-* calibration data is written to device (default data is used unless a csv file has been specified)
-* option bytes with locking is written to device unless skip_lock has been set (This should NEVER be the case if device is sent to customer)
-
-Completion criteria:
-* If setup is successful the calibration data from the driver and device will be printed
-* The user MUST compare the calibration data and MAKE SURE they match (Differences due to values being float is ok, that is 0.00139999 is considered equal to 0.0014)
-
-### Calibration
-
-Preparations:
-* Place .csv file with calibration data into the calibration folder next to the executable
-
-Procedure:
-* Connect to the device
-* Ensure that ID and firmware was successfully retrieved during connection in the status field
-* Navigate to calibration (type "calibration" or "c")
-* Execute ame_calibration command (type "ame_calibration" or "a")
-* Select .csv file with calibration data on drivers request
-
-What is happening:
-* Driver read calibration data from file
-* calibration data is uploaded to device memory
-* calibration data is written from device memory to flash
-* calibration data is read from device flash into driver
-
-Completion criteria:
-* If setup is successful the calibration data from the .csv file  and device will be printed
-* The user MUST compare the calibration data and MAKE SURE they match (Differences due to values being float is ok, that is 0.00139999 is considered equal to 0.0014)
-
-
-
-
  
 
 
