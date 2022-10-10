@@ -16,6 +16,8 @@ import io
 from serial.tools import list_ports
 import select
 import errno
+from math import ceil
+from re import match
 
 
 class NucleusDriver:
@@ -24,14 +26,14 @@ class NucleusDriver:
 
         self.messages = self.Messages()
         self.connection = self.Connection(self.messages)
-        self.logging = self.Logging(self.messages, self.connection)
+        self.logging = self.Logging(messages=self.messages, connection=self.connection)
         self.parser = self.Parser(self.messages, self.logging, self.connection)
-        self.thread = self.Thread(self.messages, self.connection, self.parser)
-        self.commands = self.Commands(self.messages, self.connection, self.thread, self.parser)
-        self.run_classes = self.RunClasses(messages=self.messages, connection=self.connection, thread=self.thread,
+        self.commands = self.Commands(messages=self.messages, connection=self.connection, parser=self.parser)
+        self.run_classes = self.RunClasses(messages=self.messages, connection=self.connection, parser=self.parser,
                                            logging=self.logging, commands=self.commands)
 
         self.connection.commands = self.commands
+        self.logging.commands = self.commands
 
     class Messages:
 
@@ -52,17 +54,24 @@ class NucleusDriver:
 
     class Parser:
 
+        FAMILY_ID_NUCLEUS = 0x20
+        FAMILY_ID_DVL = 0x16
+
         ID_IMU = 0x82
         ID_MAGNETOMETER = 0x87
         ID_BOTTOMTRACK = 0xb4
         ID_WATERTRACK = 0xbe
         ID_ALTIMETER = 0xaa
         ID_AHRS = 0xd2
+        ID_INS = 0xdc
         ID_FIELD_CALIBRATION = 0x8B
+        ID_ASCII = 0xA0
+        ID_SPECTRUM_ANALYZER = 0x20
+        ID_CURRENT_PROFILE = 0xC0
 
         DEFAULT_RESPONSE_TIMEOUT = 5
 
-        MAX_PACKAGE_LENGTH = 360
+        MAX_PACKAGE_LENGTH = 7000
         # MAX_PACKAGE_LENGTH is given by the following firmware scripts:
         # https://dev.azure.com/NortekGroup/INS/_git/Firmware?path=/src/ofmt.c&version=GBmaster&line=28&lineEnd=29&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
         # https://dev.azure.com/NortekGroup/INS/_git/Firmware?path=/lib/sensor_fusion/src/uns_types.h&version=GBmaster&line=10&lineEnd=11&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
@@ -78,12 +87,15 @@ class NucleusDriver:
             self.condition_queue = queue.Queue()
 
             self.reading_packet = False
-            self.binary_packet = list()
+            self.binary_packet = bytearray()
             self.ascii_packet = list()
 
             self._queuing = {'packet': False,
                              'ascii': False,
                              'condition': False}
+
+            self.thread = Thread()
+            self.thread_running = False
 
         def set_queuing(self, packet: bool = None, ascii: bool = None, condition: bool = None):
 
@@ -111,6 +123,7 @@ class NucleusDriver:
                     self.condition_queue.get_nowait()
 
             if queue_name == 'ascii' or queue_name == 'all':
+
                 for i in range(self.ascii_queue.qsize()):
                     self.ascii_queue.get_nowait()
 
@@ -240,56 +253,21 @@ class NucleusDriver:
 
             return checksum
 
-        def check_header(self, data):
-
-            checksum_result = False
-            header_size = data[1]
-
-            if header_size >= len(data):
-                return checksum_result
-
-            if self.checksum(data[:header_size - 2]) == data[header_size - 2] | data[header_size - 1] << 8:
-                checksum_result = True
-
-            return checksum_result
-
-        def check_packet(self, data):
-
-            checksum_result = False
-            header_size = data[1]
-
-            packet_size = (data[4] & 0xff) | ((data[5] & 0xff) << 8)
-
-            if header_size + packet_size != len(data):
-                return checksum_result
-
-            if self.checksum(data[header_size:]) == data[header_size - 4] | data[header_size - 3] << 8:
-                checksum_result = True
-
-            return checksum_result
-
         def add_binary_packet(self, binary_packet, ascii_packet):
 
-            header_length = binary_packet[1]
-            package_length = header_length + (binary_packet[4] & 0xff) | ((binary_packet[5] & 0xff) << 8)
+            header_checksum, data_checksum, packet = self.get_packet(binary_packet)
 
-            if self.check_header(binary_packet[:package_length]):
+            if header_checksum:
+                if data_checksum and packet['id'] == hex(self.ID_ASCII):
+                    self.write_ascii(packet)
 
-                if self.check_packet(binary_packet[:package_length]):
-                    packet, error_message, condition = self.extract_packet(binary_packet[:package_length])
-                else:
-                    condition = False
-                    packet = binary_packet[:package_length]
-                    error_message = 'data checksum failed'
-
-                if condition is True:
-
-                    self.write_packet(packet=packet)
+                elif data_checksum:
+                    self.write_packet(packet)
 
                 else:
-                    self.write_condition(error_message=error_message, packet=packet)
+                    self.write_condition(error_message='data checksum failed', packet=binary_packet)
 
-                binary_packet = binary_packet[package_length:]
+                binary_packet = binary_packet[packet['sizeHeader'] + packet['sizeData']:]
                 if len(binary_packet) == 0:
                     reading_packet = False
                 else:
@@ -302,257 +280,398 @@ class NucleusDriver:
                 reading_packet = True
 
             else:
-                self.write_condition(error_message='header checksum failed', packet=binary_packet[:package_length])
-                binary_packet = binary_packet[package_length:]
+                self.write_condition(error_message='header checksum failed', packet=binary_packet)
                 reading_packet = False
+                binary_packet = bytearray()
 
             return binary_packet, ascii_packet, reading_packet
 
-        def extract_packet(self, data):
+        def get_packet(self, binary_packet):
 
-            header_size = data[1]
-            id = data[2]
+            header_checksum = False
+            data_checksum = False
+            packet = dict()
 
-            sensor_data, error_message, condition = self.get_sensor_data(id, data[header_size:])
+            if not isinstance(binary_packet, bytearray):
+                self.messages.write_exception('packet is not bytearray. Extraction aborted')
+                return header_checksum, data_checksum, packet
 
-            return sensor_data, error_message, condition
+            def check_header_size():
 
-        def get_sensor_data(self, sensor_id, data):
+                status = False
 
-            packet = None
-            error_message = 'packet id not recognized'
-            condition = False
+                if len(binary_packet) >= unpack('<B', binary_packet[1:2])[0]:
+                    status = True
 
-            if sensor_id == self.ID_IMU:
-                try:
-                    version = unpack('<B', data[0].to_bytes(1, 'little'))[0]
-                    if version == 1:
-                        unpacked_data = list(unpack('<BBHIIIfffffff', bytearray(data)))
-                        packet = {
-                            'id': hex(sensor_id),
-                            'timestamp_python': datetime.now().timestamp(),
-                            'timestamp': unpacked_data[3] + unpacked_data[4] * 1e-6,
-                            'status': hex(unpacked_data[5]),
-                            'accelerometer_x': unpacked_data[6],
-                            'accelerometer_y': unpacked_data[7],
-                            'accelerometer_z': unpacked_data[8],
-                            'gyro_x': unpacked_data[9],
-                            'gyro_y': unpacked_data[10],
-                            'gyro_z': unpacked_data[11],
-                            'temperature': unpacked_data[12]
-                        }
-                        error_message = ''
-                        condition = True
-                except error:
-                    self.messages.write_warning('failed to unpack IMU data')
-                    error_message = 'failed to unpack IMU data'
+                return status
 
-            elif sensor_id == self.ID_MAGNETOMETER:
-                try:
-                    version = unpack('<B', data[0].to_bytes(1, 'little'))[0]
-                    if version == 1:
-                        unpacked_data = list(unpack('<BBHIIIfff', bytearray(data)))
-                        packet = {
-                            'id': hex(sensor_id),
-                            'timestamp_python': datetime.now().timestamp(),
-                            'timestamp': unpacked_data[3] + unpacked_data[4] * 1e-6,
-                            'status': hex(unpacked_data[5]),
-                            'magnetometer_x': unpacked_data[6],
-                            'magnetometer_y': unpacked_data[7],
-                            'magnetometer_z': unpacked_data[8],
-                        }
-                        error_message = ''
-                        condition = True
-                except error:
-                    self.messages.write_warning('failed to unpack magnetometer data')
-                    error_message = 'failed to unpack magnetometer data'
+            def check_packet_size():
 
-            elif sensor_id in (self.ID_BOTTOMTRACK, self.ID_WATERTRACK):
-                try:
-                    version = unpack('<B', data[0].to_bytes(1, 'little'))[0]
-                    if version == 1:
-                        unpacked_data = list(unpack('<BBHIIIIIffffffffffffffffffffffffff', bytearray(data)))
-                        packet = {
-                            'id': hex(sensor_id),
-                            'timestamp_python': datetime.now().timestamp(),
-                            'timestamp': unpacked_data[3] + unpacked_data[4] * 1e-6,
-                            'status': hex(unpacked_data[5]),
-                            'serial_number': unpacked_data[6],
-                            'error': hex(unpacked_data[7]),
-                            'sound_speed': unpacked_data[8],
-                            'temperature': unpacked_data[9],
-                            'pressure': unpacked_data[10],
-                            'velocity_beam_0': unpacked_data[11],
-                            'velocity_beam_1': unpacked_data[12],
-                            'velocity_beam_2': unpacked_data[13],
-                            'distance_beam_0': unpacked_data[14],
-                            'distance_beam_1': unpacked_data[15],
-                            'distance_beam_2': unpacked_data[16],
-                            'fom_beam_0': unpacked_data[17],
-                            'fom_beam_1': unpacked_data[18],
-                            'fom_beam_2': unpacked_data[19],
-                            'dt_beam_0': unpacked_data[20],
-                            'dt_beam_1': unpacked_data[21],
-                            'dt_beam_2': unpacked_data[22],
-                            'time_velocity_estimate_0': unpacked_data[23],
-                            'time_velocity_estimate_1': unpacked_data[24],
-                            'time_velocity_estimate_2': unpacked_data[25],
-                            'velocity_x': unpacked_data[26],
-                            'velocity_y': unpacked_data[27],
-                            'velocity_z': unpacked_data[28],
-                            'fom_x': unpacked_data[29],
-                            'fom_y': unpacked_data[30],
-                            'fom_z': unpacked_data[31],
-                            'dt_xyz': unpacked_data[32],
-                            'time_velocity_estimate_xyz': unpacked_data[33]
-                        }
-                        error_message = ''
-                        condition = True
-                except error:
-                    self.messages.write_warning('failed to unpack DVL data')
-                    error_message = 'failed to unpack DVL data'
+                status = False
 
-            elif sensor_id == self.ID_ALTIMETER:
-                try:
-                    version = unpack('<B', data[0].to_bytes(1, 'little'))[0]
-                    if version == 1:
-                        unpacked_data = list(unpack('<BBHIIIIIffffH', bytearray(data)))
-                        packet = {
-                            'id': hex(sensor_id),
-                            'timestamp_python': datetime.now().timestamp(),
-                            'timestamp': unpacked_data[3] + unpacked_data[4] * 1e-6,
-                            'status': hex(unpacked_data[5]),
-                            'serial_number': unpacked_data[6],
-                            'error': hex(unpacked_data[7]),
-                            'sound_speed': unpacked_data[8],
-                            'temperature': unpacked_data[9],
-                            'pressure': unpacked_data[10],
-                            'altimeter_distance': unpacked_data[11],
-                            'altimeter_quality': unpacked_data[12]
-                        }
-                        error_message = ''
-                        condition = True
-                except error:
-                    self.messages.write_warning('failed to unpack altimeter data')
-                    error_message = 'failed to unpack altimeter data'
+                if len(binary_packet) >= header_data['sizeHeader'] + header_data['sizeData']:
+                    status = True
 
-            elif sensor_id == self.ID_AHRS:
-                try:
-                    version = unpack('<B', data[0].to_bytes(1, 'little'))[0]
-                    if version == 1:
-                        unpacked_data = list(unpack('<BBHIIIIIBBBBffffffffffffffffff', bytearray(data)))
-                        packet = {
-                            'id': hex(sensor_id),
-                            'timestamp_python': datetime.now().timestamp(),
-                            'timestamp': unpacked_data[3] + unpacked_data[4] * 1e-6,
-                            'status': hex(unpacked_data[5]),
-                            'serial_number': unpacked_data[6],
-                            'error': hex(unpacked_data[7]),
-                            'operation_mode': unpacked_data[8],
-                            'fom_ahrs': unpacked_data[9],
-                            'fom_fc1': unpacked_data[10],
-                            'euler_angles_roll': unpacked_data[12],
-                            'euler_angles_pitch': unpacked_data[13],
-                            'euler_angles_heading': unpacked_data[14],
-                            'quaternion_0': unpacked_data[15],
-                            'quaternion_1': unpacked_data[16],
-                            'quaternion_2': unpacked_data[17],
-                            'quaternion_3': unpacked_data[18],
-                            'dcm_11': unpacked_data[19],
-                            'dcm_12': unpacked_data[20],
-                            'dcm_13': unpacked_data[21],
-                            'dcm_21': unpacked_data[22],
-                            'dcm_22': unpacked_data[23],
-                            'dcm_23': unpacked_data[24],
-                            'dcm_31': unpacked_data[25],
-                            'dcm_32': unpacked_data[26],
-                            'dcm_33': unpacked_data[27],
-                            'declination': unpacked_data[28],
-                            'depth': unpacked_data[29],
-                        }
-                        error_message = ''
-                        condition = True
-                    elif version == 2:
-                        unpacked_data = list(unpack('<BBHIIIIIBBBBffffffffffffffffffff', bytearray(data)))
-                        packet = {
-                            'id': hex(sensor_id),
-                            'timestamp_python': datetime.now().timestamp(),
-                            'timestamp': unpacked_data[3] + unpacked_data[4] * 1e-6,
-                            'status': hex(unpacked_data[5]),
-                            'serial_number': unpacked_data[6],
-                            'error': hex(unpacked_data[7]),
-                            'operation_mode': unpacked_data[8],
-                            'fom_ahrs': unpacked_data[12],
-                            'fom_fc1': unpacked_data[13],
-                            'euler_angles_roll': unpacked_data[14],
-                            'euler_angles_pitch': unpacked_data[15],
-                            'euler_angles_heading': unpacked_data[16],
-                            'quaternion_0': unpacked_data[17],
-                            'quaternion_1': unpacked_data[18],
-                            'quaternion_2': unpacked_data[19],
-                            'quaternion_3': unpacked_data[20],
-                            'dcm_11': unpacked_data[21],
-                            'dcm_12': unpacked_data[22],
-                            'dcm_13': unpacked_data[23],
-                            'dcm_21': unpacked_data[24],
-                            'dcm_22': unpacked_data[25],
-                            'dcm_23': unpacked_data[26],
-                            'dcm_31': unpacked_data[27],
-                            'dcm_32': unpacked_data[28],
-                            'dcm_33': unpacked_data[29],
-                            'declination': unpacked_data[30],
-                            'depth': unpacked_data[31],
-                        }
-                        error_message = ''
-                        condition = True
-                except error:
-                    self.messages.write_warning('failed to unpack AHRS data')
-                    error_message = 'failed to unpack AHRS data'
+                return status
 
-            elif sensor_id == self.ID_FIELD_CALIBRATION:
-                try:
-                    version = unpack('<B', data[0].to_bytes(1, 'little'))[0]
-                    if version == 1:
-                        unpacked_data = list(unpack('<BBHIIIfffffffffffffffff', bytearray(data)))
-                        packet = {
-                            'id': hex(sensor_id),
-                            'timestamp_python': datetime.now().timestamp(),
-                            'timestamp': unpacked_data[3] + unpacked_data[4] * 1e-6,
-                            'status': hex(unpacked_data[5]),
-                            'hard_iron_x': unpacked_data[6],
-                            'hard_iron_y': unpacked_data[7],
-                            'hard_iron_z': unpacked_data[8],
-                            's_axis_00': unpacked_data[9],
-                            's_axis_01': unpacked_data[10],
-                            's_axis_02': unpacked_data[11],
-                            's_axis_10': unpacked_data[12],
-                            's_axis_11': unpacked_data[13],
-                            's_axis_12': unpacked_data[14],
-                            's_axis_20': unpacked_data[15],
-                            's_axis_21': unpacked_data[16],
-                            's_axis_22': unpacked_data[17],
-                            'new_point_0': unpacked_data[18],
-                            'new_point_1': unpacked_data[19],
-                            'new_point_2': unpacked_data[20],
-                            'fom': unpacked_data[21],
-                            'coverage': unpacked_data[22],
-                        }
-                        error_message = ''
-                        condition = True
-                except error:
-                    self.messages.write_warning('failed to unpack field_cal data')
-                    error_message = 'failed to unpack field_cal data'
+            def get_header_data():
 
-            return packet, error_message, condition
+                header = {'sizeHeader': unpack('<B', binary_packet[1:2])[0],
+                          'id': unpack('<B', binary_packet[2:3])[0],
+                          'family': unpack('<B', binary_packet[3:4])[0],
+                          'sizeData': unpack('<H', binary_packet[4:6])[0],
+                          'size': unpack('<B', binary_packet[1:2])[0] + unpack('<H', binary_packet[4:6])[0],
+                          'dataCheckSum': unpack('<H', binary_packet[6:8])[0],
+                          'headerCheckSum': unpack('<H', binary_packet[8:10])[0]}
+
+                return header
+
+            def get_common_data():
+
+                common = {'version': unpack('<B', data[0:1])[0],
+                          'offsetOfData': unpack('<B', data[1:2])[0],
+                          'timeStamp': unpack('<I', data[4:8])[0],
+                          'microSeconds': unpack('<I', data[8:12])[0]}
+
+                return common
+
+            def get_sensor_data():
+
+                def get_status(status_bits, bit):
+
+                    status = False
+
+                    if (status_bits >> bit) & 0x01 == 1:
+                        status = True
+
+                    return status
+
+                sensor = None
+
+                if header_data['family'] == self.FAMILY_ID_NUCLEUS:
+
+                    if header_data['id'] == self.ID_AHRS:
+
+                        sensor = {'serialNumber': unpack('<I', data[16:20])[0],
+                                  'operationMode': unpack('<B', data[24:25])[0],  # TODO: add operationModeString?
+                                  'ahrsData.roll': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
+                                  'ahrsData.pitch': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
+                                  'ahrsData.heading': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
+                                  'ahrsData.quaternionW': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
+                                  'ahrsData.quaternionX': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
+                                  'ahrsData.quaternionY': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
+                                  'ahrsData.quaternionZ': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0],
+                                  'ahrsData.rotationMatrix_0': unpack('<f', data[common_data['offsetOfData'] + 28: common_data['offsetOfData'] + 32])[0],
+                                  'ahrsData.rotationMatrix_1': unpack('<f', data[common_data['offsetOfData'] + 32: common_data['offsetOfData'] + 36])[0],
+                                  'ahrsData.rotationMatrix_2': unpack('<f', data[common_data['offsetOfData'] + 36: common_data['offsetOfData'] + 40])[0],
+                                  'ahrsData.rotationMatrix_3': unpack('<f', data[common_data['offsetOfData'] + 40: common_data['offsetOfData'] + 44])[0],
+                                  'ahrsData.rotationMatrix_4': unpack('<f', data[common_data['offsetOfData'] + 44: common_data['offsetOfData'] + 48])[0],
+                                  'ahrsData.rotationMatrix_5': unpack('<f', data[common_data['offsetOfData'] + 48: common_data['offsetOfData'] + 52])[0],
+                                  'ahrsData.rotationMatrix_6': unpack('<f', data[common_data['offsetOfData'] + 52: common_data['offsetOfData'] + 56])[0],
+                                  'ahrsData.rotationMatrix_7': unpack('<f', data[common_data['offsetOfData'] + 56: common_data['offsetOfData'] + 60])[0],
+                                  'ahrsData.rotationMatrix_8': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
+                                  'declination': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0],
+                                  'depth': unpack('<f', data[common_data['offsetOfData'] + 68: common_data['offsetOfData'] + 72])[0]
+                                  }
+
+                        if common_data['version'] == 1:
+
+                            sensor['fomAhrs'] = unpack('<B', data[25:26])[0]
+                            sensor['fomFc1'] = unpack('<B', data[26:27])[0]
+
+                        if common_data['version'] == 2:
+
+                            sensor['fomAhrs'] = unpack('<f', data[28:32])[0]
+                            sensor['fomFc1'] = unpack('<f', data[32:36])[0]
+
+                    if header_data['id'] == self.ID_INS:
+
+                        sensor = {'serialNumber': unpack('<I', data[16:20])[0],
+                                  'operationMode': unpack('<B', data[24:25])[0],  # TODO: add operationModeString?
+                                  'ahrsData.roll': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
+                                  'ahrsData.pitch': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
+                                  'ahrsData.heading': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
+                                  'ahrsData.quaternionW': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
+                                  'ahrsData.quaternionX': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
+                                  'ahrsData.quaternionY': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
+                                  'ahrsData.quaternionZ': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0],
+                                  'ahrsData.rotationMatrix_0': unpack('<f', data[common_data['offsetOfData'] + 28: common_data['offsetOfData'] + 32])[0],
+                                  'ahrsData.rotationMatrix_1': unpack('<f', data[common_data['offsetOfData'] + 32: common_data['offsetOfData'] + 36])[0],
+                                  'ahrsData.rotationMatrix_2': unpack('<f', data[common_data['offsetOfData'] + 36: common_data['offsetOfData'] + 40])[0],
+                                  'ahrsData.rotationMatrix_3': unpack('<f', data[common_data['offsetOfData'] + 40: common_data['offsetOfData'] + 44])[0],
+                                  'ahrsData.rotationMatrix_4': unpack('<f', data[common_data['offsetOfData'] + 44: common_data['offsetOfData'] + 48])[0],
+                                  'ahrsData.rotationMatrix_5': unpack('<f', data[common_data['offsetOfData'] + 48: common_data['offsetOfData'] + 52])[0],
+                                  'ahrsData.rotationMatrix_6': unpack('<f', data[common_data['offsetOfData'] + 52: common_data['offsetOfData'] + 56])[0],
+                                  'ahrsData.rotationMatrix_7': unpack('<f', data[common_data['offsetOfData'] + 56: common_data['offsetOfData'] + 60])[0],
+                                  'ahrsData.rotationMatrix_8': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
+                                  'declination': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0],
+                                  'depth': unpack('<f', data[common_data['offsetOfData'] + 68: common_data['offsetOfData'] + 72])[0],
+                                  'deltaQuaternionW': unpack('<f', data[common_data['offsetOfData'] + 72: common_data['offsetOfData'] + 76])[0],
+                                  'deltaQuaternionX': unpack('<f', data[common_data['offsetOfData'] + 76: common_data['offsetOfData'] + 80])[0],
+                                  'deltaQuaternionY': unpack('<f', data[common_data['offsetOfData'] + 80: common_data['offsetOfData'] + 84])[0],
+                                  'deltaQuaternionZ': unpack('<f', data[common_data['offsetOfData'] + 84: common_data['offsetOfData'] + 88])[0],
+                                  'courseOverGround': unpack('<f', data[common_data['offsetOfData'] + 88: common_data['offsetOfData'] + 92])[0],
+                                  'temperature': unpack('<f', data[common_data['offsetOfData'] + 92: common_data['offsetOfData'] + 96])[0],
+                                  'pressure': unpack('<f', data[common_data['offsetOfData'] + 96: common_data['offsetOfData'] + 100])[0],
+                                  'altitude': unpack('<f', data[common_data['offsetOfData'] + 100: common_data['offsetOfData'] + 104])[0],
+                                  'latitude': unpack('<f', data[common_data['offsetOfData'] + 104: common_data['offsetOfData'] + 108])[0],
+                                  'longitude': unpack('<f', data[common_data['offsetOfData'] + 108: common_data['offsetOfData'] + 112])[0],
+                                  'height': unpack('<f', data[common_data['offsetOfData'] + 112: common_data['offsetOfData'] + 116])[0],
+                                  'positionFrameX': unpack('<f', data[common_data['offsetOfData'] + 116: common_data['offsetOfData'] + 120])[0],
+                                  'positionFrameY': unpack('<f', data[common_data['offsetOfData'] + 120: common_data['offsetOfData'] + 124])[0],
+                                  'positionFrameZ': unpack('<f', data[common_data['offsetOfData'] + 124: common_data['offsetOfData'] + 128])[0],
+                                  'deltaPositionFrameX': unpack('<f', data[common_data['offsetOfData'] + 128: common_data['offsetOfData'] + 132])[0],
+                                  'deltaPositionFrameY': unpack('<f', data[common_data['offsetOfData'] + 132: common_data['offsetOfData'] + 136])[0],
+                                  'deltaPositionFrameZ': unpack('<f', data[common_data['offsetOfData'] + 136: common_data['offsetOfData'] + 140])[0],
+                                  'deltaPositionNucleusX': unpack('<f', data[common_data['offsetOfData'] + 140: common_data['offsetOfData'] + 144])[0],
+                                  'deltaPositionNucleusY': unpack('<f', data[common_data['offsetOfData'] + 144: common_data['offsetOfData'] + 148])[0],
+                                  'deltaPositionNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 148: common_data['offsetOfData'] + 152])[0],
+                                  'velocityNedX': unpack('<f', data[common_data['offsetOfData'] + 152: common_data['offsetOfData'] + 156])[0],
+                                  'velocityNedY': unpack('<f', data[common_data['offsetOfData'] + 156: common_data['offsetOfData'] + 160])[0],
+                                  'velocityNedZ': unpack('<f', data[common_data['offsetOfData'] + 160: common_data['offsetOfData'] + 164])[0],
+                                  'velocityNucleusX': unpack('<f', data[common_data['offsetOfData'] + 164: common_data['offsetOfData'] + 168])[0],
+                                  'velocityNucleusY': unpack('<f', data[common_data['offsetOfData'] + 168: common_data['offsetOfData'] + 172])[0],
+                                  'velocityNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 172: common_data['offsetOfData'] + 176])[0],
+                                  'deltaVelocityNedX': unpack('<f', data[common_data['offsetOfData'] + 176: common_data['offsetOfData'] + 180])[0],
+                                  'deltaVelocityNedY': unpack('<f', data[common_data['offsetOfData'] + 180: common_data['offsetOfData'] + 184])[0],
+                                  'deltaVelocityNedZ': unpack('<f', data[common_data['offsetOfData'] + 184: common_data['offsetOfData'] + 188])[0],
+                                  'deltaVelocityNucleusX': unpack('<f', data[common_data['offsetOfData'] + 188: common_data['offsetOfData'] + 192])[0],
+                                  'deltaVelocityNucleusY': unpack('<f', data[common_data['offsetOfData'] + 192: common_data['offsetOfData'] + 196])[0],
+                                  'deltaVelocityNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 196: common_data['offsetOfData'] + 200])[0],
+                                  'speedOverGround': unpack('<f', data[common_data['offsetOfData'] + 200: common_data['offsetOfData'] + 204])[0],
+                                  'turnRateX': unpack('<f', data[common_data['offsetOfData'] + 204: common_data['offsetOfData'] + 208])[0],
+                                  'turnRateY': unpack('<f', data[common_data['offsetOfData'] + 208: common_data['offsetOfData'] + 212])[0],
+                                  'turnRateZ': unpack('<f', data[common_data['offsetOfData'] + 212: common_data['offsetOfData'] + 216])[0],
+                                  }
+
+                        if common_data['version'] == 1:
+
+                            sensor['fomAhrs'] = unpack('<B', data[25:26])[0]
+                            sensor['fomFc1'] = unpack('<B', data[26:27])[0]
+
+                        if common_data['version'] == 2:
+
+                            sensor['fomAhrs'] = unpack('<f', data[28:32])[0]
+                            sensor['fomFc1'] = unpack('<f', data[32:36])[0]
+
+                    if header_data['id'] == self.ID_IMU:
+
+                        imu_status = unpack('<I', data[12:16])[0]
+
+                        sensor = {'status.isValid': get_status(status_bits=imu_status, bit=0),
+                                  'status.hasDataPathOverrun': get_status(status_bits=imu_status, bit=17),
+                                  'status.hasFlashUpdateFailure': get_status(status_bits=imu_status, bit=18),
+                                  'status.hasSpiComError': get_status(status_bits=imu_status, bit=19),
+                                  'status.hasLowVoltage': get_status(status_bits=imu_status, bit=20),
+                                  'status.hasSensorFailure': get_status(status_bits=imu_status, bit=21),
+                                  'status.hasMemoryFailure': get_status(status_bits=imu_status, bit=22),
+                                  'status.hasGyro1Failure': get_status(status_bits=imu_status, bit=23),
+                                  'status.hasGyro2Failure': get_status(status_bits=imu_status, bit=24),
+                                  'status.hasAccelerometerFailure': get_status(status_bits=imu_status, bit=25),
+                                  'accelerometer.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
+                                  'accelerometer.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
+                                  'accelerometer.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
+                                  'gyro.x': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
+                                  'gyro.y': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
+                                  'gyro.z': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
+                                  'temperature': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0]
+                                  }
+
+                    if header_data['id'] == self.ID_MAGNETOMETER:
+
+                        mag_status = unpack('<I', data[12:16])[0]
+
+                        sensor = {'status.isCompensatedForHardIron': get_status(status_bits=mag_status, bit=0),
+                                  'status.dvlActive': get_status(status_bits=mag_status, bit=29),
+                                  'status.dvlAcousticsActive': get_status(status_bits=mag_status, bit=30),
+                                  'status.dvlTransmitterActive': get_status(status_bits=mag_status, bit=31),
+                                  'magnetometer.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
+                                  'magnetometer.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
+                                  'magnetometer.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0]
+                                  }
+
+                    if header_data['id'] in (self.ID_BOTTOMTRACK, self.ID_WATERTRACK):
+
+                        status = unpack('<I', data[12:16])[0]
+
+                        sensor = {'status.beam1VelocityValid': get_status(status_bits=status, bit=0),
+                                  'status.beam2VelocityValid': get_status(status_bits=status, bit=1),
+                                  'status.beam3VelocityValid': get_status(status_bits=status, bit=2),
+                                  'status.beam1DistanceValid': get_status(status_bits=status, bit=3),
+                                  'status.beam2DistanceValid': get_status(status_bits=status, bit=4),
+                                  'status.beam3DistanceValid': get_status(status_bits=status, bit=5),
+                                  'status.beam1FomValid': get_status(status_bits=status, bit=6),
+                                  'status.beam2FomValid': get_status(status_bits=status, bit=7),
+                                  'status.beam3FomValid': get_status(status_bits=status, bit=8),
+                                  'status.xVelocityValid': get_status(status_bits=status, bit=9),
+                                  'status.yVelocityValid': get_status(status_bits=status, bit=10),
+                                  'status.zVelocityValid': get_status(status_bits=status, bit=11),
+                                  'status.xFomValid': get_status(status_bits=status, bit=12),
+                                  'status.yFomValid': get_status(status_bits=status, bit=13),
+                                  'status.zFomValid': get_status(status_bits=status, bit=14),
+                                  'serialNumber': unpack('<I', data[16:20])[0],
+                                  'soundSpeed': unpack('<f', data[24:28])[0],
+                                  'temperature': unpack('<f', data[28:32])[0],
+                                  'pressure': unpack('<f', data[32:36])[0],
+                                  'velocityBeam1': unpack('<f', data[36:40])[0],
+                                  'velocityBeam2': unpack('<f', data[40:44])[0],
+                                  'velocityBeam3': unpack('<f', data[44:48])[0],
+                                  'distanceBeam1': unpack('<f', data[48:52])[0],
+                                  'distanceBeam2': unpack('<f', data[52:56])[0],
+                                  'distanceBeam3': unpack('<f', data[56:60])[0],
+                                  'fomBeam1': unpack('<f', data[60:64])[0],
+                                  'fomBeam2': unpack('<f', data[64:68])[0],
+                                  'fomBeam3': unpack('<f', data[68:72])[0],
+                                  'dtBeam1': unpack('<f', data[72:76])[0],
+                                  'dtBeam2': unpack('<f', data[76:80])[0],
+                                  'dtBeam3': unpack('<f', data[80:84])[0],
+                                  'timeVelBeam1': unpack('<f', data[84:88])[0],
+                                  'timeVelBeam2': unpack('<f', data[88:92])[0],
+                                  'timeVelBeam3': unpack('<f', data[92:96])[0],
+                                  'velocityX': unpack('<f', data[96:100])[0],
+                                  'velocityY': unpack('<f', data[100:104])[0],
+                                  'velocityZ': unpack('<f', data[104:108])[0],
+                                  'fomX': unpack('<f', data[108:112])[0],
+                                  'fomY': unpack('<f', data[112:116])[0],
+                                  'fomZ': unpack('<f', data[116:120])[0],
+                                  'dtXYZ': unpack('<f', data[120:124])[0],
+                                  'timeVelXYZ': unpack('<f', data[124:128])[0]
+                                  }
+
+                    if header_data['id'] == self.ID_ALTIMETER:
+
+                        status = unpack('<I', data[12:16])[0]
+
+                        sensor = {'status.altimeterDistanceValid': get_status(status_bits=status, bit=0),
+                                  'status.altimeterQualityValid': get_status(status_bits=status, bit=1),
+                                  'status.pressureValid': get_status(status_bits=status, bit=16),
+                                  'status.temperatureValid': get_status(status_bits=status, bit=17),
+                                  'serialNumber': unpack('<I', data[16:20])[0],
+                                  'soundSpeed': unpack('<f', data[24:28])[0],
+                                  'temperature': unpack('<f', data[28:32])[0],
+                                  'pressure': unpack('<f', data[32:36])[0],
+                                  'altimeterDistance': unpack('<f', data[36:40])[0],
+                                  'altimeterQuality': unpack('<H', data[40:42])[0]
+                                  }
+
+                    if header_data['id'] == self.ID_CURRENT_PROFILE:
+
+                        sensor = {'serialNumber': unpack('<I', data[16:20])[0],
+                                  'soundVelocity': unpack('<f', data[24:28])[0],
+                                  'temperature': unpack('<f', data[28:32])[0],
+                                  'pressure': unpack('<f', data[32:36])[0],
+                                  'cellSize': unpack('<f', data[36:40])[0],
+                                  'blanking': unpack('<f', data[40:44])[0],
+                                  'numberOfCells': unpack('<H', data[44:46])[0],
+                                  'ambiguityVelocity': unpack('<H', data[46:48])[0]}
+
+                        velocity_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'H')
+                        velocity_data_offset = common_data['offsetOfData']
+                        velocity_data_size = 2 * 3 * sensor['numberOfCells']
+                        #sensor['velocityData'] = unpack(velocity_data_format, data[velocity_data_offset: velocity_data_offset + velocity_data_size])[:velocity_data_size]
+                        velocity_data = unpack(velocity_data_format, data[velocity_data_offset: velocity_data_offset + velocity_data_size])[:velocity_data_size]
+                        for index, velocity_cell in enumerate(velocity_data):
+                            sensor['velocityData_{}'.format(index)] = velocity_cell
+
+                        amplitude_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'B')
+                        amplitude_data_offset = common_data['offsetOfData'] + 6 * sensor['numberOfCells']
+                        amplitude_data_size = 1 * 3 * sensor['numberOfCells']
+                        #sensor['amplitudeData'] = unpack(amplitude_data_format, data[amplitude_data_offset: amplitude_data_offset + amplitude_data_size])[:amplitude_data_size]
+                        amplitude_data = unpack(amplitude_data_format, data[amplitude_data_offset: amplitude_data_offset + amplitude_data_size])[:amplitude_data_size]
+                        for index, amplitude_cell in enumerate(amplitude_data):
+                            sensor['amplitudeData_{}'.format(index)] = amplitude_cell
+
+                        correlation_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'B')
+                        correlation_data_offset = common_data['offsetOfData'] + 9 * sensor['numberOfCells']
+                        correlation_data_size = 1 * 3 * sensor['numberOfCells']
+                        #sensor['correlationData'] = unpack(correlation_data_format, data[correlation_data_offset: correlation_data_offset + correlation_data_size])[:correlation_data_size]
+                        correlation_data = unpack(correlation_data_format, data[correlation_data_offset: correlation_data_offset + correlation_data_size])[:correlation_data_size]
+                        for index, correlation_cell in enumerate(correlation_data):
+                            sensor['correlationData_{}'.format(index)] = correlation_cell
+
+                    if header_data['id'] == self.ID_FIELD_CALIBRATION:
+
+                        status = unpack('<I', data[12:16])[0]
+
+                        sensor = {'status.pointsUsedInEstimation': get_status(status_bits=status, bit=0),
+                                  'hardIron.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
+                                  'hardIron.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
+                                  'hardIron.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
+                                  'sAxis_0': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
+                                  'sAxis_1': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
+                                  'sAxis_2': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
+                                  'sAxis_3': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0],
+                                  'sAxis_4': unpack('<f', data[common_data['offsetOfData'] + 28: common_data['offsetOfData'] + 32])[0],
+                                  'sAxis_5': unpack('<f', data[common_data['offsetOfData'] + 32: common_data['offsetOfData'] + 36])[0],
+                                  'sAxis_6': unpack('<f', data[common_data['offsetOfData'] + 36: common_data['offsetOfData'] + 40])[0],
+                                  'sAxis_7': unpack('<f', data[common_data['offsetOfData'] + 40: common_data['offsetOfData'] + 44])[0],
+                                  'sAxis_8': unpack('<f', data[common_data['offsetOfData'] + 44: common_data['offsetOfData'] + 48])[0],
+                                  'newPoint.x': unpack('<f', data[common_data['offsetOfData'] + 48: common_data['offsetOfData'] + 52])[0],
+                                  'newPoint.y': unpack('<f', data[common_data['offsetOfData'] + 52: common_data['offsetOfData'] + 56])[0],
+                                  'newPoint.z': unpack('<f', data[common_data['offsetOfData'] + 56: common_data['offsetOfData'] + 60])[0],
+                                  'fomFieldCalibration': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
+                                  'coverage': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0]
+                                  }
+
+                    if header_data['id'] == self.ID_ASCII:
+
+                        sensor = {'string': unpack('<{}s'.format(len(data)), data)}
+
+                if header_data['family'] == self.FAMILY_ID_DVL:
+
+                    if header_data['id'] == self.ID_SPECTRUM_ANALYZER:
+
+                        sensor = {'data': data}
+
+                return sensor
+
+            if not check_header_size():
+                self.messages.write_exception('Packet is smaller than specified header length. Extraction aborted')
+                return header_checksum, data_checksum, packet
+
+            header_data = get_header_data()
+
+            if self.checksum(binary_packet[:header_data['sizeHeader'] - 2]) == header_data['headerCheckSum']:
+                header_checksum = True
+            else:
+                self.messages.write_exception('Header did not pass checksum. Extraction aborted')
+                return header_checksum, data_checksum, packet
+
+            packet.update(header_data)
+
+            if not check_packet_size():
+                self.messages.write_exception('Packet is smaller than specified header and data length. Extraction aborted')
+                return header_checksum, data_checksum, packet
+
+            if self.checksum(binary_packet[header_data['sizeHeader']: header_data['sizeHeader'] + header_data['sizeData']]) == header_data['dataCheckSum']:
+                data_checksum = True
+            else:
+                self.messages.write_exception('Packet did not pass checksum. Extraction aborted')
+                return header_checksum, data_checksum, packet
+
+            data = binary_packet[header_data['sizeHeader']:header_data['sizeHeader'] + header_data['sizeData']]
+
+            common_data = get_common_data()
+            packet.update(common_data)
+
+            packet['timestampPython'] = datetime.now().timestamp()
+
+            sensor_data = get_sensor_data()
+
+            if sensor_data is None:
+                self.messages.write_exception('Unable to unpack sensor data. Extraction aborted')
+                return header_checksum, data_checksum, packet
+
+            packet.update(sensor_data)
+
+            return header_checksum, data_checksum, packet
 
         def add_ascii_packet(self, ascii_packet):
 
             self.write_ascii(packet=ascii_packet)
 
         def add_data(self, data):
-
             for value in data:
-
                 if value == 0xa5 and not self.reading_packet:
                     self.reading_packet = True
                     self.ascii_packet = list()
@@ -568,17 +687,6 @@ class NucleusDriver:
                 if len(self.ascii_packet) >= 2 and self.ascii_packet[-2] == 0x0d and self.ascii_packet[-1] == 0x0a:
                     self.add_ascii_packet(self.ascii_packet)
                     self.ascii_packet = list()
-
-    class Thread:
-
-        def __init__(self, messages, connection, nucleus_parser):
-
-            self.messages = messages
-            self.connection = connection
-            self.nucleus_parser = nucleus_parser
-
-            self.thread = Thread()
-            self.thread_running = False
 
         def start(self) -> bool:
 
@@ -617,7 +725,7 @@ class NucleusDriver:
 
                 if data:
 
-                    self.nucleus_parser.add_data(data=data)
+                    self.add_data(data=data)
 
                 else:
                     time.sleep(0.01)
@@ -673,12 +781,18 @@ class NucleusDriver:
 
             return self._connected
 
+        def get_serial_port(self):
+
+            port_info = list_ports.comports(include_links=False)
+            ports = [port.device for port in port_info]
+
+            return ports
+
         def select_serial_port(self):
 
             serial_port = None
 
-            port_info = list_ports.comports(include_links=False)
-            ports = [port.device for port in port_info]
+            ports = self.get_serial_port()
 
             if bool(ports):
                 self.messages.write_message('\nserial - port:')
@@ -774,30 +888,6 @@ class NucleusDriver:
 
             return True
 
-        '''
-        def get_timeout(self) -> float:
-
-            return self.timeout
-
-        def set_timeout(self, timeout):
-        
-            self.timeout = timeout
-
-            if self.get_connection_type() == 'serial':
-                if sys.platform == 'win32' and self.get_connection_status():
-                    self.disconnect()
-                    self.serial.timeout = self.timeout
-                    self.connect(connection_type='serial', get_device_info=False)
-
-                else:
-                    self.serial.timeout = self.timeout
-
-            if self.get_connection_type() == 'tcp':
-                self.tcp.settimeout(self.timeout)
-
-            if self.get_connection_type() == 'udp':
-                self.udp.settimeout(self.timeout)
-        '''
         def connect(self, connection_type: str, get_device_info=True) -> bool:
 
             def _set_connection_type() -> bool:
@@ -873,9 +963,9 @@ class NucleusDriver:
                     self.messages.write_message(message='tcp_configuration.port is not defined')
                     return False
 
-                # This gives the Nucleus 25 seconds to become visible on the network after power on
-                for i in range(6):
-                    if i >= 5:
+                # This gives the Nucleus 35 seconds to become visible on the network after power on
+                for i in range(8):
+                    if i >= 7:
                         self.messages.write_warning('Failed to discover Nucleus on the network')
                         return False
                     try:
@@ -902,7 +992,7 @@ class NucleusDriver:
 
             def _connect_udp() -> bool:
 
-                if self.tcp_configuration.port is None:
+                if self.udp_configuration.port is None:
                     self.messages.write_message(message='tcp_configuration.port is not defined')
                     return False
 
@@ -949,17 +1039,21 @@ class NucleusDriver:
 
                 self.get_all = list()
 
-                for entry in get_all:
-                    if b'ID' in entry:
-                        self.nucleus_id = entry.lstrip(b'ID,').rstrip(b'\r\n').decode()
+                try:
+                    for entry in get_all:
+                        if b'ID' in entry:
+                            self.nucleus_id = entry.lstrip(b'ID,').rstrip(b'\r\n').decode()
 
-                    if b'GETFW' in entry:
-                        self.firmware_version = entry.lstrip(b'GETFW,').rstrip(b'\r\n').decode()
+                        if b'GETFW' in entry:
+                            self.firmware_version = entry.lstrip(b'GETFW,').rstrip(b'\r\n').decode()
 
-                    if b'OK\r\n' in entry:
-                        break
+                        if b'OK\r\n' in entry:
+                            break
 
-                    self.get_all.append(entry.decode())
+                        self.get_all.append(entry.decode())
+
+                except UnicodeDecodeError:
+                    self.messages.write_warning('Failed to decode GETALL message')
 
         def disconnect(self) -> bool:
 
@@ -1059,7 +1153,7 @@ class NucleusDriver:
             def _send_udp_command():
 
                 try:
-                    self.udp.sendto(command, (self.udp_configuration.ip, self.udp_configuration.port))
+                    self.udp.sendto(command, (self.udp_configuration.ip, int(self.udp_configuration.port)))
                     return True
                 except Exception as exception:
                     self.messages.write_exception(message='Failed to send "{}" over udp: {}'.format(command, exception))
@@ -1245,54 +1339,45 @@ class NucleusDriver:
 
     class Commands:
 
-        def __init__(self, messages, connection, thread, nucleus_parser):
+        DHCP_STATIC = ['DHCP', 'STATIC']
+        ADDRESS_PATTERN = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
 
-            self.messages = messages
-            self.connection = connection
-            self.thread = thread
-            self.nucleus_parser = nucleus_parser
+        def __init__(self, **kwargs):
+
+            self.connection = kwargs.get('connection')
+            self.messages = kwargs.get('messages')
+            self.parser = kwargs.get('parser')
 
         def _reset_buffer(self):
 
-            if self.thread.thread_running is not True:
+            if self.parser.thread_running is not True:
                 self.connection.reset_buffers()
-            elif self.nucleus_parser.get_queuing()['ascii'] is True:
-                self.nucleus_parser.clear_queue(queue_name='ascii')
+            elif self.parser.get_queuing()['ascii'] is True:
+                self.parser.clear_queue(queue_name='ascii')
 
         def _get_reply(self, terminator: bytes = None, timeout: int = 1) -> [bytes]:
 
             get_reply = b''
 
-            if self.thread.thread_running is not True:
+            if self.parser.thread_running is not True:
                 get_reply = self.connection.read(terminator=terminator, timeout=timeout)
-            elif self.nucleus_parser.get_queuing()['ascii'] is True:
-                '''
-                for i in range(100):  # Allow for up to 100 lines of reply before OK reply
-                    ascii_packet = self.nucleus_parser.read_ascii(timeout=timeout)
-                    if ascii_packet is None:
-                        break
-                    else:
-                        get_reply += ascii_packet['bytes']
-
-                    if terminator is not None and terminator in get_reply:
-                        break
-                '''
+            elif self.parser.get_queuing()['ascii'] is True:
                 init_time = datetime.now()
                 while (datetime.now() - init_time).seconds < timeout:
-                    ascii_packet = self.nucleus_parser.read_ascii()
-
+                    ascii_packet = self.parser.read_ascii()
                     if ascii_packet is not None:
                         get_reply += ascii_packet['bytes']
 
                     if terminator is not None and terminator in get_reply:
                         break
 
+
             return get_reply
 
         def _check_reply(self, data: bytes, command: bytes, terminator: bytes = None):
 
             if terminator is not None and terminator not in data:
-                if b'ERROR\r\n' in data:
+                if b'ERROR' in data:
                     get_error_reply = self.get_error().rstrip(b'OK\r\n')
                     self.messages.write_exception(message='Received ERROR instead of {} after sending {}: {}'.format(terminator, command, get_error_reply))
 
@@ -1300,16 +1385,41 @@ class NucleusDriver:
                     self.messages.write_warning(message='Did not receive {} after sending {}: {}'.format(terminator, command, data))
 
             elif terminator is None:
-                if b'ERROR\r\n' in data:
+                if b'ERROR' in data:
                     get_error_reply = self.get_error().rstrip(b'OK\r\n')
                     self.messages.write_exception(message='Received ERROR after sending {}: {}'.format(command, get_error_reply))
 
-        def _handle_reply(self, command, terminator: bytes = None, timeout: int = 1) -> [bytes]:
+        def _handle_reply(self, command, terminator: bytes = None, timeout: int = 1, nmea=False) -> [bytes]:
+
+            if nmea:
+                terminator = b'$PNOR,' + terminator.rstrip(b'\r\n')
+                nmea_checksum = self._nmea_checksum(terminator)
+                terminator = terminator + b'*' + nmea_checksum + b'\r\n'
 
             get_reply = self._get_reply(terminator=terminator, timeout=timeout)
             self._check_reply(data=get_reply, terminator=terminator, command=command)
 
-            return [i + b'\r\n' for i in get_reply.split(b'\r\n') if i]
+            reply_list = [i + b'\r\n' for i in get_reply.split(b'\r\n') if i]
+
+            if nmea:
+                for reply in reply_list:
+                    reply_split = reply.split(b'*')
+                    nmea_checksum = self._nmea_checksum(reply_split[0])
+                    if nmea_checksum != reply_split[1].rstrip(b'\r\n'):
+                        self.messages.write_warning('Reply did not pass nmea checksum: {}\t{}'.format(reply, nmea_checksum))
+
+            return reply_list
+
+        def _nmea_checksum(self, command):
+
+            checksum = 0
+
+            command = command.lstrip(b'$')
+
+            for byte in command:
+                checksum ^= byte
+
+            return '{0:02X}'.format(checksum).encode()
 
         def get_error(self) -> [bytes]:
 
@@ -1335,7 +1445,7 @@ class NucleusDriver:
 
             return get_reply
 
-        def stop(self) -> [bytes]:
+        def stop(self, timeout=1) -> [bytes]:
 
             self._reset_buffer()
 
@@ -1343,7 +1453,7 @@ class NucleusDriver:
 
             self.connection.write(command)
 
-            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n', timeout=timeout)
 
             return get_reply
 
@@ -1356,6 +1466,18 @@ class NucleusDriver:
             self.connection.write(fieldcal_command)
 
             get_reply = self._handle_reply(command=fieldcal_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def start_spectrum(self, timeout=1) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'STARTSPECTRUM\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n', timeout=timeout)
 
             return get_reply
 
@@ -1391,11 +1513,16 @@ class NucleusDriver:
 
             return get_reply
 
-        def get_fw(self, str=False, major=False, minor=False, patch=False, build=False, hash=False, dvlfw=False, dvlminor=False, dvlboot=False, dvlfpga=False) -> [bytes]:
+        def get_fw(self, str=False, major=False, minor=False, patch=False, extra=False, build=False, hash=False, dvlfw=False, dvlminor=False, dvlboot=False, dvlfpga=False, _nmea=False) -> [bytes]:
 
             self._reset_buffer()
 
-            command = b'GETFW'
+            command = b''
+
+            if _nmea is True:
+                command += b'$PNOR,'
+
+            command += b'GETFW'
 
             if str is True:
                 command += b',STR'
@@ -1408,6 +1535,9 @@ class NucleusDriver:
 
             if patch is True:
                 command += b',PATCH'
+
+            if extra is True:
+                command += b',EXTRA'
 
             if build is True:
                 command += b',BUILD'
@@ -1427,11 +1557,16 @@ class NucleusDriver:
             if dvlfpga is True:
                 command += b',DVLFPGA'
 
+            if _nmea is True:
+                nmea_checksum = self._nmea_checksum(command)
+                command += b'*'
+                command += nmea_checksum
+
             command += b'\r\n'
 
             self.connection.write(command)
 
-            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n', nmea=_nmea)
 
             return get_reply
 
@@ -1467,12 +1602,129 @@ class NucleusDriver:
 
             return get_reply
 
+        def set_eth(self, ipmethod=None, ip=None, netmask=None, gateway=None):
+
+            self._reset_buffer()
+
+            command = b'SETETH'
+
+            if ipmethod is not None:
+                if ipmethod.upper() in self.DHCP_STATIC:
+                    command += b',IPMETHOD="' + ipmethod.upper().encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for IPMETHOD in SETETH command')
+
+            if ip is not None:
+                if match(self.ADDRESS_PATTERN, ip):
+                    command += b',IP="' + ip.encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for IP in SETETH command')
+
+            if netmask is not None:
+                if match(self.ADDRESS_PATTERN, netmask):
+                    command += b',NETMASK="' + netmask.encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for NETMASK in SETETH command')
+
+            if gateway is not None:
+                if match(self.ADDRESS_PATTERN, gateway):
+                    command += b',GATEWAY="' + gateway.encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for GATEWAY in SETETH command')
+
+            command += b'\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_eth(self, ipmethod=False, ip=False, netmask=False, gateway=False):
+
+            self._reset_buffer()
+
+            command = b'GETETH'
+
+            if ipmethod is True:
+                command += b',IPMETHOD'
+
+            if ip is True:
+                command += b',IP'
+
+            if netmask is True:
+                command += b',NETMASK'
+
+            if gateway is True:
+                command += b',GATEWAY'
+
+            command += b'\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def read_ip(self, ip=False, netmask=False, gateway=False, leasetime=False):
+
+            self._reset_buffer()
+
+            command = b'READIP'
+
+            if ip is True:
+                command += b',IP'
+
+            if netmask is True:
+                command += b',NETMASK'
+
+            if gateway is True:
+                command += b',GATEWAY'
+
+            if leasetime is True:
+                command += b',LEASETIME'
+
+            command += b'\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_eth_lim(self, ipmethod=False, ip=False, netmask=False, gateway=False):
+
+            self._reset_buffer()
+
+            command = b'GETETHLIM'
+
+            if ipmethod is True:
+                command += b',IPMETHOD'
+
+            if ip is True:
+                command += b',IP'
+
+            if netmask is True:
+                command += b',NETMASK'
+
+            if gateway is True:
+                command += b',GATEWAY'
+
+            command += b'\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
     class Logging:
 
         def __init__(self, messages, connection):
 
             self.messages = messages
             self.connection = connection
+            self.commands = None
 
             self._logging = False
 
@@ -1489,9 +1741,11 @@ class NucleusDriver:
             self.ascii_writer = None
             self.condition_writer = None
 
-        @staticmethod
-        def _get_field_names_packet():
+            self.cp_nc = None
+
+        def _get_field_names_packet(self):
             """function to return the fieldnames for the UNS logging"""
+            '''
             field_names = ['id', 'timestamp_python', 'timestamp', 'serial_number', 'error', 'status',
                            'accelerometer_x', 'accelerometer_y', 'accelerometer_z', 'gyro_x', 'gyro_y', 'gyro_z',
                            'magnetometer_x', 'magnetometer_y', 'magnetometer_z',
@@ -1524,6 +1778,188 @@ class NucleusDriver:
                            's_axis_21', 's_axis_22',
                            'new_point_0', 'new_point_1', 'new_point_2',
                            'fom', 'coverage']
+            '''
+            header_fields = ['sizeHeader', 'id', 'family', 'sizeData', 'size', 'dataCheckSum', 'headerCheckSum']
+
+            common_fields = ['version', 'offsetOfData', 'timeStamp', 'microSeconds']
+
+            driver_fields = ['timestampPython']
+
+            is_valid_field = ['isValid']
+
+            ahrs_fields = ['serialNumber', 'operationMode',
+                           'ahrsData.roll', 'ahrsData.pitch', 'ahrsData.heading',
+                           'ahrsData.quaternionW', 'ahrsData.quaternionX', 'ahrsData.quaternionY', 'ahrsData.quaternionZ',
+                           'ahrsData.rotationMatrix_0', 'ahrsData.rotationMatrix_1', 'ahrsData.rotationMatrix_2',
+                           'ahrsData.rotationMatrix_3', 'ahrsData.rotationMatrix_4', 'ahrsData.rotationMatrix_5',
+                           'ahrsData.rotationMatrix_6', 'ahrsData.rotationMatrix_7', 'ahrsData.rotationMatrix_8',
+                           'declination', 'depth', 'fomAhrs', 'fomFc1']
+
+            ins_fields = ['deltaQuaternionW', 'deltaQuaternionX', 'deltaQuaternionY', 'deltaQuaternionZ',
+                          'courseOverGround', 'temperature', 'pressure',
+                          'altitude', 'latitude', 'longitude', 'height',
+                          'positionFrameX', 'positionFrameY', 'positionFrameZ',
+                          'deltaPositionFrameX', 'deltaPositionFrameY', 'deltaPositionFrameZ',
+                          'deltaPositionNucleusX', 'deltaPositionNucleusY', 'deltaPositionNucleusZ',
+                          'velocityNedX', 'velocityNedY', 'velocityNedZ',
+                          'velocityNucleusX', 'velocityNucleusY', 'velocityNucleusZ',
+                          'deltaVelocityNedX', 'deltaVelocityNedY', 'deltaVelocityNedZ',
+                          'deltaVelocityNucleusX', 'deltaVelocityNucleusY', 'deltaVelocityNucleusZ',
+                          'speedOverGround', 'turnRateX', 'turnRateY', 'turnRateZ']
+
+            imu_fields = ['status.isValid',
+                          'status.hasDataPathOverrun', 'status.hasFlashUpdateFailure', 'status.hasSpiComError',
+                          'status.hasLowVoltage', 'status.hasSensorFailure', 'status.hasMemoryFailure',
+                          'status.hasGyro1Failure', 'status.hasGyro2Failure', 'status.hasAccelerometerFailure',
+                          'accelerometer.x', 'accelerometer.y', 'accelerometer.z',
+                          'gyro.x', 'gyro.y', 'gyro.z',
+                          'temperature']
+
+            mag_fields = ['status.isCompensatedForHardIron', 'status.dvlActive', 'status.dvlAcousticsActive', 'status.dvlTransmitterActive',
+                          'magnetometer.x', 'magnetometer.y', 'magnetometer.z']
+
+            dvl_fields = ['status.beam1VelocityValid', 'status.beam2VelocityValid', 'status.beam3VelocityValid',
+                          'status.beam1DistanceValid', 'status.beam2DistanceValid', 'status.beam3DistanceValid',
+                          'status.beam1FomValid', 'status.beam2FomValid', 'status.beam3FomValid',
+                          'status.xVelocityValid', 'status.yVelocityValid', 'status.zVelocityValid',
+                          'status.xFomValid', 'status.yFomValid', 'status.zFomValid',
+                          'serialNumber', 'soundSpeed', 'temperature', 'pressure',
+                          'velocityBeam1', 'velocityBeam2', 'velocityBeam3',
+                          'distanceBeam1', 'distanceBeam2', 'distanceBeam3',
+                          'fomBeam1', 'fomBeam2', 'fomBeam3', 'dtBeam1', 'dtBeam2', 'dtBeam3',
+                          'timeVelBeam1', 'timeVelBeam2', 'timeVelBeam3',
+                          'velocityX', 'velocityY', 'velocityZ', 'fomX', 'fomY', 'fomZ',
+                          'dtXYZ', 'timeVelXYZ']
+
+            alti_fields = ['status.altimeterDistanceValid', 'status.altimeterQualityValid', 'status.pressureValid', 'status.temperatureValid',
+                           'serialNumber', 'soundSpeed', 'temperature', 'pressure',
+                           'altimeterDistance', 'altimeterQuality']
+
+            cp_fields = ['serialNumber', 'soundVelocity', 'temperature', 'pressure',
+                         'cellSize', 'blanking', 'numberOfCells', 'ambiguityVelocity']
+                         #'velocityData', 'amplitudeData', 'correlationData']  # TODO: Make these fields dynamic?
+
+            if self.cp_nc is not None:
+                for index in range(self.cp_nc * 3):
+                    cp_fields.append('velocityData_{}'.format(index))
+
+                for index in range(self.cp_nc * 3):
+                    cp_fields.append('amplitudeData_{}'.format(index))
+
+                for index in range(self.cp_nc * 3):
+                    cp_fields.append('correlationData_{}'.format(index))
+
+            fc_fields = ['status.pointsUsedInEstimation',
+                         'hardIron.x', 'hardIron.y', 'hardIron.z',
+                         'sAxis_0', 'sAxis_1', 'sAxis_2',
+                         'sAxis_3', 'sAxis_4', 'sAxis_5',
+                         'sAxis_6', 'sAxis_7', 'sAxis_8',
+                         'newPoint.x', 'newPoint.y', 'newPoint.z',
+                         'fomFieldCalibration', 'coverage']
+
+            string_fields = ['string']
+            '''
+            field_names = ['id', 'className', 'family', 'isValid', 'size', 'sizeData', 'sizeHeader',  'headerCheckSum', 'dataCheckSum',
+                           'string', 'version', 'timeStamp',   'microSeconds',  'status.altimeterDistanceValid',
+                           'accelerometer.x', 'accelerometer.y', 'accelerometer.z',
+                           'ahrsData.roll', 'ahrsData.pitch', 'ahrsData.heading',
+                           'ahrsData.quaternionW', 'ahrsData.quaternionX', 'ahrsData.quaternionY', 'ahrsData.quaternionZ',
+                           'ahrsData.rotationMatrix_0', 'ahrsData.rotationMatrix_1', 'ahrsData.rotationMatrix_2',
+                           'ahrsData.rotationMatrix_3', 'ahrsData.rotationMatrix_4', 'ahrsData.rotationMatrix_5',
+                           'ahrsData.rotationMatrix_6', 'ahrsData.rotationMatrix_7', 'ahrsData.rotationMatrix_8',
+                           'altimeterDistance', 'altimeterQuality', 'declination', 'depth',
+                            'distanceBeam1',
+                            'distanceBeam2',
+                            'distanceBeam3',
+                            'dtBeam1',
+                            'dtBeam2',
+                            'dtBeam3',
+                            'dtXYZ',
+                            'fomAhrs',
+                            'fomBeam1',
+                            'fomBeam2',
+                            'fomBeam3',
+                            'fomFc1',
+                            'fomX',
+                            'fomY',
+                            'fomZ',
+                            'gyro.x',
+                            'gyro.y',
+                            'gyro.z',
+                            'magnetometer.x',
+                            'magnetometer.y',
+                            'magnetometer.z',
+                            'serial',
+                            'operationMode',
+                            'operationModeString',
+                            'pressure',
+                            'serialNumber',
+                            'soundSpeed',
+                            'status.altimeterQualityValid',
+                            'status.beam1DistanceValid',
+                            'status.beam1FomValid',
+                            'status.beam1VelocityValid',
+                            'status.beam2DistanceValid',
+                            'status.beam2FomValid',
+                            'status.beam2VelocityValid',
+                            'status.beam3DistanceValid',
+                            'status.beam3FomValid',
+                            'status.beam3VelocityValid',
+                            'status.dvlAcousticsActive',
+                            'status.dvlActive',
+                            'status.dvlTransmitterActive',
+                            'status.hasAccelerometerFailure',
+                            'status.hasDataPathOverrun',
+                            'status.hasDiagnosticsData',
+                            'status.hasFlashUpdateFailure',
+                            'status.hasGyro1Failure',
+                            'status.hasGyro2Failure',
+                            'status.hasLowVoltage',
+                            'status.hasMemoryFailure',
+                            'status.hasSensorFailure',
+                            'status.hasSpiComError',
+                            'status.isCompensatedForHardIron',
+                            'status.isValid',
+                            'status.pressureValid',
+                            'status.temperatureValid',
+                            'status.xFomValid',
+                            'status.xVelocityValid',
+                            'status.yFomValid',
+                            'status.yVelocityValid',
+                            'status.zFomValid',
+                            'status.zVelocityValid',
+                            'temperature',
+                            'timeVelBeam1',
+                            'timeVelBeam2',
+                            'timeVelBeam3',
+                            'timeVelXYZ',
+                            'velocityBeam1',
+                            'velocityBeam2',
+                            'velocityBeam3',
+                            'velocityX',
+                            'velocityY',
+                            'velocityZ']
+            '''
+
+            data_fields = [header_fields,
+                           common_fields,
+                           driver_fields,
+                           is_valid_field,  # TODO: This is a temporary fix where this value needs to be in the log file, but nothing is logged to this column
+                           ahrs_fields,
+                           ins_fields,
+                           imu_fields,
+                           mag_fields,
+                           dvl_fields,
+                           alti_fields,
+                           cp_fields,
+                           fc_fields,
+                           string_fields]
+
+            field_names = list()
+            for fields in data_fields:
+                for field in fields:
+                    if field not in field_names:
+                        field_names.append(field)
 
             return field_names
 
@@ -1541,6 +1977,34 @@ class NucleusDriver:
 
             return field_names
 
+        def get_cp_nc(self):
+
+            reply = self.commands.get_cur_prof(profile_range=True, cs=True, bd=True, ds=True)
+
+            if len(reply) != 2:
+                self.messages.write_warning('Unable to obtain current profile configuration')
+
+            else:
+                try:
+                    cp_data = reply[0].split(b',')
+                    cp_range = float(cp_data[0].decode())
+                    cp_cs = float(cp_data[1].decode())
+                    cp_bd = float(cp_data[2].decode())
+                    cp_ds = cp_data[3].rstrip(b'\r\n').decode()
+
+                    if cp_ds == '"OFF"':
+                        self.cp_nc = 0
+
+                    else:
+                        nc = ceil((cp_range - cp_bd) / cp_cs)
+                        if nc > 0:
+                            self.cp_nc = nc
+                        else:
+                            self.cp_nc = None
+
+                except Exception as e:
+                    self.messages.write_warning('Error occured when trying to extract current profile data: {}'.format(e))
+
         def set_path(self, path: str):
 
             self._path = path.rstrip('/')
@@ -1556,6 +2020,8 @@ class NucleusDriver:
             self.packet_file = open(folder + '/nucleus_log.csv', 'w', newline='')
             self.condition_file = open(folder + '/condition_log.csv', 'w', newline='')
             self.ascii_file = open(folder + '/ascii_log.csv', 'w', newline='')
+
+            self.connection.get_info()
 
             if self.connection.get_all is not None:
                 with open(folder + '/get_all.txt', 'w') as file:
@@ -1600,7 +2066,7 @@ class NucleusDriver:
 
             self.connection = kwargs.get('connection')
             self.messages = kwargs.get('messages')
-            self.thread = kwargs.get('thread')
+            self.parser = kwargs.get('parser')
             self.logging = kwargs.get('logging')
             self.commands = kwargs.get('commands')
 
@@ -1853,7 +2319,7 @@ class NucleusDriver:
 
                 return True
 
-            if self.thread.thread.is_alive():
+            if self.parser.thread.is_alive():
                 self.messages.write_message('Can not handle connection while logging thread is running')
                 return
 
@@ -1922,6 +2388,10 @@ class NucleusDriver:
 
                     self.messages.write_message('fieldcal command is only supported through logging')
 
+                elif command.upper() == 'STARTSPECTRUM':
+
+                    self.messages.write_message('startspectrum command is only supported through logging')
+
                 elif command.upper() == 'STOP':
 
                     self.messages.write_message('stop command is only supported through logging')
@@ -1957,6 +2427,7 @@ class NucleusDriver:
             COMMAND_DICT = {
                 'start': ['r', 'Starts logging'],
                 'fieldcal': ['f', 'Starts fieldcal'],
+                'spectrum_analyzer': ['sa', 'Starts spectrum analyzer'],
                 'stop': ['s', 'Stops logging'],
                 'set_log_path': ['p', 'Specify path for where log files should be saved. If not specified a default path will be used'],
                 'status': ['i', 'Returns status of logging'],
@@ -1979,13 +2450,20 @@ class NucleusDriver:
 
                 if reply in ['start', 'r']:
 
-                    self.thread.start()
+                    self.logging.get_cp_nc()
+                    self.parser.start()
                     self.logging.start()
                     self.commands.start()
 
+                elif reply in ['spectrum_analyzer', 'sa']:
+
+                    self.parser.start()
+                    self.logging.start()
+                    self.commands.start_spectrum()
+
                 elif reply in ['fieldcal', 'f']:
 
-                    self.thread.start()
+                    self.parser.start()
                     self.logging.start()
                     self.commands.fieldcal()
 
@@ -1994,7 +2472,7 @@ class NucleusDriver:
                 elif reply in ['stop', 's']:
 
                     self.logging.stop()
-                    self.thread.stop()
+                    self.parser.stop()
                     if self.logging_fieldcal:
                         time.sleep(0.5)
                     self.commands.stop()
