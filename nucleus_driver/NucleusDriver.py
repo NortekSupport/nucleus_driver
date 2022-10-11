@@ -1342,6 +1342,13 @@ class NucleusDriver:
         DHCP_STATIC = ['DHCP', 'STATIC']
         ADDRESS_PATTERN = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
 
+        ON_OFF = ['ON', 'OFF']
+        MODES = ['NORMAL', 'AUTO']
+        PL_MODES = ['MAX', 'USER']
+        TRIGGER_SOURCES = ['INTERNAL', 'EXTRISE', 'EXTFALL', 'EXTEDGES', 'COMMAND']
+        ALTI_RANGE = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        CP_RANGE = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+
         def __init__(self, **kwargs):
 
             self.connection = kwargs.get('connection')
@@ -1590,18 +1597,6 @@ class NucleusDriver:
 
             return get_reply
 
-        def get_all(self):
-
-            self._reset_buffer()
-
-            command = b'GETALL\r\n'
-
-            self.connection.write(command)
-
-            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
-
-            return get_reply
-
         def set_eth(self, ipmethod=None, ip=None, netmask=None, gateway=None):
 
             self._reset_buffer()
@@ -1711,6 +1706,690 @@ class NucleusDriver:
                 command += b',GATEWAY'
 
             command += b'\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def set_ahrs(self, freq=None, mode=None, ds=None, df=None) -> [bytes]:
+
+            self._reset_buffer()
+
+            set_ahrs_command = b'SETAHRS'
+
+            if freq is not None:
+                if isinstance(freq, int):
+                    set_ahrs_command += b',FREQ=' + str(freq).encode()
+                else:
+                    self.messages.write_warning('Invalid value for FREQ in SETAHRS command')
+
+            if mode is not None:
+                if isinstance(mode, int):
+                    set_ahrs_command += b',MODE=' + str(mode).encode()
+                else:
+                    self.messages.write_warning('Invalid value for MODE in SETAHRS command')
+
+            if ds is not None:
+                if ds.upper() in self.ON_OFF:
+                    set_ahrs_command += b',DS="' + ds.upper().encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for DS in SETAHRS command')
+
+            if df is not None:
+                if isinstance(df, int):
+                    set_ahrs_command += b',DF=' + str(df).encode()
+                else:
+                    self.messages.write_warning('Invalid value for DF in SETAHRS command')
+
+            set_ahrs_command += b'\r\n'
+
+            self.connection.write(set_ahrs_command)
+
+            get_reply = self._handle_reply(command=set_ahrs_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_ahrs(self, freq=False, mode=False, ds=False, df=False) -> [bytes]:
+
+            self._reset_buffer()
+
+            get_ahrs_command = b'GETAHRS'
+
+            if freq is True:
+                get_ahrs_command += b',FREQ'
+
+            if mode is True:
+                get_ahrs_command += b',MODE'
+
+            if ds is True:
+                get_ahrs_command += b',DS'
+
+            if df is True:
+                get_ahrs_command += b',DF'
+
+            get_ahrs_command += b'\r\n'
+
+            self.connection.write(get_ahrs_command)
+
+            get_reply = self._handle_reply(command=get_ahrs_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_ahrs_lim(self, freq=False, mode=False, ds=False, df=False) -> [bytes]:
+
+            self._reset_buffer()
+
+            get_ahrs_lim_command = b'GETAHRSLIM'
+
+            if freq is True:
+                get_ahrs_lim_command += b',FREQ'
+
+            if mode is True:
+                get_ahrs_lim_command += b',MODE'
+
+            if ds is True:
+                get_ahrs_lim_command += b',DS'
+
+            if df is True:
+                get_ahrs_lim_command += b',DF'
+
+            get_ahrs_lim_command += b'\r\n'
+
+            self.connection.write(get_ahrs_lim_command)
+
+            get_reply = self._handle_reply(command=get_ahrs_lim_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def set_bt(self, mode=None, vr=None, wt=None, pl=None, pl_mode=None, ds=None, df=None) -> [bytes]:
+
+            self._reset_buffer()
+
+            set_bt_command = b'SETBT'
+
+            if mode is not None:
+                if isinstance(mode, str) and mode.upper() in self.MODES:
+                    set_bt_command += b',MODE="' + mode.upper().encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for MODE in SETBT command')
+
+            if vr is not None:
+                if isinstance(vr, int) or isinstance(vr, float):
+                    set_bt_command += b',VR=' + str(vr).encode()
+                else:
+                    self.messages.write_warning('Invalid value for VR in SETBT command')
+
+            if wt is not None:
+                if wt.upper() in self.ON_OFF:
+                    set_bt_command += b',WT="' + wt.upper().encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for WT in SETBT command')
+
+            if pl is not None:
+                if isinstance(pl, int) or isinstance(pl, float):
+                    set_bt_command += b',PL=' + str(pl).encode()
+                else:
+                    self.messages.write_warning('Invalid value for PL in SETBT command')
+
+            if pl_mode is not None:
+                if isinstance(pl_mode, str) and pl_mode.upper() in self.PL_MODES:
+                    set_bt_command += b',PLMODE="' + pl_mode.upper().encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for PLMODE in SETBT command')
+
+            if ds is not None:
+                if ds.upper() in self.ON_OFF:
+                    set_bt_command += b',DS="' + ds.upper().encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for DS in SETBT command')
+
+            if df is not None:
+                if isinstance(df, int):
+                    set_bt_command += b',DF=' + str(df).encode()
+                else:
+                    self.messages.write_warning('Invalid value for DF in SETBT command')
+
+            set_bt_command += b'\r\n'
+
+            self.connection.write(set_bt_command)
+
+            get_reply = self._handle_reply(command=set_bt_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_bt(self, vr=False, wt=False, pl=False, pl_mode=False, ds=False, df=False) -> [bytes]:
+
+            self._reset_buffer()
+
+            get_bt_command = b'GETBT'
+
+            if vr is True:
+                get_bt_command += b',VR'
+
+            if wt is True:
+                get_bt_command += b',WT'
+
+            if pl is True:
+                get_bt_command += b',PL'
+
+            if pl_mode is True:
+                get_bt_command += b',PLMODE'
+
+            if ds is True:
+                get_bt_command += b',DS'
+
+            if df is True:
+                get_bt_command += b',DF'
+
+            get_bt_command += b'\r\n'
+
+            self.connection.write(get_bt_command)
+
+            get_reply = self._handle_reply(command=get_bt_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_bt_lim(self, vr=False, wt=False, pl=False, pl_mode=False, ds=False, df=False) -> [bytes]:
+
+            self._reset_buffer()
+
+            get_bt_lim_command = b'GETBTLIM'
+
+            if vr is True:
+                get_bt_lim_command += b',VR'
+
+            if wt is True:
+                get_bt_lim_command += b',WT'
+
+            if pl is True:
+                get_bt_lim_command += b',PL'
+
+            if pl_mode is True:
+                get_bt_lim_command += b',PLMODE'
+
+            if ds is True:
+                get_bt_lim_command += b',DS'
+
+            if df is True:
+                get_bt_lim_command += b',DF'
+
+            get_bt_lim_command += b'\r\n'
+
+            self.connection.write(get_bt_lim_command)
+
+            get_reply = self._handle_reply(command=get_bt_lim_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def set_alti(self, pl=None, ds=None, df=None) -> [bytes]:
+
+            self._reset_buffer()
+
+            set_alti_command = b'SETALTI'
+
+            if pl is not None:
+                if isinstance(pl, int) or isinstance(pl, float):
+                    set_alti_command += b',PL=' + str(pl).encode()
+                else:
+                    self.messages.write_warning('Invalid value for PL in SETALTI command')
+
+            if ds is not None:
+                if ds.upper() in self.ON_OFF:
+                    set_alti_command += b',DS="' + ds.upper().encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for DS in SETALTI command')
+
+            if df is not None:
+                if isinstance(df, int):
+                    set_alti_command += b',DF=' + str(df).encode()
+                else:
+                    self.messages.write_warning('Invalid value for DF in SETALTI command')
+
+            set_alti_command += b'\r\n'
+
+            self.connection.write(set_alti_command)
+
+            get_reply = self._handle_reply(command=set_alti_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_alti(self, pl=False, ds=False, df=False) -> [bytes]:
+
+            self._reset_buffer()
+
+            get_alti_command = b'GETALTI'
+
+            if pl is True:
+                get_alti_command += b',PL'
+
+            if ds is True:
+                get_alti_command += b',DS'
+
+            if df is True:
+                get_alti_command += b',DF'
+
+            get_alti_command += b'\r\n'
+
+            self.connection.write(get_alti_command)
+
+            get_reply = self._handle_reply(command=get_alti_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_alti_lim(self, pl=False, ds=False, df=False) -> [bytes]:
+
+            self._reset_buffer()
+
+            get_alti_lim_command = b'GETALTILIM'
+
+            if pl is True:
+                get_alti_lim_command += b',PL'
+
+            if ds is True:
+                get_alti_lim_command += b',DS'
+
+            if df is True:
+                get_alti_lim_command += b',DF'
+
+            get_alti_lim_command += b'\r\n'
+
+            self.connection.write(get_alti_lim_command)
+
+            get_reply = self._handle_reply(command=get_alti_lim_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def set_trig(self, src=None, freq=None, alti=None, cp=None) -> [bytes]:
+
+            self._reset_buffer()
+
+            set_trig_command = b'SETTRIG'
+
+            if src is not None:
+                if src.upper() in self.TRIGGER_SOURCES:
+                    set_trig_command += b',SRC="' + src.upper().encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for SRC in SETTRIG command')
+
+            if freq is not None:
+                if isinstance(freq, int):
+                    set_trig_command += b',FREQ=' + str(freq).encode()
+                else:
+                    self.messages.write_warning('Invalid value for FREQ in SETTRIG command')
+
+            if alti is not None:
+                if isinstance(alti, int) and alti in self.ALTI_RANGE:
+                    set_trig_command += b',ALTI=' + str(alti).encode()
+                else:
+                    self.messages.write_warning('Invalid value for ALTI in SETTRIG command')
+
+            if cp is not None:
+                if isinstance(cp, int) and cp in self.CP_RANGE:
+                    set_trig_command += b',CP=' + str(cp).encode()
+                else:
+                    self.messages.write_warning('Invalid value for CP in SETTRIG command')
+
+            set_trig_command += b'\r\n'
+
+            self.connection.write(set_trig_command)
+
+            get_reply = self._handle_reply(command=set_trig_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_trig(self, src=False, freq=False, alti=False, cp=False) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'GETTRIG'
+
+            if src is True:
+                command += b',SRC'
+
+            if freq is True:
+                command += b',FREQ'
+
+            if alti is True:
+                command += b',ALTI'
+
+            if cp is True:
+                command += b',CP'
+
+            command += b'\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_trig_lim(self, src=False, freq=False, alti=False, cp=False) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'GETTRIGLIM'
+
+            if src is True:
+                command += b',SRC'
+
+            if freq is True:
+                command += b',FREQ'
+
+            if alti is True:
+                command += b',ALTI'
+
+            if cp is True:
+                command += b',CP'
+
+            command += b'\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def set_cur_prof(self, profile_range=None, cs=None, bd=None, ds=None, df=None) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'SETCURPROF'
+
+            if profile_range is not None:
+                if isinstance(profile_range, int) or isinstance(profile_range, float):
+                    command += b',RANGE=' + str(profile_range).encode()
+                else:
+                    self.messages.write_warning('Invalid value for RANGE in SETCURPROF command')
+
+            if cs is not None:
+                if isinstance(cs, int) or isinstance(cs, float):
+                    command += b',CS=' + str(cs).encode()
+                else:
+                    self.messages.write_warning('Invalid value for CS in SETCURPROF command')
+
+            if bd is not None:
+                if isinstance(bd, int) or isinstance(bd, float):
+                    command += b',BD=' + str(bd).encode()
+                else:
+                    self.messages.write_warning('Invalid value for BD in SETCURPROF command')
+
+            if ds is not None:
+                if ds.upper() in self.ON_OFF:
+                    command += b',DS="' + ds.upper().encode() + b'"'
+                else:
+                    self.messages.write_warning('Invalid value for DS in SETCURPROF command')
+
+            if df is not None:
+                if isinstance(df, int):
+                    command += b',DF=' + str(df).encode()
+                else:
+                    self.messages.write_warning('Invalid value for DF in SETCURPROF command')
+
+            command += b'\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_cur_prof(self, profile_range=False, cs=False, bd=False, ds=False, df=False):
+
+            self._reset_buffer()
+
+            command = b'GETCURPROF'
+
+            if profile_range is True:
+                command += b',RANGE'
+
+            if cs is True:
+                command += b',CS'
+
+            if bd is True:
+                command += b',BD'
+
+            if ds is True:
+                command += b',DS'
+
+            if df is True:
+                command += b',DF'
+
+            command += b'\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_cur_prof_lim(self, profile_range=False, cs=False, bd=False, ds=False, df=False):
+
+            self._reset_buffer()
+
+            command = b'GETCURPROFLIM'
+
+            if profile_range is True:
+                command += b',RANGE'
+
+            if cs is True:
+                command += b',CS'
+
+            if bd is True:
+                command += b',BD'
+
+            if ds is True:
+                command += b',DS'
+
+            if df is True:
+                command += b',DF'
+
+            command += b'\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def get_all(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'GETALL\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def trig(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            trig_command = b'TRIG\r\n'
+
+            self.connection.write(trig_command)
+
+            get_reply = self._handle_reply(command=trig_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def save_all(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'SAVE,ALL\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def save_config(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            save_config_command = b'SAVE,CONFIG\r\n'
+
+            self.connection.write(save_config_command)
+
+            get_reply = self._handle_reply(command=save_config_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def save_mission(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            save_mission_command = b'SAVE,MISSION\r\n'
+
+            self.connection.write(save_mission_command)
+
+            get_reply = self._handle_reply(command=save_mission_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def save_magcal(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            save_magcal_command = b'SAVE,MAGCAL\r\n'
+
+            self.connection.write(save_magcal_command)
+
+            get_reply = self._handle_reply(command=save_magcal_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def save_comm(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'SAVE,COMM\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def restore_all(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'RESTORE,ALL\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def restore_config(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'RESTORE,CONFIG\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def restore_mission(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'RESTORE,MISSION\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def restore_magcal(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'RESTORE,MAGCAL\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def restore_comm(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'RESTORE,COMM\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def set_default_all(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'SETDEFAULT,ALL\r\n'
+
+            self.connection.write(command)
+
+            get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def set_default_config(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            set_default_config_command = b'SETDEFAULT,CONFIG\r\n'
+
+            self.connection.write(set_default_config_command)
+
+            get_reply = self._handle_reply(command=set_default_config_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def set_default_mission(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            set_default_mission_command = b'SETDEFAULT,MISSION\r\n'
+
+            self.connection.write(set_default_mission_command)
+
+            get_reply = self._handle_reply(command=set_default_mission_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def set_default_magcal(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            set_default_magcal_command = b'SETDEFAULT,MAGCAL\r\n'
+
+            self.connection.write(set_default_magcal_command)
+
+            get_reply = self._handle_reply(command=set_default_magcal_command, terminator=b'OK\r\n')
+
+            return get_reply
+
+        def set_default_comm(self) -> [bytes]:
+
+            self._reset_buffer()
+
+            command = b'SETDEFAULT,COMM\r\n'
 
             self.connection.write(command)
 
