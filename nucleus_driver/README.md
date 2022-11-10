@@ -1,6 +1,6 @@
 # Nucleus Driver
 
-This is a driver for the Nortek Nucleus device
+This is a driver for the Nortek Nucleus device. The driver requires Python with a minimum version of 3.7
 
 ## Installation
 
