@@ -6,21 +6,23 @@ from zipfile import ZipFile
 
 class Flash:
 
-    def __init__(self, messages, connection, commands):
+    def __init__(self, **kwargs):
 
         self.BIN_FILE_PATTERN = r'(\w+)-v(\d+).(\d+).(\d+)(.*)'
         self.LDR_FILE_PATTERN = r'(\w+)_V(\d+)_(\d+)'
 
-        self.messages = messages
-        self.connection = connection
-        self.commands = commands
+        self.messages = kwargs.get('messages')
+        self.connection = kwargs.get('connection')
+        self.commands = kwargs.get('commands')
 
         self.nucleus_firmware_name = None
         self.dvl_firmware_name = None
         self.nucleus_firmware = None
         self.dvl_firmware = None
 
-    def set_flash_files(self, path: str):
+    def set_flash_files(self, path: str) -> bool:
+
+        status = False
 
         if path.endswith('.zip'):
 
@@ -43,6 +45,8 @@ class Flash:
             if self.dvl_firmware_name is not None:
                 self.dvl_firmware = archive.read(self.dvl_firmware_name)
 
+            status = True
+
         elif path.endswith('.bin'):
 
             self.nucleus_firmware_name = path.split('/')[-1]
@@ -55,6 +59,8 @@ class Flash:
                 self.nucleus_firmware = None
                 self.nucleus_firmware_name = None
 
+            status = True
+
         elif path.endswith('.ldr'):
 
             self.dvl_firmware_name = path.split('/')[-1]
@@ -62,8 +68,12 @@ class Flash:
             with open(path, mode='rb') as file:
                 self.dvl_firmware = file.read()
 
+            status = True
+
         else:
             self.messages.write_warning('Invalid extension for flash file. Flash file not set')
+
+        return status
 
     def reset_flash_files(self):
 
@@ -217,7 +227,7 @@ class Flash:
 
         self.messages.write_message(message='Uploading Nucleus firmware...')
 
-        reply = self.commands.upload(package=firmware_package)
+        reply = self.commands._upload(package=firmware_package)
         if reply is None:
             return -102
         elif b'ACK\r\n' not in reply:
@@ -228,7 +238,7 @@ class Flash:
         self.messages.write_message(message='Nucleus firmware uploaded')
         self.messages.write_message(message='Updating Nucleus firmware...')
 
-        reply = self.commands.fw_update()
+        reply = self.commands._fw_update()
         if reply is None:
             return -105
         elif b'ACK\r\n' not in reply:
@@ -289,7 +299,7 @@ class Flash:
 
         self.messages.write_message(message='Uploading DVL firmware...')
 
-        reply = self.commands.upload(package=firmware_package)
+        reply = self.commands._upload(package=firmware_package)
 
         if reply is None:
             return -202
@@ -300,7 +310,7 @@ class Flash:
 
         self.messages.write_message(message='DVL firmware uploaded')
 
-        reply = self.commands.dvl_update()
+        reply = self.commands._dvl_update()
         if reply is None:
             return -205
         elif b'ACK\r\n' not in reply:
@@ -387,7 +397,7 @@ class Flash:
         self.messages.write_message(message='New firmware version: {}'.format(version))
 
         if nucleus_firmware_match is not False and dvl_firmware_match is not False:
-            reply = self.commands.fw_confirm()
+            reply = self.commands._fw_confirm()
             if b'OK\r\n' not in reply:
                 return -402
 
@@ -397,7 +407,7 @@ class Flash:
             self.messages.write_warning(message='Firmware update failed. Nucleus did not start up properly')
             self.messages.write_warning(message='Reverting back to old firmware...')
 
-            self.commands.reset()
+            self.commands.reboot()
 
             if self.connection.get_connection_type() == 'serial':
 

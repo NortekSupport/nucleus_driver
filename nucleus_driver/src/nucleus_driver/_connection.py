@@ -9,7 +9,7 @@ import errno
 
 
 class Connection:
-    CONNECTION_TYPES = ['serial', 'udp', 'tcp']
+    CONNECTION_TYPES = ['serial', 'tcp']
 
     @dataclass
     class SerialConfiguration:
@@ -21,14 +21,9 @@ class Connection:
         host: str = None
         port: int = 9000
 
-    @dataclass
-    class UdpConfiguration:
-        ip: str = '192.168.2.2'  # UDP address of ROV running on ArduSub software
-        port: int = None
+    def __init__(self, **kwargs):
 
-    def __init__(self, messages):
-
-        self.messages = messages
+        self.messages = kwargs.get('messages')
         self.commands = None
 
         self._connection_type = None
@@ -36,15 +31,12 @@ class Connection:
 
         self.serial = serial.Serial()
         self.tcp = socket.socket()
-        self.udp = socket.socket()
 
         self.serial_configuration = self.SerialConfiguration()
         self.tcp_configuration = self.TcpConfiguration()
-        self.udp_configuration = self.UdpConfiguration()
         self.timeout = 1
 
         self.tcp_buffer = b''
-        self.udp_buffer = b''
 
         self.nucleus_id = None
         self.firmware_version = None
@@ -112,21 +104,13 @@ class Connection:
         if port is not None:
             self.tcp_configuration.port = port
 
-    def set_udp_configuration(self, ip: str = None, port: int = None):
-
-        if ip is not None:
-            self.udp_configuration.ip = ip
-
-        if port is not None:
-            self.udp_configuration.port = port
-
     def get_serial_number_from_tcp_hostname(self) -> int:
 
         serial_number = None
 
         if self.tcp_configuration.host is None:
             self.messages.write_warning('Could not extract serial number from hostname. Hostname is None')
-            return serial_number
+            return None
 
         try:
             serial_number_str = self.tcp_configuration.host.split('-')[-1].split('.local')[0]
@@ -177,9 +161,6 @@ class Connection:
                 if self._connection_type == 'tcp':
                     self.tcp = socket.socket()
 
-                if self._connection_type == 'udp':
-                    self.udp = socket.socket()
-
                 return True
 
             else:
@@ -223,9 +204,6 @@ class Connection:
 
                 reply = self.readline()
 
-                # This needs to support:
-                # b'Welcome to Nortek Nucleus1000'
-                # b'Welcome to Nortek Fusion DVL1000'
                 if b'Welcome to Nortek' not in reply:
                     self.messages.write_warning(message='Did not recevie welcome message after login attempt')
                     return False
@@ -267,24 +245,6 @@ class Connection:
 
             return True
 
-        def _connect_udp() -> bool:
-
-            if self.udp_configuration.port is None:
-                self.messages.write_message(message='tcp_configuration.port is not defined')
-                return False
-
-            try:
-                self.udp = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-
-                self.udp.settimeout(self.timeout)
-
-                return True
-
-            except Exception as exception:
-                self.messages.write_exception(message='Failed to connect through UDP: {}'.format(exception))
-
-                return False
-
         if self.get_connection_status() is True:
             self.messages.write_message(message='Nucleus is already connected')
             return False
@@ -298,9 +258,6 @@ class Connection:
 
         if self.get_connection_type() == 'tcp':
             self._connected = _connect_tcp()
-
-        if self.get_connection_type() == 'udp':
-            self._connected = _connect_udp()
 
         if self.get_connection_status() and self.commands is not None and get_device_info:
             self.get_info()
@@ -365,20 +322,6 @@ class Connection:
 
                 return False
 
-        def _disconnect_udp():
-
-            try:
-                self.udp.close()
-                self._connection_type = None
-                self.udp = socket.socket()
-
-                return True
-
-            except Exception as exception:
-                self.messages.write_exception(message='Failed to disconnet from serial connection: {}'.format(exception))
-
-                return False
-
         disconnected = False
 
         if self.get_connection_type() == 'serial':
@@ -386,9 +329,6 @@ class Connection:
 
         if self.get_connection_type() == 'tcp':
             disconnected = _disconnect_tcp()
-
-        if self.get_connection_type() == 'udp':
-            disconnected = _disconnect_udp()
 
         self._connected = not disconnected
 
@@ -426,15 +366,6 @@ class Connection:
                 self.messages.write_exception(message='Failed to send "{}" over tcp: {}'.format(command[:20], exception))
                 return False
 
-        def _send_udp_command():
-
-            try:
-                self.udp.sendto(command, (self.udp_configuration.ip, int(self.udp_configuration.port)))
-                return True
-            except Exception as exception:
-                self.messages.write_exception(message='Failed to send "{}" over udp: {}'.format(command, exception))
-                return False
-
         if not self.get_connection_status():
             self.messages.write_message(message='Nucleus is not connected. Can not send command: {}'.format(command))
             return False
@@ -444,9 +375,6 @@ class Connection:
 
         if self.get_connection_type() == 'tcp':
             sending_successful = _send_tcp_command()
-
-        if self.get_connection_type() == 'udp':
-            sending_successful = _send_udp_command()
 
         return sending_successful
 
@@ -528,61 +456,11 @@ class Connection:
 
             return tcp_data
 
-        def _udp_read() -> bytes:
-
-            def _read() -> bool:
-                try:
-                    self.udp_buffer += self.udp.recv(4096)
-                    return True
-                except socket.timeout:
-                    return True
-                except Exception as exception:
-                    if self.get_connection_status():
-                        self.messages.write_exception(message='Failed to read udp data from Nucleus: {}'.format(exception))
-
-                    return False
-
-            if terminator is not None:
-
-                init_time = datetime.now()
-                while (datetime.now() - init_time).seconds < timeout:
-                    if terminator in self.udp_buffer:
-                        break
-                    else:
-                        if not _read():
-                            break
-
-                line, separator, self.udp_buffer = self.udp_buffer.partition(terminator)
-                udp_data = line + separator
-
-            elif size is not None:
-
-                init_time = datetime.now()
-                while (datetime.now() - init_time).seconds < timeout:
-                    if len(self.udp_buffer) >= size:
-                        break
-                    else:
-                        if not _read():
-                            break
-
-                udp_data = self.udp_buffer[:size]
-                self.udp_buffer = self.udp_buffer[size:]
-
-            else:
-                _read()
-                udp_data = self.udp_buffer
-                self.udp_buffer = b''
-
-            return udp_data
-
         if self.get_connection_type() == 'serial':
             read_data = _serial_read()
 
         if self.get_connection_type() == 'tcp':
             read_data = _tcp_read()
-
-        if self.get_connection_type() == 'udp':
-            read_data = _udp_read()
 
         return read_data
 
@@ -610,5 +488,3 @@ class Connection:
                     self.messages.write_warning('Got an unexpected exception when resetting TCP buffers: {}'.format(e))
                     break
 
-        elif self.get_connection_type() == 'udp':
-            self.udp_buffer = b''

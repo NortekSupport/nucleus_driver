@@ -30,11 +30,11 @@ class Parser:
     # https://dev.azure.com/NortekGroup/INS/_git/Firmware?path=/src/ofmt.c&version=GBmaster&line=28&lineEnd=29&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
     # https://dev.azure.com/NortekGroup/INS/_git/Firmware?path=/lib/sensor_fusion/src/uns_types.h&version=GBmaster&line=10&lineEnd=11&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
 
-    def __init__(self, messages, logger, connection):
+    def __init__(self, **kwargs):
 
-        self.messages = messages
-        self.logger = logger
-        self.connection = connection
+        self.messages = kwargs.get('messages')
+        self.logger = kwargs.get('logger')
+        self.connection = kwargs.get('connection')
 
         self.packet_queue = Queue(maxsize=10000)
         self.ascii_queue = Queue(maxsize=10000)

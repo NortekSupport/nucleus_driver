@@ -33,40 +33,7 @@ class Logger:
 
     def _get_field_names_packet(self):
         """function to return the fieldnames for the UNS logging"""
-        '''
-        field_names = ['id', 'timestamp_python', 'timestamp', 'serial_number', 'error', 'status',
-                       'accelerometer_x', 'accelerometer_y', 'accelerometer_z', 'gyro_x', 'gyro_y', 'gyro_z',
-                       'magnetometer_x', 'magnetometer_y', 'magnetometer_z',
-                       'sound_speed', 'temperature', 'pressure',
-                       'velocity_beam_0', 'velocity_beam_1', 'velocity_beam_2',
-                       'distance_beam_0', 'distance_beam_1', 'distance_beam_2',
-                       'fom_beam_0', 'fom_beam_1', 'fom_beam_2',
-                       'dt_beam_0', 'dt_beam_1', 'dt_beam_2',
-                       'time_velocity_estimate_0', 'time_velocity_estimate_1', 'time_velocity_estimate_2',
-                       'velocity_x', 'velocity_y', 'velocity_z',
-                       'fom_x', 'fom_y', 'fom_z', 'dt_xyz', 'time_velocity_estimate_xyz',
-                       'altimeter_distance', 'altimeter_quality',
-                       'euler_angles_roll', 'euler_angles_pitch', 'euler_angles_heading',
-                       'quaternion_0', 'quaternion_1', 'quaternion_2', 'quaternion_3',
-                       'dcm_11', 'dcm_12', 'dcm_13', 'dcm_21', 'dcm_22', 'dcm_23', 'dcm_31', 'dcm_32', 'dcm_33',
-                       'declination', 'depth', 'operation_mode', 'fom_ahrs', 'fom_fc1',
-                       'delta_quaternion_0', 'delta_quaternion_1', 'delta_quaternion_2', 'delta_quaternion_3',
-                       'course_over_ground', 'turn_rate_x', 'turn_rate_y', 'turn_rate_z',
-                       'altitude', 'latitude', 'longitude', 'height',
-                       'position_frame_x', 'position_frame_y', 'position_frame_z',
-                       'delta_position_frame_x', 'delta_position_frame_y', 'delta_position_frame_z',
-                       'delta_position_uns_x', 'delta_position_uns_y', 'delta_position_uns_z',
-                       'velocity_ned_x', 'velocity_ned_y', 'velocity_ned_z',
-                       'velocity_uns_x', 'velocity_uns_y', 'velocity_uns_z',
-                       'delta_velocity_ned_x', 'delta_velocity_ned_y', 'delta_velocity_ned_z',
-                       'delta_velocity_uns_x', 'delta_velocity_uns_y', 'delta_velocity_uns_z',
-                       'velocity_sog',
-                       'hard_iron_x', 'hard_iron_y', 'hard_iron_z',
-                       's_axis_00', 's_axis_01', 's_axis_02', 's_axis_10', 's_axis_11', 's_axis_12', 's_axis_20',
-                       's_axis_21', 's_axis_22',
-                       'new_point_0', 'new_point_1', 'new_point_2',
-                       'fom', 'coverage']
-        '''
+
         header_fields = ['sizeHeader', 'id', 'family', 'sizeData', 'size', 'dataCheckSum', 'headerCheckSum']
 
         common_fields = ['version', 'offsetOfData', 'timeStamp', 'microSeconds']
@@ -125,7 +92,6 @@ class Logger:
 
         cp_fields = ['serialNumber', 'soundVelocity', 'temperature', 'pressure',
                      'cellSize', 'blanking', 'numberOfCells', 'ambiguityVelocity']
-        # 'velocityData', 'amplitudeData', 'correlationData']  # TODO: Make these fields dynamic?
 
         if self.cp_nc is not None:
             for index in range(self.cp_nc * 3):
@@ -146,88 +112,6 @@ class Logger:
                      'fomFieldCalibration', 'coverage']
 
         string_fields = ['string']
-        '''
-        field_names = ['id', 'className', 'family', 'isValid', 'size', 'sizeData', 'sizeHeader',  'headerCheckSum', 'dataCheckSum',
-                       'string', 'version', 'timeStamp',   'microSeconds',  'status.altimeterDistanceValid',
-                       'accelerometer.x', 'accelerometer.y', 'accelerometer.z',
-                       'ahrsData.roll', 'ahrsData.pitch', 'ahrsData.heading',
-                       'ahrsData.quaternionW', 'ahrsData.quaternionX', 'ahrsData.quaternionY', 'ahrsData.quaternionZ',
-                       'ahrsData.rotationMatrix_0', 'ahrsData.rotationMatrix_1', 'ahrsData.rotationMatrix_2',
-                       'ahrsData.rotationMatrix_3', 'ahrsData.rotationMatrix_4', 'ahrsData.rotationMatrix_5',
-                       'ahrsData.rotationMatrix_6', 'ahrsData.rotationMatrix_7', 'ahrsData.rotationMatrix_8',
-                       'altimeterDistance', 'altimeterQuality', 'declination', 'depth',
-                        'distanceBeam1',
-                        'distanceBeam2',
-                        'distanceBeam3',
-                        'dtBeam1',
-                        'dtBeam2',
-                        'dtBeam3',
-                        'dtXYZ',
-                        'fomAhrs',
-                        'fomBeam1',
-                        'fomBeam2',
-                        'fomBeam3',
-                        'fomFc1',
-                        'fomX',
-                        'fomY',
-                        'fomZ',
-                        'gyro.x',
-                        'gyro.y',
-                        'gyro.z',
-                        'magnetometer.x',
-                        'magnetometer.y',
-                        'magnetometer.z',
-                        'serial',
-                        'operationMode',
-                        'operationModeString',
-                        'pressure',
-                        'serialNumber',
-                        'soundSpeed',
-                        'status.altimeterQualityValid',
-                        'status.beam1DistanceValid',
-                        'status.beam1FomValid',
-                        'status.beam1VelocityValid',
-                        'status.beam2DistanceValid',
-                        'status.beam2FomValid',
-                        'status.beam2VelocityValid',
-                        'status.beam3DistanceValid',
-                        'status.beam3FomValid',
-                        'status.beam3VelocityValid',
-                        'status.dvlAcousticsActive',
-                        'status.dvlActive',
-                        'status.dvlTransmitterActive',
-                        'status.hasAccelerometerFailure',
-                        'status.hasDataPathOverrun',
-                        'status.hasDiagnosticsData',
-                        'status.hasFlashUpdateFailure',
-                        'status.hasGyro1Failure',
-                        'status.hasGyro2Failure',
-                        'status.hasLowVoltage',
-                        'status.hasMemoryFailure',
-                        'status.hasSensorFailure',
-                        'status.hasSpiComError',
-                        'status.isCompensatedForHardIron',
-                        'status.isValid',
-                        'status.pressureValid',
-                        'status.temperatureValid',
-                        'status.xFomValid',
-                        'status.xVelocityValid',
-                        'status.yFomValid',
-                        'status.yVelocityValid',
-                        'status.zFomValid',
-                        'status.zVelocityValid',
-                        'temperature',
-                        'timeVelBeam1',
-                        'timeVelBeam2',
-                        'timeVelBeam3',
-                        'timeVelXYZ',
-                        'velocityBeam1',
-                        'velocityBeam2',
-                        'velocityBeam3',
-                        'velocityX',
-                        'velocityY',
-                        'velocityZ']
-        '''
 
         data_fields = [header_fields,
                        common_fields,
@@ -297,21 +181,25 @@ class Logger:
 
         self._path = path.rstrip('/')
 
-    def start(self) -> str:
+    def start(self, _converting=False) -> str:
 
         folder = self._path + '/' + datetime.now().strftime('%y%m%d_%H%M%S')
 
         Path(folder).mkdir(parents=True, exist_ok=True)
 
-        self.messages.write_message('Logging started. Path: {}'.format(folder))
+        if not _converting:
+            self.messages.write_message('Logging started. Path: {}'.format(folder))
+        else:
+            self.messages.write_message('Converting started. Path: {}'.format(folder))
 
         self.packet_file = open(folder + '/nucleus_log.csv', 'w', newline='')
         self.condition_file = open(folder + '/condition_log.csv', 'w', newline='')
         self.ascii_file = open(folder + '/ascii_log.csv', 'w', newline='')
 
-        self.connection.get_info()
+        if self.connection.get_connection_status():
+            self.connection.get_info()
 
-        if self.connection.get_all is not None:
+        if self.connection.get_all is not None and _converting is False:
             with open(folder + '/get_all.txt', 'w') as file:
                 file.writelines(self.connection.get_all)
 
