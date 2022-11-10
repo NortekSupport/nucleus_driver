@@ -34,7 +34,7 @@ driver.connect(connection_type='serial')
 ```
 
 For TCP connection the Nucleus device supports both connecting through hostname and through the device's IP address.
-The device's IP address is given by a dhcp server by default (if the device is connected to a router), or it can be given a static IP adress. 
+The device's IP address is given by a dhcp server by default (if the device is connected to a router), or it can be given a static IP address. 
 The hostname of the device will be "NORTEK-######.local" where ###### is the device's serial number, i.e. NORTEK-300001.local.
 
 ```python
@@ -45,7 +45,7 @@ driver.set_tcp_configuration(host=TCP_HOST)
 driver.connect(connection_type='tcp')
 ```
 
-Disconnecting from the device is the same ragarless of connection type
+Disconnecting from the device is the same regardless of connection type
 
 ```python
 driver.disconnect()
@@ -97,7 +97,7 @@ The packets containing measurement data is added to a packet queue,
 the packets containing ascii data (that is responses from different commands) are added to an ascii queue, 
 and failed packets (i.e. data packets that failed the CRC check) will be added to a condition queue.
 
-These packets can be obtained by reading their respecitve FIFO queues. If a queue is empty, that queue will return None
+These packets can be obtained by reading their respective FIFO queues. If a queue is empty, that queue will return None
 
 For measurement data, use read_packet()
 ```python
@@ -117,11 +117,11 @@ condition_packet = driver.read_condition()  # returns the first packet from the 
 ### Log data
 
 The different packets extracted from the parser will also be logged to file is logging is enabled.
-When logging is started the driver creates a folder named according to the current date and time, and this foleder contains 4 files:
+When logging is started the driver creates a folder named according to the current date and time, and this folder contains 4 files:
 * get_all.txt: contains the data returned by the "getall" command, this provides information about all the configuration of the device at the time of measurement
 * nucleus_log.csv: contains the data packets
 * ascii_log.csv: contains any ascii messages that has been received during logging
-* conition_log.csv: contains data that failed to be parsed successfully
+* condition_log.csv: contains data that failed to be parsed successfully
 
 Specify path for log data, if not specified the driver will create a "logs" folder in the current path
 ```python
@@ -144,10 +144,11 @@ driver.stop_logging()
 The driver supports flashing of a Nucleus device. The device use two different firmwares, one for the Nucleus, and one for the DVL. 
 New firmware from Nortek will be distributed in a zip file containing both the Nucleus and DVL firmware, ensuring that these firmwares work well together.
 
-Flash firmware unto the Nucleus device. The file can be a nucleus firmware, a dvl firmware, or a zip file containing both nucleus and dvl firmware
+Flash firmware unto the Nucleus device. The file can be a nucleus firmware, a dvl firmware, or a zip file containing both nucleus and dvl firmware. 
+It is recommended to only use the zip files provided by Nortek as it ensures that the Nucleus and DVL firmware it contains are compatible.
 ```python
 FILE_PATH = 'path/to/flash/file'  # supported file extentions are .ldr, .bin and .zip
-driver.flash_firmware()
+driver.flash_firmware(path=FILE_PATH)
 ```
 
 ### Download data from SD card
@@ -161,7 +162,7 @@ To set the path for the download files use the set_download_path function
 PATH = 'path/to/download/folder'
 driver.set_download_path(path=PATH)
 ```
-The download functions will create a folder called "download" within the specified path. If not path is specified the current folder is the path,
+The download functions will create a folder called "download" within the specified path. If no path is specified the current folder is the path.
 
 To see what files are available for download at the SD card the list files function can be used:
 
@@ -170,7 +171,7 @@ driver.list_files(src=None)
 ```
 
 Here the "src" argument is referring to which datatype that should be listed:
-* src=0 lists nuecleus measurement files
+* src=0 lists nucleus measurement files
 * src=1 lists dvl diagnostic data files
 * src=2 list getall data files. The getall data consist of the configuration of the Nucleus device at the time of measurement of the Nucleus measurement data and DVL configuration data. The FID value in this list corresponds to the FID value of the other data sets.
 
@@ -189,11 +190,11 @@ driver.download_dvl_data(fid=None, sa=None, length=None)
 
 The getall data corresponding with the specified file will also be downloaded as part of these downloads.
 
-In both the Nucleus measuement data and DVL diagnostics data download the arguments "fid", "sa" and "length" are used.
+In both the Nucleus measurement data and DVL diagnostics data download the arguments "fid", "sa" and "length" are used.
 "fid" is the id of the file to be downloaded.
 "sa" is the start byte in the file from where you want to download data, with a minimum value of 1.
 "length" is the length in bytes from "sa" of data you wish to download.
-All of these arguments are optional, omitting "fid" results in download ing the latest file, 
+All of these arguments are optional, omitting "fid" results in downloading the latest file, 
 omitting "sa" results in downloading from the start of the file,
 and omitting "length" results in download until the end of the file.
 
@@ -208,13 +209,13 @@ driver.convert_nucleus_data(path=PATH)
 
 Any asserts occurring during operation will be stored on the Nucleus device. For debugging purposes these asserts can be downloaded and sent to Nortek during support tasks.
 
-to set the path for assert download
+To set the path for assert download
 ```python
 PATH = 'path/to/asserts/folder'
 driver.set_assert_path(path=PATH)
 ```
 
-the driver will create an assert folder within the specified path for the download. If no path is specified the current path is used.
+The driver will create an assert folder within the specified path for the download. If no path is specified the current path is used.
 
 To download the data use the assert_download function
 
@@ -255,7 +256,7 @@ driver.clear_syslog()
 
 ## Running driver as shell script
 
-The driver also comes with a console script that supports writing commands to the device, logging data and flashing of the device. 
+The driver also comes with a console script that supports most of the functionality of the driver. 
 To run the console script, execute the command
 
 ```shell
