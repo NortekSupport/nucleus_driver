@@ -271,6 +271,15 @@ class Parser:
             self.messages.write_exception('packet is not bytearray. Extraction aborted')
             return header_checksum, data_checksum, packet
 
+        def _get_status(status_bits, bit):
+
+            status = False
+
+            if (status_bits >> bit) & 0x01 == 1:
+                status = True
+
+            return status
+
         def check_header_size():
 
             status = False
@@ -303,23 +312,17 @@ class Parser:
 
         def get_common_data():
 
+            status = unpack('<B', data[2:3])[0]
+
             common = {'version': unpack('<B', data[0:1])[0],
                       'offsetOfData': unpack('<B', data[1:2])[0],
+                      'flags.posixTime': _get_status(status_bits=status, bit=0),
                       'timeStamp': unpack('<I', data[4:8])[0],
                       'microSeconds': unpack('<I', data[8:12])[0]}
 
             return common
 
         def get_sensor_data():
-
-            def get_status(status_bits, bit):
-
-                status = False
-
-                if (status_bits >> bit) & 0x01 == 1:
-                    status = True
-
-                return status
 
             sensor = None
 
@@ -428,16 +431,16 @@ class Parser:
                 if header_data['id'] == self.ID_IMU:
                     imu_status = unpack('<I', data[12:16])[0]
 
-                    sensor = {'status.isValid': get_status(status_bits=imu_status, bit=0),
-                              'status.hasDataPathOverrun': get_status(status_bits=imu_status, bit=17),
-                              'status.hasFlashUpdateFailure': get_status(status_bits=imu_status, bit=18),
-                              'status.hasSpiComError': get_status(status_bits=imu_status, bit=19),
-                              'status.hasLowVoltage': get_status(status_bits=imu_status, bit=20),
-                              'status.hasSensorFailure': get_status(status_bits=imu_status, bit=21),
-                              'status.hasMemoryFailure': get_status(status_bits=imu_status, bit=22),
-                              'status.hasGyro1Failure': get_status(status_bits=imu_status, bit=23),
-                              'status.hasGyro2Failure': get_status(status_bits=imu_status, bit=24),
-                              'status.hasAccelerometerFailure': get_status(status_bits=imu_status, bit=25),
+                    sensor = {'status.isValid': _get_status(status_bits=imu_status, bit=0),
+                              'status.hasDataPathOverrun': _get_status(status_bits=imu_status, bit=17),
+                              'status.hasFlashUpdateFailure': _get_status(status_bits=imu_status, bit=18),
+                              'status.hasSpiComError': _get_status(status_bits=imu_status, bit=19),
+                              'status.hasLowVoltage': _get_status(status_bits=imu_status, bit=20),
+                              'status.hasSensorFailure': _get_status(status_bits=imu_status, bit=21),
+                              'status.hasMemoryFailure': _get_status(status_bits=imu_status, bit=22),
+                              'status.hasGyro1Failure': _get_status(status_bits=imu_status, bit=23),
+                              'status.hasGyro2Failure': _get_status(status_bits=imu_status, bit=24),
+                              'status.hasAccelerometerFailure': _get_status(status_bits=imu_status, bit=25),
                               'accelerometer.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
                               'accelerometer.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
                               'accelerometer.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
@@ -450,10 +453,10 @@ class Parser:
                 if header_data['id'] == self.ID_MAGNETOMETER:
                     mag_status = unpack('<I', data[12:16])[0]
 
-                    sensor = {'status.isCompensatedForHardIron': get_status(status_bits=mag_status, bit=0),
-                              'status.dvlActive': get_status(status_bits=mag_status, bit=29),
-                              'status.dvlAcousticsActive': get_status(status_bits=mag_status, bit=30),
-                              'status.dvlTransmitterActive': get_status(status_bits=mag_status, bit=31),
+                    sensor = {'status.isCompensatedForHardIron': _get_status(status_bits=mag_status, bit=0),
+                              'status.dvlActive': _get_status(status_bits=mag_status, bit=29),
+                              'status.dvlAcousticsActive': _get_status(status_bits=mag_status, bit=30),
+                              'status.dvlTransmitterActive': _get_status(status_bits=mag_status, bit=31),
                               'magnetometer.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
                               'magnetometer.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
                               'magnetometer.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0]
@@ -462,21 +465,21 @@ class Parser:
                 if header_data['id'] in (self.ID_BOTTOMTRACK, self.ID_WATERTRACK):
                     status = unpack('<I', data[12:16])[0]
 
-                    sensor = {'status.beam1VelocityValid': get_status(status_bits=status, bit=0),
-                              'status.beam2VelocityValid': get_status(status_bits=status, bit=1),
-                              'status.beam3VelocityValid': get_status(status_bits=status, bit=2),
-                              'status.beam1DistanceValid': get_status(status_bits=status, bit=3),
-                              'status.beam2DistanceValid': get_status(status_bits=status, bit=4),
-                              'status.beam3DistanceValid': get_status(status_bits=status, bit=5),
-                              'status.beam1FomValid': get_status(status_bits=status, bit=6),
-                              'status.beam2FomValid': get_status(status_bits=status, bit=7),
-                              'status.beam3FomValid': get_status(status_bits=status, bit=8),
-                              'status.xVelocityValid': get_status(status_bits=status, bit=9),
-                              'status.yVelocityValid': get_status(status_bits=status, bit=10),
-                              'status.zVelocityValid': get_status(status_bits=status, bit=11),
-                              'status.xFomValid': get_status(status_bits=status, bit=12),
-                              'status.yFomValid': get_status(status_bits=status, bit=13),
-                              'status.zFomValid': get_status(status_bits=status, bit=14),
+                    sensor = {'status.beam1VelocityValid': _get_status(status_bits=status, bit=0),
+                              'status.beam2VelocityValid': _get_status(status_bits=status, bit=1),
+                              'status.beam3VelocityValid': _get_status(status_bits=status, bit=2),
+                              'status.beam1DistanceValid': _get_status(status_bits=status, bit=3),
+                              'status.beam2DistanceValid': _get_status(status_bits=status, bit=4),
+                              'status.beam3DistanceValid': _get_status(status_bits=status, bit=5),
+                              'status.beam1FomValid': _get_status(status_bits=status, bit=6),
+                              'status.beam2FomValid': _get_status(status_bits=status, bit=7),
+                              'status.beam3FomValid': _get_status(status_bits=status, bit=8),
+                              'status.xVelocityValid': _get_status(status_bits=status, bit=9),
+                              'status.yVelocityValid': _get_status(status_bits=status, bit=10),
+                              'status.zVelocityValid': _get_status(status_bits=status, bit=11),
+                              'status.xFomValid': _get_status(status_bits=status, bit=12),
+                              'status.yFomValid': _get_status(status_bits=status, bit=13),
+                              'status.zFomValid': _get_status(status_bits=status, bit=14),
                               'serialNumber': unpack('<I', data[16:20])[0],
                               'soundSpeed': unpack('<f', data[24:28])[0],
                               'temperature': unpack('<f', data[28:32])[0],
@@ -509,10 +512,10 @@ class Parser:
                 if header_data['id'] == self.ID_ALTIMETER:
                     status = unpack('<I', data[12:16])[0]
 
-                    sensor = {'status.altimeterDistanceValid': get_status(status_bits=status, bit=0),
-                              'status.altimeterQualityValid': get_status(status_bits=status, bit=1),
-                              'status.pressureValid': get_status(status_bits=status, bit=16),
-                              'status.temperatureValid': get_status(status_bits=status, bit=17),
+                    sensor = {'status.altimeterDistanceValid': _get_status(status_bits=status, bit=0),
+                              'status.altimeterQualityValid': _get_status(status_bits=status, bit=1),
+                              'status.pressureValid': _get_status(status_bits=status, bit=16),
+                              'status.temperatureValid': _get_status(status_bits=status, bit=17),
                               'serialNumber': unpack('<I', data[16:20])[0],
                               'soundSpeed': unpack('<f', data[24:28])[0],
                               'temperature': unpack('<f', data[28:32])[0],
@@ -559,7 +562,7 @@ class Parser:
                 if header_data['id'] == self.ID_FIELD_CALIBRATION:
                     status = unpack('<I', data[12:16])[0]
 
-                    sensor = {'status.pointsUsedInEstimation': get_status(status_bits=status, bit=0),
+                    sensor = {'status.pointsUsedInEstimation': _get_status(status_bits=status, bit=0),
                               'hardIron.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
                               'hardIron.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
                               'hardIron.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],

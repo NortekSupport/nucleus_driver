@@ -36,7 +36,7 @@ class Logger:
 
         header_fields = ['sizeHeader', 'id', 'family', 'sizeData', 'size', 'dataCheckSum', 'headerCheckSum']
 
-        common_fields = ['version', 'offsetOfData', 'timeStamp', 'microSeconds']
+        common_fields = ['version', 'offsetOfData', 'flags.posixTime', 'timeStamp', 'microSeconds']
 
         driver_fields = ['timestampPython']
 

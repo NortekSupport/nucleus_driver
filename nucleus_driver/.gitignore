@@ -2,6 +2,8 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
 ### Python ###
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -24,6 +26,7 @@ parts/
 sdist/
 var/
 wheels/
+logs/
 share/python-wheels/
 *.egg-info/
 .installed.cfg

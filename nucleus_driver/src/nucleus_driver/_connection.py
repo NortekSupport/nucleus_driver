@@ -260,9 +260,21 @@ class Connection:
             self._connected = _connect_tcp()
 
         if self.get_connection_status() and self.commands is not None and get_device_info:
+            if not self.set_clockstring():
+                self.messages.write_warning('Failed to set current time on Nucleus device')
             self.get_info()
 
         return self.get_connection_status()
+
+    def set_clockstring(self):
+
+        clockstring = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+        status = False
+        if b'OK\r\n' in self.commands.set_clockstring(clockstring=clockstring):
+            status = True
+
+        return status
 
     def get_info(self):
 
