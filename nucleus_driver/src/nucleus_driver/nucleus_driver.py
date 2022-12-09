@@ -190,13 +190,13 @@ class NucleusDriver:
 
         return self.asserts.clear_assert()
 
-    def assert_download(self):
+    def assert_download(self, path: str=None):
 
         self.asserts.read_assert()
 
         status = False
         if len(self.asserts.assert_encrypted) > 1:
-            self.asserts.write_encrypted_assert_to_file()
+            self.asserts.write_encrypted_assert_to_file(path=path)
             status = True
 
         return status
@@ -213,13 +213,13 @@ class NucleusDriver:
 
         return self.syslog.clear_syslog()
 
-    def syslog_download(self):
+    def syslog_download(self, path: str=None):
 
         self.syslog.read_syslog()
 
         status = False
         if len(self.syslog.syslog_encrypted) > 1:
-            self.syslog.write_encrypted_syslog_to_file()
+            self.syslog.write_encrypted_syslog_to_file(path=path)
             status = True
 
         return status
@@ -232,13 +232,13 @@ class NucleusDriver:
 
         return self.download.set_path(path=path)
 
-    def download_dvl_data(self, fid=None, sa=None, length=None):
+    def download_dvl_data(self, fid=None, sa=None, length=None, path=None):
 
-        return self.download.download_dvl_data(fid=fid, sa=sa, length=length)
+        return self.download.download_dvl_data(fid=fid, sa=sa, length=length, path=path)
 
-    def download_nucleus_data(self, fid=None, sa=None, length=None):
+    def download_nucleus_data(self, fid=None, sa=None, length=None, path=None):
 
-        return self.download.download_nucleus_data(fid=fid, sa=sa, length=length)
+        return self.download.download_nucleus_data(fid=fid, sa=sa, length=length, path=path)
 
     def convert_nucleus_data(self, path):
 

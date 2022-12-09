@@ -3,7 +3,16 @@ from datetime import datetime
 
 
 class Commands:
+
     DHCP_STATIC = ['DHCP', 'STATIC']
+    ON_OFF = ['ON', 'OFF']
+    MODES = ['NORMAL', 'AUTO']
+    PL_MODES = ['MAX', 'USER']
+    TRIGGER_SOURCES = ['INTERNAL', 'EXTRISE', 'EXTFALL', 'EXTEDGES', 'COMMAND']
+    ALTI_RANGE = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    CP_RANGE = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    MAG_METHODS = ['AUTO', 'OFF', 'WMM']
+
     ADDRESS_PATTERN = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
 
     def __init__(self, **kwargs):
@@ -172,7 +181,6 @@ class Commands:
 
         return get_reply
 
-    # TODO: in default driver?
     def _fw_update(self, timeout=38) -> [bytes]:
 
         self._reset_buffer()
@@ -185,8 +193,6 @@ class Commands:
         if b'ACK\r\n' not in get_ack_reply:
             return get_ack_reply
 
-        # The following timeout is defined based on the maximum time each of the following operations may take.
-        # The timeouts are given by the following calculations: https://dev.azure.com/NortekGroup/9f822050-97e3-47d7-9697-3773608ceeff/_apis/git/repositories/4dea5944-f474-4ef9-b642-a82f0e306b66/items?path=/doc/flash.ods&versionDescriptor%5BversionOptions%5D=0&versionDescriptor%5BversionType%5D=0&versionDescriptor%5Bversion%5D=master&resolveLfs=true&%24format=octetStream&api-version=5.0&download=true
         get_ok_reply = self._handle_reply(command=command, terminator=b'OK\r\n', timeout=timeout)
 
         get_reply = list()
@@ -195,7 +201,6 @@ class Commands:
 
         return get_reply
 
-    # TODO: in default driver?
     def _fw_confirm(self):
 
         self._reset_buffer()
@@ -208,7 +213,6 @@ class Commands:
 
         return get_reply
 
-    # TODO: in default driver?
     def _dvl_update(self) -> [bytes]:
 
         self._reset_buffer()
@@ -220,7 +224,6 @@ class Commands:
 
         return get_reply
 
-    # TODO: in default driver?
     def _upload(self, package) -> [bytes]:
 
         self._reset_buffer()
@@ -563,15 +566,11 @@ class Commands:
 
         return get_reply
 
-    def set_inst(self, type=None, rotxy=None, rotyz=None, rotxz=None) -> [bytes]:
+    def set_inst(self, rotxy=None, rotyz=None, rotxz=None, led=None) -> [bytes]:
 
         self._reset_buffer()
 
         set_inst_command = b'SETINST'
-
-        if type is not None:
-            # TODO: Implement the type parameter
-            pass
 
         if rotxy is not None:
             if isinstance(rotxy, float) or isinstance(rotxy, int):
@@ -590,6 +589,12 @@ class Commands:
                 set_inst_command += b',ROTXZ=' + str(rotxz).encode()
             else:
                 self.messages.write_warning('Invalid value for ROTXZ in SETINST command')
+
+        if led is not None:
+            if led.upper() in self.ON_OFF:
+                set_inst_command += b',LED="' + led.upper().encode() + b'"'
+            else:
+                self.messages.write_warning('Invalid value for LED in SETINST command')
 
         set_inst_command += b'\r\n'
 
@@ -1544,7 +1549,7 @@ class Commands:
 
         return get_reply
 
-    def get_id(self, sn=False, str=False) -> [bytes]:
+    def get_id(self, sn=False, str=False, _timeout = 1) -> [bytes]:
 
         self._reset_buffer()
 
@@ -1560,7 +1565,7 @@ class Commands:
 
         self.connection.write(command)
 
-        get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+        get_reply = self._handle_reply(command=command, terminator=b'OK\r\n', timeout=_timeout)
 
         return get_reply
 
@@ -1632,9 +1637,6 @@ class Commands:
             nmea_checksum = self._nmea_checksum(command)
             command += b'*'
             command += nmea_checksum
-
-        #if _nmea is True:
-        #    command = _append_nmea()
 
         command += b'\r\n'
 

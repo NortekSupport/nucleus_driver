@@ -49,8 +49,6 @@ class App(cmd2.Cmd):
 
         def serial_configuration() -> bool:
 
-            #if args.connection_serial_port is None:
-
             port = self.nucleus_driver.connection.select_serial_port()
 
             if port is None:
@@ -61,8 +59,6 @@ class App(cmd2.Cmd):
             return True
 
         def tcp_configuration() -> bool:
-
-            #if args.connection_tcp_host is None:
 
             self.nucleus_driver.messages.write_message('\nConnect through TCP with host(hostname/ip) or serial number: ')
             self.nucleus_driver.messages.write_message('[0] Host')
@@ -104,12 +100,16 @@ class App(cmd2.Cmd):
         elif connect_args.connection_type == 'tcp':
             config_status = tcp_configuration()
 
-        if config_status:
-            status = self.nucleus_driver.connect(connection_type=connect_args.connection_type)
-        else:
-            status = False
+        if not config_status:
+            self.nucleus_driver.messages.write_warning('Failed to set connection configuration')
+            return
 
-        print('Connection status: {}'.format(status))
+        if self.nucleus_driver.connect(connection_type=connect_args.connection_type):
+            self.nucleus_driver.messages.write_message('\r\nSuccessfully connected to Nucleus device\r\n')
+            self.nucleus_driver.messages.write_message('ID:    {}'.format(self.nucleus_driver.connection.nucleus_id))
+            self.nucleus_driver.messages.write_message('GETFW: {}\r\n'.format(self.nucleus_driver.connection.firmware_version))
+        else:
+            self.nucleus_driver.messages.write_warning('\r\nFailed to connect to Nucleus device\r\n')
 
     disconnect_parser = Cmd2ArgumentParser(description='Disconnect from the nucleus device')
 
@@ -117,31 +117,57 @@ class App(cmd2.Cmd):
     @with_category(CMD_CAT_CONNECTING)
     def do_disconnect(self, _):
 
-        status = self.nucleus_driver.disconnect()
-        print('Connection status: {}'.format(not status))
+        if not self.nucleus_driver.connection.get_connection_status():
+            self.nucleus_driver.messages.write_message('No device connected')
+            return
+
+        if self.nucleus_driver.disconnect():
+            self.nucleus_driver.messages.write_message('Disconnected from Nucleus device')
+        else:
+            self.nucleus_driver.messages.write_warning('Failed to disconnect from Nucleus Device')
 
     start_measurement_parser = Cmd2ArgumentParser(description='Start measurement')
+    start_measurement_parser.add_argument('-p', '--path', help='Set path for log files', completer=cmd2.Cmd.path_complete)
 
     @with_argparser(start_measurement_parser)
     @with_category(CMD_CAT_LOGGING)
-    def do_start(self, _):
+    def do_start(self, start_measurement_args):
+
+        path = start_measurement_args.path
 
         if not self.nucleus_driver.connection.get_connection_status():
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
+
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Logging thread is already running')
+            return
+
+        if path is not None:
+            self.nucleus_driver.set_log_path(path=path)
 
         self.nucleus_driver.start_logging()
         self.nucleus_driver.start_measurement()
 
     start_field_calibration_parser = Cmd2ArgumentParser(description='Start field calibration')
+    start_field_calibration_parser.add_argument('-p', '--path', help='Set path for log files', completer=cmd2.Cmd.path_complete)
 
     @with_argparser(start_field_calibration_parser)
     @with_category(CMD_CAT_LOGGING)
-    def do_fieldcal(self, _):
+    def do_fieldcal(self, start_field_calibration_args):
+
+        path = start_field_calibration_args.path
 
         if not self.nucleus_driver.connection.get_connection_status():
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
+
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Logging thread is already running')
+            return
+
+        if path is not None:
+            self.nucleus_driver.set_log_path(path=path)
 
         self.nucleus_driver.start_logging()
         self.nucleus_driver.start_fieldcal()
@@ -159,26 +185,20 @@ class App(cmd2.Cmd):
         self.nucleus_driver.stop_logging()
         self.nucleus_driver.stop()
 
-    set_log_path_parser = Cmd2ArgumentParser(description='Set path for log files')
-    set_log_path_parser.add_argument('path', help='Set path for log files', completer=cmd2.Cmd.path_complete)
-
-    @with_argparser(set_log_path_parser)
-    @with_category(CMD_CAT_LOGGING)
-    def do_set_log_path(self, set_log_path_args):
-
-        path = set_log_path_args.path
-
-        if not os.access(path, os.W_OK):
-            self.nucleus_driver.messages.write_warning('You do not have writing access to specified path')
-        else:
-            self.nucleus_driver.set_log_path(path=path)
-
     command_parser = Cmd2ArgumentParser(description='Send command to nucleus')
     command_parser.add_argument('command', help='send command to nucleus device and print response')
 
     @with_argparser(command_parser)
     @with_category(CMD_CAT_COMMAND)
     def do_command(self, command_args):
+
+        if not self.nucleus_driver.connection.get_connection_status():
+            self.nucleus_driver.messages.write_message('Nucleus not connected')
+            return
+
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Can not send command to Nucleus while logging thread is running')
+            return
 
         command = command_args.command
 
@@ -195,6 +215,14 @@ class App(cmd2.Cmd):
     @with_category(CMD_CAT_FLASH)
     def do_flash_firmware(self, set_flash_path_args):
 
+        if not self.nucleus_driver.connection.get_connection_status():
+            self.nucleus_driver.messages.write_message('Nucleus not connected')
+            return
+
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Can not flash Nucleus while logging thread is running')
+            return
+
         path = set_flash_path_args.path
 
         if not self.nucleus_driver.connection.get_connection_status():
@@ -207,30 +235,24 @@ class App(cmd2.Cmd):
     # Assert
     ###########################################
 
-    set_assert_path_parser = Cmd2ArgumentParser(description='Assert path')
-    set_assert_path_parser.add_argument('path', help='Set path for assert file download', completer=cmd2.Cmd.path_complete)
-
-    @with_argparser(set_assert_path_parser)
-    @with_category(CMD_CAT_ASSERT)
-    def do_assert_set_path(self, set_assert_path_args):
-
-        path = set_assert_path_args.path
-
-        new_path = self.nucleus_driver.set_assert_path(path=path)
-
-        self.nucleus_driver.messages.write_message('Assert path is set to: {}'.format(new_path))
-
     download_asserts_parser = Cmd2ArgumentParser(description='Download asserts')
+    download_asserts_parser.add_argument('-p', '--path', help='Set path for assert file download', completer=cmd2.Cmd.path_complete)
 
     @with_argparser(download_asserts_parser)
     @with_category(CMD_CAT_ASSERT)
-    def do_assert_download(self, _):
+    def do_assert_download(self, download_asserts_args):
+
+        path = download_asserts_args.path
 
         if not self.nucleus_driver.connection.get_connection_status():
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
-        if not self.nucleus_driver.assert_download():
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Can not download asserts while logging thread is running')
+            return
+
+        if not self.nucleus_driver.assert_download(path=path):
             self.nucleus_driver.messages.write_warning('Did not receive any asserts from Nucleus')
 
     clear_asserts_parser = Cmd2ArgumentParser(description='Clear asserts from Nucleus device')
@@ -243,39 +265,37 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
-        response = self.nucleus_driver.clear_assert()
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Can not clear asserts while logging thread is running')
+            return
 
-        for message in response:
-            self.nucleus_driver.messages.write_message(message)
+        if b'OK\r\n' in self.nucleus_driver.clear_assert():
+            self.nucleus_driver.messages.write_message('Successfully cleared asserts')
+        else:
+            self.nucleus_driver.messages.write_warning('Clear assert did not reply with OK: {}'.format(response))
 
     ##########################################
     # Syslog
     ###########################################
 
-    set_syslog_path_parser = Cmd2ArgumentParser(description='Syslog path')
-    set_syslog_path_parser.add_argument('path', help='Set path for syslog file download', completer=cmd2.Cmd.path_complete)
-
-    @with_argparser(set_syslog_path_parser)
-    @with_category(CMD_CAT_SYSLOG)
-    def do_syslog_set_path(self, set_syslog_path_args):
-
-        path = set_syslog_path_args.path
-
-        new_path = self.nucleus_driver.set_syslog_path(path=path)
-
-        self.nucleus_driver.messages.write_message('Syslog path is set to: {}'.format(new_path))
-
     download_syslog_parser = Cmd2ArgumentParser(description='Download syslog')
+    download_syslog_parser.add_argument('-p', '--path', help='Set path for syslog file download', completer=cmd2.Cmd.path_complete)
 
     @with_argparser(download_syslog_parser)
     @with_category(CMD_CAT_SYSLOG)
-    def do_syslog_download(self, _):
+    def do_syslog_download(self, download_syslog_args):
+
+        path = download_syslog_args.path
 
         if not self.nucleus_driver.connection.get_connection_status():
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
-        if not self.nucleus_driver.syslog_download():
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Can not download syslog while logging thread is running')
+            return
+
+        if not self.nucleus_driver.syslog_download(path=path):
             self.nucleus_driver.messages.write_warning('Did not receive any syslog entries from Nucleus')
 
     clear_syslog_parser = Cmd2ArgumentParser(description='Clear syslog from Nucleus device')
@@ -288,6 +308,10 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Can not clear syslog while logging thread is running')
+            return
+
         response = self.nucleus_driver.clear_syslog()
 
         for message in response:
@@ -297,23 +321,11 @@ class App(cmd2.Cmd):
     # Download
     ###########################################
 
-    set_download_path_parser = Cmd2ArgumentParser(description='Set download path')
-    set_download_path_parser.add_argument('path', help='Select path for download files', completer=cmd2.Cmd.path_complete)
-
-    @with_argparser(set_download_path_parser)
-    @with_category(CMD_CAT_DOWNLOAD)
-    def do_set_download_path(self, set_download_path_args):
-
-        path = set_download_path_args.path
-
-        new_path = self.nucleus_driver.set_download_path(path=path)
-
-        self.nucleus_driver.messages.write_message('Download path is set to: {}'.format(new_path))
-
     download_dvl_parser = Cmd2ArgumentParser(description='Download dvl diagnostics data')
-    download_dvl_parser.add_argument('-fid', help='id of file to download')
-    download_dvl_parser.add_argument('-sa', help='start byte address of file to download')
-    download_dvl_parser.add_argument('-length', help='length of bytes in file to download')
+    download_dvl_parser.add_argument('-f', '--fid', help='id of file to download')
+    download_dvl_parser.add_argument('-s', '--sa', help='start byte address of file to download')
+    download_dvl_parser.add_argument('-l', '--length', help='length of bytes in file to download')
+    download_dvl_parser.add_argument('-p', '--path', help='path for file to be downloaded', completer=cmd2.Cmd.path_complete)
 
     @with_argparser(download_dvl_parser)
     @with_category(CMD_CAT_DOWNLOAD)
@@ -322,9 +334,14 @@ class App(cmd2.Cmd):
         fid = download_dvl_args.fid
         sa = download_dvl_args.sa
         length = download_dvl_args.length
+        path = download_dvl_args.path
 
         if not self.nucleus_driver.connection.get_connection_status():
             self.nucleus_driver.messages.write_message('Nucleus not connected')
+            return
+
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Can not download DVL diagnostics data while logging thread is running')
             return
 
         if fid is not None:
@@ -336,7 +353,7 @@ class App(cmd2.Cmd):
         if length is not None:
             length = int(length)
 
-        status = self.nucleus_driver.download_dvl_data(fid=fid, sa=sa, length=length)
+        status = self.nucleus_driver.download_dvl_data(fid=fid, sa=sa, length=length, path=path)
 
         if status:
             self.nucleus_driver.messages.write_message('Successfully downloaded data')
@@ -344,9 +361,10 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_warning('Failed to completely download data')
 
     download_nucleus_parser = Cmd2ArgumentParser(description='Download nucleus data')
-    download_nucleus_parser.add_argument('-fid', help='id of file to download')
-    download_nucleus_parser.add_argument('-sa', help='start byte address of file to download')
-    download_nucleus_parser.add_argument('-length', help='length of bytes in file to download')
+    download_nucleus_parser.add_argument('-f', '--fid', help='id of file to download')
+    download_nucleus_parser.add_argument('-s', '--sa', help='start byte address of file to download')
+    download_nucleus_parser.add_argument('-l', '--length', help='length of bytes in file to download')
+    download_nucleus_parser.add_argument('-p', '--path', help='path for file to be downloaded', completer=cmd2.Cmd.path_complete)
 
     @with_argparser(download_nucleus_parser)
     @with_category(CMD_CAT_DOWNLOAD)
@@ -355,9 +373,14 @@ class App(cmd2.Cmd):
         fid = download_nucleus_args.fid
         sa = download_nucleus_args.sa
         length = download_nucleus_args.length
+        path = download_nucleus_args.path
 
         if not self.nucleus_driver.connection.get_connection_status():
             self.nucleus_driver.messages.write_message('Nucleus not connected')
+            return
+
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Can not download Nucleus data while logging thread is running')
             return
 
         if fid is not None:
@@ -369,7 +392,7 @@ class App(cmd2.Cmd):
         if length is not None:
             length = int(length)
 
-        status = self.nucleus_driver.download_nucleus_data(fid=fid, sa=sa, length=length)
+        status = self.nucleus_driver.download_nucleus_data(fid=fid, sa=sa, length=length, path=path)
 
         if status:
             self.nucleus_driver.messages.write_message('Successfully downloaded data')
@@ -384,6 +407,10 @@ class App(cmd2.Cmd):
     def do_convert_nucleus_data(self, convert_nucleus_data_args):
 
         path = convert_nucleus_data_args.path
+
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Can not convert Nucleus data while logging thread is running')
+            return
 
         status = self.nucleus_driver.convert_nucleus_data(path=path)
 
@@ -403,6 +430,10 @@ class App(cmd2.Cmd):
 
         if not self.nucleus_driver.connection.get_connection_status():
             self.nucleus_driver.messages.write_message('Nucleus not connected')
+            return
+
+        if self.nucleus_driver.parser.thread.is_alive():
+            self.nucleus_driver.messages.write_message('Can not get file list while logging thread is running')
             return
 
         src = None

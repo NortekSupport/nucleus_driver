@@ -26,10 +26,6 @@ class Parser:
 
     MAX_PACKAGE_LENGTH = 7000
 
-    # MAX_PACKAGE_LENGTH is given by the following firmware scripts:
-    # https://dev.azure.com/NortekGroup/INS/_git/Firmware?path=/src/ofmt.c&version=GBmaster&line=28&lineEnd=29&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
-    # https://dev.azure.com/NortekGroup/INS/_git/Firmware?path=/lib/sensor_fusion/src/uns_types.h&version=GBmaster&line=10&lineEnd=11&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
-
     def __init__(self, **kwargs):
 
         self.messages = kwargs.get('messages')

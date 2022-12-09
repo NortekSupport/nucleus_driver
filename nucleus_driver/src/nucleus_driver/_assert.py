@@ -53,15 +53,21 @@ class Assert:
         self.assert_encrypted = b''
         return self.commands.clear_assert()
 
-    def write_encrypted_assert_to_file(self):
+    def write_encrypted_assert_to_file(self, path=None):
 
         if len(self.assert_encrypted) < 1:
             self.messages.write_message('assert encrypted is empty')
             return
 
-        file_path = self._path + '/' + datetime.now().strftime('%y%m%d_%H%M%S') + '_assert_encrypted.txt'
+        if path is None:
+            path = self._path
 
-        os.makedirs(self._path, exist_ok=True)
+        if path.endswith('.txt'):
+            Path(path).parent.mkdir(parents=True, exist_ok=True)
+            file_path = path
+        else:
+            Path(path).mkdir(parents=True, exist_ok=True)
+            file_path = '{}/{}_assert_encrypted.txt'.format(path.rstrip('/'), datetime.now().strftime('%y%m%d_%H%M%S'))
 
         with open(file_path, 'wb') as file:
             file.write(self.assert_encrypted)

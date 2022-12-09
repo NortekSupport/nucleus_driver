@@ -65,15 +65,21 @@ class Syslog:
         self.syslog_encrypted = b''
         return self.commands.clear_syslog()
 
-    def write_encrypted_syslog_to_file(self):
+    def write_encrypted_syslog_to_file(self, path=None):
 
         if len(self.syslog_encrypted) < 1:
-            self.messages.write_message('Decoded syslog is empty')
+            self.messages.write_message('Encrypted syslog is empty')
             return
 
-        file_path = self._path + '/' + datetime.now().strftime('%y%m%d_%H%M%S') + '_syslog_encrypted.txt'
+        if path is None:
+            path = self._path
 
-        os.makedirs(self._path, exist_ok=True)
+        if path.endswith('.txt'):
+            Path(path).parent.mkdir(parents=True, exist_ok=True)
+            file_path = path
+        else:
+            Path(path).mkdir(parents=True, exist_ok=True)
+            file_path = '{}/{}_syslog_encrypted.txt'.format(path.rstrip('/'), datetime.now().strftime('%y%m%d_%H%M%S'))
 
         with open(file_path, 'wb') as file:
             file.write(self.syslog_encrypted)

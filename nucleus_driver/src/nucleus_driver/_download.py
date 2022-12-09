@@ -355,7 +355,7 @@ class Download:
 
         return get_all_nucleus, get_all_dvl
 
-    def download_dvl_data(self, fid=None, sa=None, length=None) -> bool:
+    def download_dvl_data(self, fid=None, sa=None, length=None, path=None) -> bool:
 
         def _check_arguments():
 
@@ -458,9 +458,14 @@ class Download:
             self.dvl_download_statistics['failed bytes'] = 0
             percentage_previous = -1
 
-            file_path = self._path + '/dvl/' + datetime.now().strftime('%y%m%d_%H%M%S')
-            self.messages.write_message('Downloading data to: {}'.format(file_path))
+            if path is None:
+                path = self._path
+
+            file_path = path.rstrip('/') + '/dvl/' + datetime.now().strftime('%y%m%d_%H%M%S')
             Path(file_path).mkdir(parents=True, exist_ok=True)
+
+            self.messages.write_message('Downloading data to: {}'.format(file_path))
+
             with open(file_path + '/dvl_data.bin', 'wb') as file, open(file_path + '/dvl_crc_fails.bin', 'wb') as fail_file:
 
                 file.write(get_all)
@@ -490,7 +495,7 @@ class Download:
 
         return status
 
-    def download_nucleus_data(self, fid=None, sa=None, length=None) -> bool:
+    def download_nucleus_data(self, fid=None, sa=None, length=None, path=None) -> bool:
 
         def _check_arguments():
 
@@ -552,9 +557,13 @@ class Download:
 
         if status:
 
-            file_path = self._path + '/nucleus/' + datetime.now().strftime('%y%m%d_%H%M%S')
-            self.messages.write_message('Downloading data to: {}'.format(file_path))
+            if path is None:
+                path = self._path
+
+            file_path = path.rstrip('/') + '/nucleus/' + datetime.now().strftime('%y%m%d_%H%M%S')
             Path(file_path).mkdir(parents=True, exist_ok=True)
+
+            self.messages.write_message('Downloading data to: {}'.format(file_path))
 
             with open(file_path + '/get_all.txt', 'w') as file:
                 file.writelines(get_all.decode())
