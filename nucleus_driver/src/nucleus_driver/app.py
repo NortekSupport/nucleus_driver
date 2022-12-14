@@ -453,6 +453,7 @@ class App(cmd2.Cmd):
 def nucleus_driver_console():
 
     nucleus_driver = NucleusDriver()
+    nucleus_driver.parser.set_queuing(packet=False, ascii=False, condition=False)
 
     app = App(nucleus_driver=nucleus_driver)
 

@@ -139,23 +139,29 @@ class NucleusDriver:
 
         self.logger.get_cp_nc()
         self.parser.start()
-        self.commands._start()
+        response = self.commands._start()
+
+        return response
 
     def start_fieldcal(self):
 
         self.parser.start()
-        self.commands._fieldcal()
+        response = self.commands._fieldcal()
 
         self.logging_fieldcal = True
+
+        return response
 
     def stop(self):
 
         self.parser.stop()
         if self.logging_fieldcal:
             time.sleep(0.5)
-        self.commands._stop()
+        response = self.commands._stop(timeout=3)
 
         self.logging_fieldcal = False
+
+        return response
 
     ###########################################
     # Flash

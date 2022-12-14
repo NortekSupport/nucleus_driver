@@ -1,5 +1,6 @@
 from queue import Queue, Empty
 from struct import unpack
+from struct import error as struct_error
 from itertools import zip_longest
 from threading import Thread
 from datetime import datetime
@@ -296,25 +297,49 @@ class Parser:
 
         def get_header_data():
 
-            header = {'sizeHeader': unpack('<B', binary_packet[1:2])[0],
-                      'id': unpack('<B', binary_packet[2:3])[0],
-                      'family': unpack('<B', binary_packet[3:4])[0],
-                      'sizeData': unpack('<H', binary_packet[4:6])[0],
-                      'size': unpack('<B', binary_packet[1:2])[0] + unpack('<H', binary_packet[4:6])[0],
-                      'dataCheckSum': unpack('<H', binary_packet[6:8])[0],
-                      'headerCheckSum': unpack('<H', binary_packet[8:10])[0]}
+            header = {'sizeHeader': None,
+                      'id': None,
+                      'family': None,
+                      'sizeData': None,
+                      'size': None,
+                      'dataCheckSum': None,
+                      'headerCheckSum': None}
+
+            try:
+                header = {'sizeHeader': unpack('<B', binary_packet[1:2])[0],
+                          'id': unpack('<B', binary_packet[2:3])[0],
+                          'family': unpack('<B', binary_packet[3:4])[0],
+                          'sizeData': unpack('<H', binary_packet[4:6])[0],
+                          'size': unpack('<B', binary_packet[1:2])[0] + unpack('<H', binary_packet[4:6])[0],
+                          'dataCheckSum': unpack('<H', binary_packet[6:8])[0],
+                          'headerCheckSum': unpack('<H', binary_packet[8:10])[0]}
+
+            except struct_error:
+                self.messages.write_warning('Failed to unpack header data')
+                self.messages.write_warning(data)
 
             return header
 
         def get_common_data():
 
-            status = unpack('<B', data[2:3])[0]
+            common = {'version': None,
+                      'offsetOfData': None,
+                      'flags.posixTime': None,
+                      'timeStamp': None,
+                      'microSeconds': None}
 
-            common = {'version': unpack('<B', data[0:1])[0],
-                      'offsetOfData': unpack('<B', data[1:2])[0],
-                      'flags.posixTime': _get_status(status_bits=status, bit=0),
-                      'timeStamp': unpack('<I', data[4:8])[0],
-                      'microSeconds': unpack('<I', data[8:12])[0]}
+            try:
+                status = unpack('<B', data[2:3])[0]
+
+                common = {'version': unpack('<B', data[0:1])[0],
+                          'offsetOfData': unpack('<B', data[1:2])[0],
+                          'flags.posixTime': _get_status(status_bits=status, bit=0),
+                          'timeStamp': unpack('<I', data[4:8])[0],
+                          'microSeconds': unpack('<I', data[8:12])[0]}
+
+            except struct_error:
+                self.messages.write_warning('Failed to unpack common data')
+                self.messages.write_warning(data)
 
             return common
 
@@ -322,269 +347,274 @@ class Parser:
 
             sensor = None
 
-            if header_data['family'] == self.FAMILY_ID_NUCLEUS:
+            try:
+                if header_data['family'] == self.FAMILY_ID_NUCLEUS:
 
-                if header_data['id'] == self.ID_AHRS:
+                    if header_data['id'] == self.ID_AHRS:
 
-                    sensor = {'serialNumber': unpack('<I', data[16:20])[0],
-                              'operationMode': unpack('<B', data[24:25])[0],  # TODO: add operationModeString?
-                              'ahrsData.roll': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
-                              'ahrsData.pitch': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
-                              'ahrsData.heading': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
-                              'ahrsData.quaternionW': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
-                              'ahrsData.quaternionX': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
-                              'ahrsData.quaternionY': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
-                              'ahrsData.quaternionZ': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0],
-                              'ahrsData.rotationMatrix_0': unpack('<f', data[common_data['offsetOfData'] + 28: common_data['offsetOfData'] + 32])[0],
-                              'ahrsData.rotationMatrix_1': unpack('<f', data[common_data['offsetOfData'] + 32: common_data['offsetOfData'] + 36])[0],
-                              'ahrsData.rotationMatrix_2': unpack('<f', data[common_data['offsetOfData'] + 36: common_data['offsetOfData'] + 40])[0],
-                              'ahrsData.rotationMatrix_3': unpack('<f', data[common_data['offsetOfData'] + 40: common_data['offsetOfData'] + 44])[0],
-                              'ahrsData.rotationMatrix_4': unpack('<f', data[common_data['offsetOfData'] + 44: common_data['offsetOfData'] + 48])[0],
-                              'ahrsData.rotationMatrix_5': unpack('<f', data[common_data['offsetOfData'] + 48: common_data['offsetOfData'] + 52])[0],
-                              'ahrsData.rotationMatrix_6': unpack('<f', data[common_data['offsetOfData'] + 52: common_data['offsetOfData'] + 56])[0],
-                              'ahrsData.rotationMatrix_7': unpack('<f', data[common_data['offsetOfData'] + 56: common_data['offsetOfData'] + 60])[0],
-                              'ahrsData.rotationMatrix_8': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
-                              'declination': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0],
-                              'depth': unpack('<f', data[common_data['offsetOfData'] + 68: common_data['offsetOfData'] + 72])[0]
-                              }
+                        sensor = {'serialNumber': unpack('<I', data[16:20])[0],
+                                  'operationMode': unpack('<B', data[24:25])[0],  # TODO: add operationModeString?
+                                  'ahrsData.roll': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
+                                  'ahrsData.pitch': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
+                                  'ahrsData.heading': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
+                                  'ahrsData.quaternionW': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
+                                  'ahrsData.quaternionX': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
+                                  'ahrsData.quaternionY': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
+                                  'ahrsData.quaternionZ': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0],
+                                  'ahrsData.rotationMatrix_0': unpack('<f', data[common_data['offsetOfData'] + 28: common_data['offsetOfData'] + 32])[0],
+                                  'ahrsData.rotationMatrix_1': unpack('<f', data[common_data['offsetOfData'] + 32: common_data['offsetOfData'] + 36])[0],
+                                  'ahrsData.rotationMatrix_2': unpack('<f', data[common_data['offsetOfData'] + 36: common_data['offsetOfData'] + 40])[0],
+                                  'ahrsData.rotationMatrix_3': unpack('<f', data[common_data['offsetOfData'] + 40: common_data['offsetOfData'] + 44])[0],
+                                  'ahrsData.rotationMatrix_4': unpack('<f', data[common_data['offsetOfData'] + 44: common_data['offsetOfData'] + 48])[0],
+                                  'ahrsData.rotationMatrix_5': unpack('<f', data[common_data['offsetOfData'] + 48: common_data['offsetOfData'] + 52])[0],
+                                  'ahrsData.rotationMatrix_6': unpack('<f', data[common_data['offsetOfData'] + 52: common_data['offsetOfData'] + 56])[0],
+                                  'ahrsData.rotationMatrix_7': unpack('<f', data[common_data['offsetOfData'] + 56: common_data['offsetOfData'] + 60])[0],
+                                  'ahrsData.rotationMatrix_8': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
+                                  'declination': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0],
+                                  'depth': unpack('<f', data[common_data['offsetOfData'] + 68: common_data['offsetOfData'] + 72])[0]
+                                  }
 
-                    if common_data['version'] == 1:
-                        sensor['fomAhrs'] = unpack('<B', data[25:26])[0]
-                        sensor['fomFc1'] = unpack('<B', data[26:27])[0]
+                        if common_data['version'] == 1:
+                            sensor['fomAhrs'] = unpack('<B', data[25:26])[0]
+                            sensor['fomFc1'] = unpack('<B', data[26:27])[0]
 
-                    if common_data['version'] == 2:
-                        sensor['fomAhrs'] = unpack('<f', data[28:32])[0]
-                        sensor['fomFc1'] = unpack('<f', data[32:36])[0]
+                        if common_data['version'] == 2:
+                            sensor['fomAhrs'] = unpack('<f', data[28:32])[0]
+                            sensor['fomFc1'] = unpack('<f', data[32:36])[0]
 
-                if header_data['id'] == self.ID_INS:
+                    if header_data['id'] == self.ID_INS:
 
-                    sensor = {'serialNumber': unpack('<I', data[16:20])[0],
-                              'operationMode': unpack('<B', data[24:25])[0],  # TODO: add operationModeString?
-                              'ahrsData.roll': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
-                              'ahrsData.pitch': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
-                              'ahrsData.heading': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
-                              'ahrsData.quaternionW': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
-                              'ahrsData.quaternionX': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
-                              'ahrsData.quaternionY': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
-                              'ahrsData.quaternionZ': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0],
-                              'ahrsData.rotationMatrix_0': unpack('<f', data[common_data['offsetOfData'] + 28: common_data['offsetOfData'] + 32])[0],
-                              'ahrsData.rotationMatrix_1': unpack('<f', data[common_data['offsetOfData'] + 32: common_data['offsetOfData'] + 36])[0],
-                              'ahrsData.rotationMatrix_2': unpack('<f', data[common_data['offsetOfData'] + 36: common_data['offsetOfData'] + 40])[0],
-                              'ahrsData.rotationMatrix_3': unpack('<f', data[common_data['offsetOfData'] + 40: common_data['offsetOfData'] + 44])[0],
-                              'ahrsData.rotationMatrix_4': unpack('<f', data[common_data['offsetOfData'] + 44: common_data['offsetOfData'] + 48])[0],
-                              'ahrsData.rotationMatrix_5': unpack('<f', data[common_data['offsetOfData'] + 48: common_data['offsetOfData'] + 52])[0],
-                              'ahrsData.rotationMatrix_6': unpack('<f', data[common_data['offsetOfData'] + 52: common_data['offsetOfData'] + 56])[0],
-                              'ahrsData.rotationMatrix_7': unpack('<f', data[common_data['offsetOfData'] + 56: common_data['offsetOfData'] + 60])[0],
-                              'ahrsData.rotationMatrix_8': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
-                              'declination': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0],
-                              'depth': unpack('<f', data[common_data['offsetOfData'] + 68: common_data['offsetOfData'] + 72])[0],
-                              'deltaQuaternionW': unpack('<f', data[common_data['offsetOfData'] + 72: common_data['offsetOfData'] + 76])[0],
-                              'deltaQuaternionX': unpack('<f', data[common_data['offsetOfData'] + 76: common_data['offsetOfData'] + 80])[0],
-                              'deltaQuaternionY': unpack('<f', data[common_data['offsetOfData'] + 80: common_data['offsetOfData'] + 84])[0],
-                              'deltaQuaternionZ': unpack('<f', data[common_data['offsetOfData'] + 84: common_data['offsetOfData'] + 88])[0],
-                              'courseOverGround': unpack('<f', data[common_data['offsetOfData'] + 88: common_data['offsetOfData'] + 92])[0],
-                              'temperature': unpack('<f', data[common_data['offsetOfData'] + 92: common_data['offsetOfData'] + 96])[0],
-                              'pressure': unpack('<f', data[common_data['offsetOfData'] + 96: common_data['offsetOfData'] + 100])[0],
-                              'altitude': unpack('<f', data[common_data['offsetOfData'] + 100: common_data['offsetOfData'] + 104])[0],
-                              'latitude': unpack('<f', data[common_data['offsetOfData'] + 104: common_data['offsetOfData'] + 108])[0],
-                              'longitude': unpack('<f', data[common_data['offsetOfData'] + 108: common_data['offsetOfData'] + 112])[0],
-                              'height': unpack('<f', data[common_data['offsetOfData'] + 112: common_data['offsetOfData'] + 116])[0],
-                              'positionFrameX': unpack('<f', data[common_data['offsetOfData'] + 116: common_data['offsetOfData'] + 120])[0],
-                              'positionFrameY': unpack('<f', data[common_data['offsetOfData'] + 120: common_data['offsetOfData'] + 124])[0],
-                              'positionFrameZ': unpack('<f', data[common_data['offsetOfData'] + 124: common_data['offsetOfData'] + 128])[0],
-                              'deltaPositionFrameX': unpack('<f', data[common_data['offsetOfData'] + 128: common_data['offsetOfData'] + 132])[0],
-                              'deltaPositionFrameY': unpack('<f', data[common_data['offsetOfData'] + 132: common_data['offsetOfData'] + 136])[0],
-                              'deltaPositionFrameZ': unpack('<f', data[common_data['offsetOfData'] + 136: common_data['offsetOfData'] + 140])[0],
-                              'deltaPositionNucleusX': unpack('<f', data[common_data['offsetOfData'] + 140: common_data['offsetOfData'] + 144])[0],
-                              'deltaPositionNucleusY': unpack('<f', data[common_data['offsetOfData'] + 144: common_data['offsetOfData'] + 148])[0],
-                              'deltaPositionNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 148: common_data['offsetOfData'] + 152])[0],
-                              'velocityNedX': unpack('<f', data[common_data['offsetOfData'] + 152: common_data['offsetOfData'] + 156])[0],
-                              'velocityNedY': unpack('<f', data[common_data['offsetOfData'] + 156: common_data['offsetOfData'] + 160])[0],
-                              'velocityNedZ': unpack('<f', data[common_data['offsetOfData'] + 160: common_data['offsetOfData'] + 164])[0],
-                              'velocityNucleusX': unpack('<f', data[common_data['offsetOfData'] + 164: common_data['offsetOfData'] + 168])[0],
-                              'velocityNucleusY': unpack('<f', data[common_data['offsetOfData'] + 168: common_data['offsetOfData'] + 172])[0],
-                              'velocityNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 172: common_data['offsetOfData'] + 176])[0],
-                              'deltaVelocityNedX': unpack('<f', data[common_data['offsetOfData'] + 176: common_data['offsetOfData'] + 180])[0],
-                              'deltaVelocityNedY': unpack('<f', data[common_data['offsetOfData'] + 180: common_data['offsetOfData'] + 184])[0],
-                              'deltaVelocityNedZ': unpack('<f', data[common_data['offsetOfData'] + 184: common_data['offsetOfData'] + 188])[0],
-                              'deltaVelocityNucleusX': unpack('<f', data[common_data['offsetOfData'] + 188: common_data['offsetOfData'] + 192])[0],
-                              'deltaVelocityNucleusY': unpack('<f', data[common_data['offsetOfData'] + 192: common_data['offsetOfData'] + 196])[0],
-                              'deltaVelocityNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 196: common_data['offsetOfData'] + 200])[0],
-                              'speedOverGround': unpack('<f', data[common_data['offsetOfData'] + 200: common_data['offsetOfData'] + 204])[0],
-                              'turnRateX': unpack('<f', data[common_data['offsetOfData'] + 204: common_data['offsetOfData'] + 208])[0],
-                              'turnRateY': unpack('<f', data[common_data['offsetOfData'] + 208: common_data['offsetOfData'] + 212])[0],
-                              'turnRateZ': unpack('<f', data[common_data['offsetOfData'] + 212: common_data['offsetOfData'] + 216])[0],
-                              }
+                        sensor = {'serialNumber': unpack('<I', data[16:20])[0],
+                                  'operationMode': unpack('<B', data[24:25])[0],  # TODO: add operationModeString?
+                                  'ahrsData.roll': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
+                                  'ahrsData.pitch': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
+                                  'ahrsData.heading': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
+                                  'ahrsData.quaternionW': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
+                                  'ahrsData.quaternionX': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
+                                  'ahrsData.quaternionY': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
+                                  'ahrsData.quaternionZ': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0],
+                                  'ahrsData.rotationMatrix_0': unpack('<f', data[common_data['offsetOfData'] + 28: common_data['offsetOfData'] + 32])[0],
+                                  'ahrsData.rotationMatrix_1': unpack('<f', data[common_data['offsetOfData'] + 32: common_data['offsetOfData'] + 36])[0],
+                                  'ahrsData.rotationMatrix_2': unpack('<f', data[common_data['offsetOfData'] + 36: common_data['offsetOfData'] + 40])[0],
+                                  'ahrsData.rotationMatrix_3': unpack('<f', data[common_data['offsetOfData'] + 40: common_data['offsetOfData'] + 44])[0],
+                                  'ahrsData.rotationMatrix_4': unpack('<f', data[common_data['offsetOfData'] + 44: common_data['offsetOfData'] + 48])[0],
+                                  'ahrsData.rotationMatrix_5': unpack('<f', data[common_data['offsetOfData'] + 48: common_data['offsetOfData'] + 52])[0],
+                                  'ahrsData.rotationMatrix_6': unpack('<f', data[common_data['offsetOfData'] + 52: common_data['offsetOfData'] + 56])[0],
+                                  'ahrsData.rotationMatrix_7': unpack('<f', data[common_data['offsetOfData'] + 56: common_data['offsetOfData'] + 60])[0],
+                                  'ahrsData.rotationMatrix_8': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
+                                  'declination': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0],
+                                  'depth': unpack('<f', data[common_data['offsetOfData'] + 68: common_data['offsetOfData'] + 72])[0],
+                                  'deltaQuaternionW': unpack('<f', data[common_data['offsetOfData'] + 72: common_data['offsetOfData'] + 76])[0],
+                                  'deltaQuaternionX': unpack('<f', data[common_data['offsetOfData'] + 76: common_data['offsetOfData'] + 80])[0],
+                                  'deltaQuaternionY': unpack('<f', data[common_data['offsetOfData'] + 80: common_data['offsetOfData'] + 84])[0],
+                                  'deltaQuaternionZ': unpack('<f', data[common_data['offsetOfData'] + 84: common_data['offsetOfData'] + 88])[0],
+                                  'courseOverGround': unpack('<f', data[common_data['offsetOfData'] + 88: common_data['offsetOfData'] + 92])[0],
+                                  'temperature': unpack('<f', data[common_data['offsetOfData'] + 92: common_data['offsetOfData'] + 96])[0],
+                                  'pressure': unpack('<f', data[common_data['offsetOfData'] + 96: common_data['offsetOfData'] + 100])[0],
+                                  'altitude': unpack('<f', data[common_data['offsetOfData'] + 100: common_data['offsetOfData'] + 104])[0],
+                                  'latitude': unpack('<f', data[common_data['offsetOfData'] + 104: common_data['offsetOfData'] + 108])[0],
+                                  'longitude': unpack('<f', data[common_data['offsetOfData'] + 108: common_data['offsetOfData'] + 112])[0],
+                                  'height': unpack('<f', data[common_data['offsetOfData'] + 112: common_data['offsetOfData'] + 116])[0],
+                                  'positionFrameX': unpack('<f', data[common_data['offsetOfData'] + 116: common_data['offsetOfData'] + 120])[0],
+                                  'positionFrameY': unpack('<f', data[common_data['offsetOfData'] + 120: common_data['offsetOfData'] + 124])[0],
+                                  'positionFrameZ': unpack('<f', data[common_data['offsetOfData'] + 124: common_data['offsetOfData'] + 128])[0],
+                                  'deltaPositionFrameX': unpack('<f', data[common_data['offsetOfData'] + 128: common_data['offsetOfData'] + 132])[0],
+                                  'deltaPositionFrameY': unpack('<f', data[common_data['offsetOfData'] + 132: common_data['offsetOfData'] + 136])[0],
+                                  'deltaPositionFrameZ': unpack('<f', data[common_data['offsetOfData'] + 136: common_data['offsetOfData'] + 140])[0],
+                                  'deltaPositionNucleusX': unpack('<f', data[common_data['offsetOfData'] + 140: common_data['offsetOfData'] + 144])[0],
+                                  'deltaPositionNucleusY': unpack('<f', data[common_data['offsetOfData'] + 144: common_data['offsetOfData'] + 148])[0],
+                                  'deltaPositionNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 148: common_data['offsetOfData'] + 152])[0],
+                                  'velocityNedX': unpack('<f', data[common_data['offsetOfData'] + 152: common_data['offsetOfData'] + 156])[0],
+                                  'velocityNedY': unpack('<f', data[common_data['offsetOfData'] + 156: common_data['offsetOfData'] + 160])[0],
+                                  'velocityNedZ': unpack('<f', data[common_data['offsetOfData'] + 160: common_data['offsetOfData'] + 164])[0],
+                                  'velocityNucleusX': unpack('<f', data[common_data['offsetOfData'] + 164: common_data['offsetOfData'] + 168])[0],
+                                  'velocityNucleusY': unpack('<f', data[common_data['offsetOfData'] + 168: common_data['offsetOfData'] + 172])[0],
+                                  'velocityNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 172: common_data['offsetOfData'] + 176])[0],
+                                  'deltaVelocityNedX': unpack('<f', data[common_data['offsetOfData'] + 176: common_data['offsetOfData'] + 180])[0],
+                                  'deltaVelocityNedY': unpack('<f', data[common_data['offsetOfData'] + 180: common_data['offsetOfData'] + 184])[0],
+                                  'deltaVelocityNedZ': unpack('<f', data[common_data['offsetOfData'] + 184: common_data['offsetOfData'] + 188])[0],
+                                  'deltaVelocityNucleusX': unpack('<f', data[common_data['offsetOfData'] + 188: common_data['offsetOfData'] + 192])[0],
+                                  'deltaVelocityNucleusY': unpack('<f', data[common_data['offsetOfData'] + 192: common_data['offsetOfData'] + 196])[0],
+                                  'deltaVelocityNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 196: common_data['offsetOfData'] + 200])[0],
+                                  'speedOverGround': unpack('<f', data[common_data['offsetOfData'] + 200: common_data['offsetOfData'] + 204])[0],
+                                  'turnRateX': unpack('<f', data[common_data['offsetOfData'] + 204: common_data['offsetOfData'] + 208])[0],
+                                  'turnRateY': unpack('<f', data[common_data['offsetOfData'] + 208: common_data['offsetOfData'] + 212])[0],
+                                  'turnRateZ': unpack('<f', data[common_data['offsetOfData'] + 212: common_data['offsetOfData'] + 216])[0],
+                                  }
 
-                    if common_data['version'] == 1:
-                        sensor['fomAhrs'] = unpack('<B', data[25:26])[0]
-                        sensor['fomFc1'] = unpack('<B', data[26:27])[0]
+                        if common_data['version'] == 1:
+                            sensor['fomAhrs'] = unpack('<B', data[25:26])[0]
+                            sensor['fomFc1'] = unpack('<B', data[26:27])[0]
 
-                    if common_data['version'] == 2:
-                        sensor['fomAhrs'] = unpack('<f', data[28:32])[0]
-                        sensor['fomFc1'] = unpack('<f', data[32:36])[0]
+                        if common_data['version'] == 2:
+                            sensor['fomAhrs'] = unpack('<f', data[28:32])[0]
+                            sensor['fomFc1'] = unpack('<f', data[32:36])[0]
 
-                if header_data['id'] == self.ID_IMU:
-                    imu_status = unpack('<I', data[12:16])[0]
+                    if header_data['id'] == self.ID_IMU:
+                        imu_status = unpack('<I', data[12:16])[0]
 
-                    sensor = {'status.isValid': _get_status(status_bits=imu_status, bit=0),
-                              'status.hasDataPathOverrun': _get_status(status_bits=imu_status, bit=17),
-                              'status.hasFlashUpdateFailure': _get_status(status_bits=imu_status, bit=18),
-                              'status.hasSpiComError': _get_status(status_bits=imu_status, bit=19),
-                              'status.hasLowVoltage': _get_status(status_bits=imu_status, bit=20),
-                              'status.hasSensorFailure': _get_status(status_bits=imu_status, bit=21),
-                              'status.hasMemoryFailure': _get_status(status_bits=imu_status, bit=22),
-                              'status.hasGyro1Failure': _get_status(status_bits=imu_status, bit=23),
-                              'status.hasGyro2Failure': _get_status(status_bits=imu_status, bit=24),
-                              'status.hasAccelerometerFailure': _get_status(status_bits=imu_status, bit=25),
-                              'accelerometer.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
-                              'accelerometer.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
-                              'accelerometer.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
-                              'gyro.x': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
-                              'gyro.y': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
-                              'gyro.z': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
-                              'temperature': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0]
-                              }
+                        sensor = {'status.isValid': _get_status(status_bits=imu_status, bit=0),
+                                  'status.hasDataPathOverrun': _get_status(status_bits=imu_status, bit=17),
+                                  'status.hasFlashUpdateFailure': _get_status(status_bits=imu_status, bit=18),
+                                  'status.hasSpiComError': _get_status(status_bits=imu_status, bit=19),
+                                  'status.hasLowVoltage': _get_status(status_bits=imu_status, bit=20),
+                                  'status.hasSensorFailure': _get_status(status_bits=imu_status, bit=21),
+                                  'status.hasMemoryFailure': _get_status(status_bits=imu_status, bit=22),
+                                  'status.hasGyro1Failure': _get_status(status_bits=imu_status, bit=23),
+                                  'status.hasGyro2Failure': _get_status(status_bits=imu_status, bit=24),
+                                  'status.hasAccelerometerFailure': _get_status(status_bits=imu_status, bit=25),
+                                  'accelerometer.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
+                                  'accelerometer.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
+                                  'accelerometer.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
+                                  'gyro.x': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
+                                  'gyro.y': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
+                                  'gyro.z': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
+                                  'temperature': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0]
+                                  }
 
-                if header_data['id'] == self.ID_MAGNETOMETER:
-                    mag_status = unpack('<I', data[12:16])[0]
+                    if header_data['id'] == self.ID_MAGNETOMETER:
+                        mag_status = unpack('<I', data[12:16])[0]
 
-                    sensor = {'status.isCompensatedForHardIron': _get_status(status_bits=mag_status, bit=0),
-                              'status.dvlActive': _get_status(status_bits=mag_status, bit=29),
-                              'status.dvlAcousticsActive': _get_status(status_bits=mag_status, bit=30),
-                              'status.dvlTransmitterActive': _get_status(status_bits=mag_status, bit=31),
-                              'magnetometer.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
-                              'magnetometer.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
-                              'magnetometer.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0]
-                              }
+                        sensor = {'status.isCompensatedForHardIron': _get_status(status_bits=mag_status, bit=0),
+                                  'status.dvlActive': _get_status(status_bits=mag_status, bit=29),
+                                  'status.dvlAcousticsActive': _get_status(status_bits=mag_status, bit=30),
+                                  'status.dvlTransmitterActive': _get_status(status_bits=mag_status, bit=31),
+                                  'magnetometer.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
+                                  'magnetometer.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
+                                  'magnetometer.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0]
+                                  }
 
-                if header_data['id'] in (self.ID_BOTTOMTRACK, self.ID_WATERTRACK):
-                    status = unpack('<I', data[12:16])[0]
+                    if header_data['id'] in (self.ID_BOTTOMTRACK, self.ID_WATERTRACK):
+                        status = unpack('<I', data[12:16])[0]
 
-                    sensor = {'status.beam1VelocityValid': _get_status(status_bits=status, bit=0),
-                              'status.beam2VelocityValid': _get_status(status_bits=status, bit=1),
-                              'status.beam3VelocityValid': _get_status(status_bits=status, bit=2),
-                              'status.beam1DistanceValid': _get_status(status_bits=status, bit=3),
-                              'status.beam2DistanceValid': _get_status(status_bits=status, bit=4),
-                              'status.beam3DistanceValid': _get_status(status_bits=status, bit=5),
-                              'status.beam1FomValid': _get_status(status_bits=status, bit=6),
-                              'status.beam2FomValid': _get_status(status_bits=status, bit=7),
-                              'status.beam3FomValid': _get_status(status_bits=status, bit=8),
-                              'status.xVelocityValid': _get_status(status_bits=status, bit=9),
-                              'status.yVelocityValid': _get_status(status_bits=status, bit=10),
-                              'status.zVelocityValid': _get_status(status_bits=status, bit=11),
-                              'status.xFomValid': _get_status(status_bits=status, bit=12),
-                              'status.yFomValid': _get_status(status_bits=status, bit=13),
-                              'status.zFomValid': _get_status(status_bits=status, bit=14),
-                              'serialNumber': unpack('<I', data[16:20])[0],
-                              'soundSpeed': unpack('<f', data[24:28])[0],
-                              'temperature': unpack('<f', data[28:32])[0],
-                              'pressure': unpack('<f', data[32:36])[0],
-                              'velocityBeam1': unpack('<f', data[36:40])[0],
-                              'velocityBeam2': unpack('<f', data[40:44])[0],
-                              'velocityBeam3': unpack('<f', data[44:48])[0],
-                              'distanceBeam1': unpack('<f', data[48:52])[0],
-                              'distanceBeam2': unpack('<f', data[52:56])[0],
-                              'distanceBeam3': unpack('<f', data[56:60])[0],
-                              'fomBeam1': unpack('<f', data[60:64])[0],
-                              'fomBeam2': unpack('<f', data[64:68])[0],
-                              'fomBeam3': unpack('<f', data[68:72])[0],
-                              'dtBeam1': unpack('<f', data[72:76])[0],
-                              'dtBeam2': unpack('<f', data[76:80])[0],
-                              'dtBeam3': unpack('<f', data[80:84])[0],
-                              'timeVelBeam1': unpack('<f', data[84:88])[0],
-                              'timeVelBeam2': unpack('<f', data[88:92])[0],
-                              'timeVelBeam3': unpack('<f', data[92:96])[0],
-                              'velocityX': unpack('<f', data[96:100])[0],
-                              'velocityY': unpack('<f', data[100:104])[0],
-                              'velocityZ': unpack('<f', data[104:108])[0],
-                              'fomX': unpack('<f', data[108:112])[0],
-                              'fomY': unpack('<f', data[112:116])[0],
-                              'fomZ': unpack('<f', data[116:120])[0],
-                              'dtXYZ': unpack('<f', data[120:124])[0],
-                              'timeVelXYZ': unpack('<f', data[124:128])[0]
-                              }
+                        sensor = {'status.beam1VelocityValid': _get_status(status_bits=status, bit=0),
+                                  'status.beam2VelocityValid': _get_status(status_bits=status, bit=1),
+                                  'status.beam3VelocityValid': _get_status(status_bits=status, bit=2),
+                                  'status.beam1DistanceValid': _get_status(status_bits=status, bit=3),
+                                  'status.beam2DistanceValid': _get_status(status_bits=status, bit=4),
+                                  'status.beam3DistanceValid': _get_status(status_bits=status, bit=5),
+                                  'status.beam1FomValid': _get_status(status_bits=status, bit=6),
+                                  'status.beam2FomValid': _get_status(status_bits=status, bit=7),
+                                  'status.beam3FomValid': _get_status(status_bits=status, bit=8),
+                                  'status.xVelocityValid': _get_status(status_bits=status, bit=9),
+                                  'status.yVelocityValid': _get_status(status_bits=status, bit=10),
+                                  'status.zVelocityValid': _get_status(status_bits=status, bit=11),
+                                  'status.xFomValid': _get_status(status_bits=status, bit=12),
+                                  'status.yFomValid': _get_status(status_bits=status, bit=13),
+                                  'status.zFomValid': _get_status(status_bits=status, bit=14),
+                                  'serialNumber': unpack('<I', data[16:20])[0],
+                                  'soundSpeed': unpack('<f', data[24:28])[0],
+                                  'temperature': unpack('<f', data[28:32])[0],
+                                  'pressure': unpack('<f', data[32:36])[0],
+                                  'velocityBeam1': unpack('<f', data[36:40])[0],
+                                  'velocityBeam2': unpack('<f', data[40:44])[0],
+                                  'velocityBeam3': unpack('<f', data[44:48])[0],
+                                  'distanceBeam1': unpack('<f', data[48:52])[0],
+                                  'distanceBeam2': unpack('<f', data[52:56])[0],
+                                  'distanceBeam3': unpack('<f', data[56:60])[0],
+                                  'fomBeam1': unpack('<f', data[60:64])[0],
+                                  'fomBeam2': unpack('<f', data[64:68])[0],
+                                  'fomBeam3': unpack('<f', data[68:72])[0],
+                                  'dtBeam1': unpack('<f', data[72:76])[0],
+                                  'dtBeam2': unpack('<f', data[76:80])[0],
+                                  'dtBeam3': unpack('<f', data[80:84])[0],
+                                  'timeVelBeam1': unpack('<f', data[84:88])[0],
+                                  'timeVelBeam2': unpack('<f', data[88:92])[0],
+                                  'timeVelBeam3': unpack('<f', data[92:96])[0],
+                                  'velocityX': unpack('<f', data[96:100])[0],
+                                  'velocityY': unpack('<f', data[100:104])[0],
+                                  'velocityZ': unpack('<f', data[104:108])[0],
+                                  'fomX': unpack('<f', data[108:112])[0],
+                                  'fomY': unpack('<f', data[112:116])[0],
+                                  'fomZ': unpack('<f', data[116:120])[0],
+                                  'dtXYZ': unpack('<f', data[120:124])[0],
+                                  'timeVelXYZ': unpack('<f', data[124:128])[0]
+                                  }
 
-                if header_data['id'] == self.ID_ALTIMETER:
-                    status = unpack('<I', data[12:16])[0]
+                    if header_data['id'] == self.ID_ALTIMETER:
+                        status = unpack('<I', data[12:16])[0]
 
-                    sensor = {'status.altimeterDistanceValid': _get_status(status_bits=status, bit=0),
-                              'status.altimeterQualityValid': _get_status(status_bits=status, bit=1),
-                              'status.pressureValid': _get_status(status_bits=status, bit=16),
-                              'status.temperatureValid': _get_status(status_bits=status, bit=17),
-                              'serialNumber': unpack('<I', data[16:20])[0],
-                              'soundSpeed': unpack('<f', data[24:28])[0],
-                              'temperature': unpack('<f', data[28:32])[0],
-                              'pressure': unpack('<f', data[32:36])[0],
-                              'altimeterDistance': unpack('<f', data[36:40])[0],
-                              'altimeterQuality': unpack('<H', data[40:42])[0]
-                              }
+                        sensor = {'status.altimeterDistanceValid': _get_status(status_bits=status, bit=0),
+                                  'status.altimeterQualityValid': _get_status(status_bits=status, bit=1),
+                                  'status.pressureValid': _get_status(status_bits=status, bit=16),
+                                  'status.temperatureValid': _get_status(status_bits=status, bit=17),
+                                  'serialNumber': unpack('<I', data[16:20])[0],
+                                  'soundSpeed': unpack('<f', data[24:28])[0],
+                                  'temperature': unpack('<f', data[28:32])[0],
+                                  'pressure': unpack('<f', data[32:36])[0],
+                                  'altimeterDistance': unpack('<f', data[36:40])[0],
+                                  'altimeterQuality': unpack('<H', data[40:42])[0]
+                                  }
 
-                if header_data['id'] == self.ID_CURRENT_PROFILE:
+                    if header_data['id'] == self.ID_CURRENT_PROFILE:
 
-                    sensor = {'serialNumber': unpack('<I', data[16:20])[0],
-                              'soundVelocity': unpack('<f', data[24:28])[0],
-                              'temperature': unpack('<f', data[28:32])[0],
-                              'pressure': unpack('<f', data[32:36])[0],
-                              'cellSize': unpack('<f', data[36:40])[0],
-                              'blanking': unpack('<f', data[40:44])[0],
-                              'numberOfCells': unpack('<H', data[44:46])[0],
-                              'ambiguityVelocity': unpack('<H', data[46:48])[0]}
+                        sensor = {'serialNumber': unpack('<I', data[16:20])[0],
+                                  'soundVelocity': unpack('<f', data[24:28])[0],
+                                  'temperature': unpack('<f', data[28:32])[0],
+                                  'pressure': unpack('<f', data[32:36])[0],
+                                  'cellSize': unpack('<f', data[36:40])[0],
+                                  'blanking': unpack('<f', data[40:44])[0],
+                                  'numberOfCells': unpack('<H', data[44:46])[0],
+                                  'ambiguityVelocity': unpack('<H', data[46:48])[0]}
 
-                    velocity_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'H')
-                    velocity_data_offset = common_data['offsetOfData']
-                    velocity_data_size = 2 * 3 * sensor['numberOfCells']
-                    # sensor['velocityData'] = unpack(velocity_data_format, data[velocity_data_offset: velocity_data_offset + velocity_data_size])[:velocity_data_size]
-                    velocity_data = unpack(velocity_data_format, data[velocity_data_offset: velocity_data_offset + velocity_data_size])[:velocity_data_size]
-                    for index, velocity_cell in enumerate(velocity_data):
-                        sensor['velocityData_{}'.format(index)] = velocity_cell
+                        velocity_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'H')
+                        velocity_data_offset = common_data['offsetOfData']
+                        velocity_data_size = 2 * 3 * sensor['numberOfCells']
+                        # sensor['velocityData'] = unpack(velocity_data_format, data[velocity_data_offset: velocity_data_offset + velocity_data_size])[:velocity_data_size]
+                        velocity_data = unpack(velocity_data_format, data[velocity_data_offset: velocity_data_offset + velocity_data_size])[:velocity_data_size]
+                        for index, velocity_cell in enumerate(velocity_data):
+                            sensor['velocityData_{}'.format(index)] = velocity_cell
 
-                    amplitude_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'B')
-                    amplitude_data_offset = common_data['offsetOfData'] + 6 * sensor['numberOfCells']
-                    amplitude_data_size = 1 * 3 * sensor['numberOfCells']
-                    # sensor['amplitudeData'] = unpack(amplitude_data_format, data[amplitude_data_offset: amplitude_data_offset + amplitude_data_size])[:amplitude_data_size]
-                    amplitude_data = unpack(amplitude_data_format, data[amplitude_data_offset: amplitude_data_offset + amplitude_data_size])[:amplitude_data_size]
-                    for index, amplitude_cell in enumerate(amplitude_data):
-                        sensor['amplitudeData_{}'.format(index)] = amplitude_cell
+                        amplitude_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'B')
+                        amplitude_data_offset = common_data['offsetOfData'] + 6 * sensor['numberOfCells']
+                        amplitude_data_size = 1 * 3 * sensor['numberOfCells']
+                        # sensor['amplitudeData'] = unpack(amplitude_data_format, data[amplitude_data_offset: amplitude_data_offset + amplitude_data_size])[:amplitude_data_size]
+                        amplitude_data = unpack(amplitude_data_format, data[amplitude_data_offset: amplitude_data_offset + amplitude_data_size])[:amplitude_data_size]
+                        for index, amplitude_cell in enumerate(amplitude_data):
+                            sensor['amplitudeData_{}'.format(index)] = amplitude_cell
 
-                    correlation_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'B')
-                    correlation_data_offset = common_data['offsetOfData'] + 9 * sensor['numberOfCells']
-                    correlation_data_size = 1 * 3 * sensor['numberOfCells']
-                    # sensor['correlationData'] = unpack(correlation_data_format, data[correlation_data_offset: correlation_data_offset + correlation_data_size])[:correlation_data_size]
-                    correlation_data = unpack(correlation_data_format, data[correlation_data_offset: correlation_data_offset + correlation_data_size])[:correlation_data_size]
-                    for index, correlation_cell in enumerate(correlation_data):
-                        sensor['correlationData_{}'.format(index)] = correlation_cell
+                        correlation_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'B')
+                        correlation_data_offset = common_data['offsetOfData'] + 9 * sensor['numberOfCells']
+                        correlation_data_size = 1 * 3 * sensor['numberOfCells']
+                        # sensor['correlationData'] = unpack(correlation_data_format, data[correlation_data_offset: correlation_data_offset + correlation_data_size])[:correlation_data_size]
+                        correlation_data = unpack(correlation_data_format, data[correlation_data_offset: correlation_data_offset + correlation_data_size])[:correlation_data_size]
+                        for index, correlation_cell in enumerate(correlation_data):
+                            sensor['correlationData_{}'.format(index)] = correlation_cell
 
-                if header_data['id'] == self.ID_FIELD_CALIBRATION:
-                    status = unpack('<I', data[12:16])[0]
+                    if header_data['id'] == self.ID_FIELD_CALIBRATION:
+                        status = unpack('<I', data[12:16])[0]
 
-                    sensor = {'status.pointsUsedInEstimation': _get_status(status_bits=status, bit=0),
-                              'hardIron.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
-                              'hardIron.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
-                              'hardIron.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
-                              'sAxis_0': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
-                              'sAxis_1': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
-                              'sAxis_2': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
-                              'sAxis_3': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0],
-                              'sAxis_4': unpack('<f', data[common_data['offsetOfData'] + 28: common_data['offsetOfData'] + 32])[0],
-                              'sAxis_5': unpack('<f', data[common_data['offsetOfData'] + 32: common_data['offsetOfData'] + 36])[0],
-                              'sAxis_6': unpack('<f', data[common_data['offsetOfData'] + 36: common_data['offsetOfData'] + 40])[0],
-                              'sAxis_7': unpack('<f', data[common_data['offsetOfData'] + 40: common_data['offsetOfData'] + 44])[0],
-                              'sAxis_8': unpack('<f', data[common_data['offsetOfData'] + 44: common_data['offsetOfData'] + 48])[0],
-                              'newPoint.x': unpack('<f', data[common_data['offsetOfData'] + 48: common_data['offsetOfData'] + 52])[0],
-                              'newPoint.y': unpack('<f', data[common_data['offsetOfData'] + 52: common_data['offsetOfData'] + 56])[0],
-                              'newPoint.z': unpack('<f', data[common_data['offsetOfData'] + 56: common_data['offsetOfData'] + 60])[0],
-                              'fomFieldCalibration': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
-                              'coverage': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0]
-                              }
+                        sensor = {'status.pointsUsedInEstimation': _get_status(status_bits=status, bit=0),
+                                  'hardIron.x': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
+                                  'hardIron.y': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
+                                  'hardIron.z': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
+                                  'sAxis_0': unpack('<f', data[common_data['offsetOfData'] + 12: common_data['offsetOfData'] + 16])[0],
+                                  'sAxis_1': unpack('<f', data[common_data['offsetOfData'] + 16: common_data['offsetOfData'] + 20])[0],
+                                  'sAxis_2': unpack('<f', data[common_data['offsetOfData'] + 20: common_data['offsetOfData'] + 24])[0],
+                                  'sAxis_3': unpack('<f', data[common_data['offsetOfData'] + 24: common_data['offsetOfData'] + 28])[0],
+                                  'sAxis_4': unpack('<f', data[common_data['offsetOfData'] + 28: common_data['offsetOfData'] + 32])[0],
+                                  'sAxis_5': unpack('<f', data[common_data['offsetOfData'] + 32: common_data['offsetOfData'] + 36])[0],
+                                  'sAxis_6': unpack('<f', data[common_data['offsetOfData'] + 36: common_data['offsetOfData'] + 40])[0],
+                                  'sAxis_7': unpack('<f', data[common_data['offsetOfData'] + 40: common_data['offsetOfData'] + 44])[0],
+                                  'sAxis_8': unpack('<f', data[common_data['offsetOfData'] + 44: common_data['offsetOfData'] + 48])[0],
+                                  'newPoint.x': unpack('<f', data[common_data['offsetOfData'] + 48: common_data['offsetOfData'] + 52])[0],
+                                  'newPoint.y': unpack('<f', data[common_data['offsetOfData'] + 52: common_data['offsetOfData'] + 56])[0],
+                                  'newPoint.z': unpack('<f', data[common_data['offsetOfData'] + 56: common_data['offsetOfData'] + 60])[0],
+                                  'fomFieldCalibration': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
+                                  'coverage': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0]
+                                  }
 
-                if header_data['id'] == self.ID_ASCII:
-                    sensor = {'string': unpack('<{}s'.format(len(data)), data)}
+                    if header_data['id'] == self.ID_ASCII:
+                        sensor = {'string': unpack('<{}s'.format(len(data)), data)}
 
-            if header_data['family'] == self.FAMILY_ID_DVL:
+                if header_data['family'] == self.FAMILY_ID_DVL:
 
-                if header_data['id'] == self.ID_SPECTRUM_ANALYZER:
-                    sensor = {'data': data}
+                    if header_data['id'] == self.ID_SPECTRUM_ANALYZER:
+                        sensor = {'data': data}
+
+            except struct_error:
+                self.messages.write_warning('Failed to unpack sensor data')
+                self.messages.write_warning(data)
 
             return sensor
 
@@ -614,8 +644,9 @@ class Parser:
 
         data = binary_packet[header_data['sizeHeader']:header_data['sizeHeader'] + header_data['sizeData']]
 
-        common_data = get_common_data()
-        packet.update(common_data)
+        if header_data['id'] != self.ID_ASCII:
+            common_data = get_common_data()
+            packet.update(common_data)
 
         packet['timestampPython'] = datetime.now().timestamp()
 
