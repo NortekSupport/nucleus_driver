@@ -50,16 +50,11 @@ class Logger:
                        'ahrsData.rotationMatrix_6', 'ahrsData.rotationMatrix_7', 'ahrsData.rotationMatrix_8',
                        'declination', 'depth', 'fomAhrs', 'fomFc1']
 
-        ins_fields = ['deltaQuaternionW', 'deltaQuaternionX', 'deltaQuaternionY', 'deltaQuaternionZ',
-                      'courseOverGround', 'temperature', 'pressure',
-                      'altitude', 'latitude', 'longitude', 'height',
+        ins_fields = ['courseOverGround', 'temperature', 'pressure',
+                      'altitude',
                       'positionFrameX', 'positionFrameY', 'positionFrameZ',
-                      'deltaPositionFrameX', 'deltaPositionFrameY', 'deltaPositionFrameZ',
-                      'deltaPositionNucleusX', 'deltaPositionNucleusY', 'deltaPositionNucleusZ',
                       'velocityNedX', 'velocityNedY', 'velocityNedZ',
                       'velocityNucleusX', 'velocityNucleusY', 'velocityNucleusZ',
-                      'deltaVelocityNedX', 'deltaVelocityNedY', 'deltaVelocityNedZ',
-                      'deltaVelocityNucleusX', 'deltaVelocityNucleusY', 'deltaVelocityNucleusZ',
                       'speedOverGround', 'turnRateX', 'turnRateY', 'turnRateZ']
 
         imu_fields = ['status.isValid',
