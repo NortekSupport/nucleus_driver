@@ -12,6 +12,9 @@ NUCLEUS_HOST = 'Nucleus-300004.local'
 app = Flask(__name__)
 api = Api(app)
 
+print('NAME:')
+print(__name__)
+
 @app.route("/nucleus_driver/start", methods=['GET'])
 def start():
 
@@ -99,7 +102,7 @@ def nucleus_driver_get_all():
 
 if __name__ == "__main__":
 
-    nucleus_driver = NucleusDriverNortek()
+    nucleus_driver = NucleusDriver()
     nucleus_driver.connection.set_tcp_configuration(host=NUCLEUS_HOST)
     nucleus_driver.connection.connect(connection_type='tcp')
 
