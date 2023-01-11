@@ -5,19 +5,29 @@ RUN apt-get update && apt-get -y upgrade
 RUN useradd --create-home pi
 USER pi
 
+ENV PATH="/home/pi/.local/bin:${PATH}"
+
+RUN pip install --upgrade pip
+
 COPY requirements.txt /tmp/
-RUN pip install -r /tmp/requirements.txt
-RUN pip install flask==1.1
+RUN pip install --user -r /tmp/requirements.txt
+RUN pip install --user Flask==2.2.2
+RUN pip install --user Flask-RESTful==0.3.9
 
 
 
 #RUN mkdir -p /home/pi
 
-COPY . /home/pi/nucleus_driver
-RUN pip install /home/pi/nucleus_driver
+COPY --chown=pi:pi . /home/pi/nucleus_driver
+
+WORKDIR /home/pi/nucleus_driver
+
+RUN pip install --user .
+
+#RUN pip install /home/pi/nucleus_driver
 #RUN cd /home/pi/nucleus_driver && pip3 install .
 
-WORKDIR /home/pi/nucleus_driver  # not necessary?
+#WORKDIR /home/pi/nucleus_driver  # not necessary?
 
 #CMD ["python3.9", "./src/nucleus_driver/entrypoints/flask_app.py"]
 
