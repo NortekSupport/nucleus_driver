@@ -3,7 +3,7 @@ from flask_restful import Api, reqparse
 from threading import Thread
 import requests
 import json
-import logger
+import logging
 
 from nucleus_driver import NucleusDriver
 
@@ -219,9 +219,9 @@ class RovLink:
         self.nucleus_id = nucleus_driver.connection.nucleus_id
         self.nucleus_firmware = nucleus_driver.connection.firmware_version
 
-        logger.info(f'Nucleus connected: {nucleus_driver.connect.get_connection_status()}')
-        logger.info(f'Nucleus ID: {self.nucleus_id}')
-        logger.info(f'Nucleus firmware: {self.nucleus_firmware}')
+        logging.info(f'Nucleus connected: {nucleus_driver.connect.get_connection_status()}')
+        logging.info(f'Nucleus ID: {self.nucleus_id}')
+        logging.info(f'Nucleus firmware: {self.nucleus_firmware}')
 
         return True
 
@@ -234,7 +234,7 @@ class RovLink:
 
         vehicle_path = f"/vehicles/{vehicle}/components/{component}/messages"
         while not requests.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT'):
-            logger.info('waiting for vehicle heartbeat')
+            logging.info('waiting for vehicle heartbeat')
             time.sleep(1)
 
     def setup_parameters(self):
@@ -254,37 +254,37 @@ class RovLink:
 
                 result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
-                logger.info(result)
+                logging.info(result)
 
                 return result.status_code == 200
 
             except Exception as error:
-                logger.warning(f"Error setting parameter '{param_name}': {error}")
+                logging.warning(f"Error setting parameter '{param_name}': {error}")
                 return False
 
         response = set_parameter("AHRS_EKF_TYPE", "MAV_PARAM_TYPE_UINT8", 3)
-        logger.info(f'AHRS_EKF_TYPE: {response}')
+        logging.info(f'AHRS_EKF_TYPE: {response}')
 
         response = set_parameter("EK2_ENABLE", "MAV_PARAM_TYPE_UINT8", 0)
-        logger.info(f'EK2_ENABLE: {response}')
+        logging.info(f'EK2_ENABLE: {response}')
 
         response = set_parameter("EK3_ENABLE", "MAV_PARAM_TYPE_UINT8", 1)
-        logger.info(f'EK3_ENABLE: {response}')
+        logging.info(f'EK3_ENABLE: {response}')
 
         response = set_parameter("VISO_TYPE", "MAV_PARAM_TYPE_UINT8", 1)
-        logger.info(f'VISO_TYPE: {response}')
+        logging.info(f'VISO_TYPE: {response}')
 
         response = set_parameter("EK3_GPS_TYPE", "MAV_PARAM_TYPE_UINT8", 3)
-        logger.info(f'EK3_GPS_TYPE: {response}')
+        logging.info(f'EK3_GPS_TYPE: {response}')
 
         response = set_parameter("EK3_SRC1_POSXY", "MAV_PARAM_TYPE_UINT8", 6)  # EXTNAV
-        logger.info(f'EK3_SRC1_POSXY: {response}')
+        logging.info(f'EK3_SRC1_POSXY: {response}')
 
         response = set_parameter("EK3_SRC1_VELXY", "MAV_PARAM_TYPE_UINT8", 6)  # EXTNAV
-        logger.info(f'EK3_SRC1_VELXY: {response}')
+        logging.info(f'EK3_SRC1_VELXY: {response}')
 
         response = set_parameter("EK3_SRC1_POSZ", "MAV_PARAM_TYPE_UINT8", 1)
-        logger.info(f'EK3_SRC1_POSZ: {response}')
+        logging.info(f'EK3_SRC1_POSZ: {response}')
 
     def send_vision_position_delta(self, position_delta, angle_delta, confidence, dt):
 
@@ -329,7 +329,7 @@ class RovLink:
         #self.setup_mavlink()  # TODO
         self.setup_parameters()
         time.sleep(1)  # TODO
-        logger.debug("Running")  # TODO
+        logging.debug("Running")  # TODO
         self.packet_received_timestamp = time.time()  # TODO
 
         connected = True  # TODO
@@ -341,7 +341,7 @@ class RovLink:
 
             if packet is None:
                 if time.time() - self.packet_received_timestamp > self.timeout:
-                    logger.warning('Timeout, restarting')
+                    logging.warning('Timeout, restarting')
                     self.reconnect()
                 time.sleep(0.005)
                 continue
