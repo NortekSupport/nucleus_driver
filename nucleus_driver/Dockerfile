@@ -13,6 +13,7 @@ COPY requirements.txt /tmp/
 RUN pip install --user -r /tmp/requirements.txt
 RUN pip install --user Flask==2.2.2
 RUN pip install --user Flask-RESTful==0.3.9
+RUN pip install --user requests==2.28.2
 
 
 
