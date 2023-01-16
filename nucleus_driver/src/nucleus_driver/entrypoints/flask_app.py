@@ -52,7 +52,7 @@ def connect_tcp():
     # TODO: Test what happens if serial port is not given
     # TODO: Test what happens if serial port is wrong
 
-    if not nucleus_driver.connect(connection_type='TCP'):
+    if not nucleus_driver.connect(connection_type='tcp'):
         response = jsonify({'status': 'Failed to connect through TCP'})
         response.status_code = 400
         return response
