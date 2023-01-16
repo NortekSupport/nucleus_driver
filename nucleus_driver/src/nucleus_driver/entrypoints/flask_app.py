@@ -47,6 +47,8 @@ def connect_serial():
 def connect_tcp():
     host = request.args.get('host')
 
+    logging.info(f'connecting to host: {host}')
+
     nucleus_driver.set_tcp_configuration(host=host)
 
     # TODO: Test what happens if serial port is not given
