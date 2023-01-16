@@ -12,6 +12,9 @@ from nucleus_driver import NucleusDriver
 #DOCKER_PORT = 5000
 
 #NUCLEUS_HOST = 'Nucleus-300004.local'
+
+logging.basicConfig(level=logging.DEBUG)
+
 HOSTNAME = 'Nucleus-300004.local'
 
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
