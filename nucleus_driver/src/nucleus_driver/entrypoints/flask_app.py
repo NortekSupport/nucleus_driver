@@ -216,8 +216,8 @@ def mavlink_get_specific_param():
             logging.warning(f"Error setting parameter '{param_name}': {error}")
             return False
 
-    #response = get_parameter("AHRS_EKF_TYPE")
-    response = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/AHRS_EKF_TYPE") #, json=data)
+    response = get_parameter("AHRS_EKF_TYPE")
+    #response = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/AHRS_EKF_TYPE") #, json=data)
     logging.info(f'AHRS_EKF_TYPE: {response.json()}')
 
 
