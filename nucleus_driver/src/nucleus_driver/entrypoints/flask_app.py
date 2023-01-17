@@ -179,7 +179,7 @@ def nucleus_driver_get_all():
     return jsonify({'get_all': reply_list})
 
 
-@app.route('mavlink/get_param', methods=['GET'])
+@app.route('/mavlink/get_param', methods=['GET'])
 def mavlink_get_param():
 
     param_get = requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_SET")
