@@ -218,9 +218,9 @@ def mavlink_get_specific_param():
 
     #response = get_parameter("AHRS_EKF_TYPE")
     response = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/AHRS_EKF_TYPE") #, json=data)
-    logging.info(f'AHRS_EKF_TYPE: {response}')
-
+    logging.info(f'AHRS_EKF_TYPE: {json.loads(response).text}')
     
+
     return response
 
 class RovLink:
