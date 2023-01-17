@@ -206,7 +206,7 @@ def mavlink_get_specific_param():
             for index, char in enumerate(parameter_name):
                 data['message']['param_id'][index] = char
 
-            result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
+            result = requests.get(MAVLINK2REST_URL + "/mavlink", json=data)
 
             logging.info(result)
 
