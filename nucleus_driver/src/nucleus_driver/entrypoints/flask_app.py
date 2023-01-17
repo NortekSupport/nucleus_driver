@@ -192,6 +192,34 @@ def mavlink_get_param():
     logging.info(f'param_get_text: {param_get_text}\r\n')
     logging.info(f'param_json_loads: {param_json_laods}\r\n')
 
+    return param_get
+
+@app.route('/mavlink/get_specific_param', methods=['GET'])
+def mavlink_get_specific_param():
+
+    def get_parameter(parameter_name):
+
+        try:
+
+            data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
+
+            for index, char in enumerate(parameter_name):
+                data['message']['param_id'][index] = char
+
+            result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
+
+            logging.info(result)
+
+            return result.status_code == 200
+
+        except Exception as error:
+            logging.warning(f"Error setting parameter '{param_name}': {error}")
+            return False
+
+    response = get_parameter("AHRS_EKF_TYPE")
+    logging.info(f'AHRS_EKF_TYPE: {response}')
+
+    return response
 
 class RovLink:
 
