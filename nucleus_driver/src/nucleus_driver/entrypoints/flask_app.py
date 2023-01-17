@@ -15,7 +15,8 @@ from nucleus_driver import NucleusDriver
 
 logging.basicConfig(level=logging.DEBUG)
 
-HOSTNAME = 'Nucleus-300004.local'
+#HOSTNAME = 'NORTEK-300004.local'
+HOSTNAME = '192.168.2.201'
 
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
 
@@ -176,6 +177,20 @@ def nucleus_driver_get_all():
         reply_list.append('index error')
 
     return jsonify({'get_all': reply_list})
+
+
+@app.route('mavlink/get_param', methods=['GET'])
+def mavlink_get_param():
+
+    param_get = requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_SET")
+
+    param_get_text = param_get.text
+
+    param_json_laods = json.loads(param_get_text)
+
+    logger.info(f'param_get: {param_get}\r\n')
+    logger.info(f'param_get_text: {param_get_text}\r\n')
+    logger.info(f'param_json_loads: {param_json_laods}\r\n')
 
 
 class RovLink:
