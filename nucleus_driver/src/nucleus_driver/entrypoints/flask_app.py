@@ -188,9 +188,9 @@ def mavlink_get_param():
 
     param_json_laods = json.loads(param_get_text)
 
-    logger.info(f'param_get: {param_get}\r\n')
-    logger.info(f'param_get_text: {param_get_text}\r\n')
-    logger.info(f'param_json_loads: {param_json_laods}\r\n')
+    logging.info(f'param_get: {param_get}\r\n')
+    logging.info(f'param_get_text: {param_get_text}\r\n')
+    logging.info(f'param_json_loads: {param_json_laods}\r\n')
 
 
 class RovLink:
