@@ -203,10 +203,21 @@ def mavlink_get_specific_param():
 
             data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
 
+
+            logging.info(f'DEFAULT DATA:\r\n{data}\r\n\r\n')
+
             for index, char in enumerate(parameter_name):
                 data['message']['param_id'][index] = char
 
-            result = requests.get(MAVLINK2REST_URL + "/mavlink", json=data)
+            data['message']['param_index'] = -1
+            data['message']['target_system'] = 1
+            data['message']['target_component'] = 1
+
+            logging.info(f'REQUEST DATA:\r\n{data}\r\n\r\n')
+
+            #result = requests.get(MAVLINK2REST_URL + "/mavlink", json=data)
+
+            result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_REQUEST_READ", json=data)
 
             logging.info(result)
 
