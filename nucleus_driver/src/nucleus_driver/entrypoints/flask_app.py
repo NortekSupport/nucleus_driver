@@ -248,7 +248,8 @@ def mavlink_get_specific_param():
             logging.warning(f"Error setting parameter '{parameter_name}': {error}")
             return False
 
-    ahrs_ekf_type = get_parameter("AHRS_EKF_TYPES")
+    #ahrs_ekf_type = get_parameter("AHRS_EKF_TYPE")
+    ahrs_ekf_type = get_parameter("ABCDEFGH")
     logging.info(f'AHRS_EKF_TYPE: {ahrs_ekf_type}')
 
     ek2_enable = get_parameter("EK2_ENABLE")
