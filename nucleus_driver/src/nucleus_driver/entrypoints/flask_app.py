@@ -278,6 +278,13 @@ def mavlink_get_specific_param():
     logging.info(response_parameter_name == parameter_name)
     logging.info('\r\n\r\n\r\n\n')
 
+    if response_parameter_name != parameter_name:
+        response['WARNING'] = {'message': 'The obtained parameter is not the same as the requested parameter',
+                               'requested_parameter': parameter_name,
+                               'obtained_parameter': response_parameter_name
+                               }
+        response.status_code = 210
+
     return response
 
 
