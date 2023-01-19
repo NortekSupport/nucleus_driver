@@ -283,6 +283,7 @@ def mavlink_get_specific_param():
                                'requested_parameter': parameter_name,
                                'obtained_parameter': response_parameter_name
                                }
+        response = jsonify(response)
         response.status_code = 210
 
     return response
