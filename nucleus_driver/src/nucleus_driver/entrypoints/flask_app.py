@@ -215,49 +215,23 @@ def mavlink_get_specific_param():
             post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
             logging.info(f'POST_RESULT:\r\n{post_result}\r\n\r\n')
+            logging.info(f'type(POST_RESULT):\r\n{type(post_result)}\r\n\r\n')
 
             get_result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
-            return get_result
+            return get_result.json()
 
         except Exception as error:
             logging.warning(f"Error setting parameter '{parameter_name}': {error}")
             return False
 
-    response = get_parameter("AHRS_EKF_TYPE")
-    logging.info(f'AHRS_EKF_TYPE: {response}')
+    ahrs_ekf_type = get_parameter("AHRS_EKF_TYPE")
+    logging.info(f'AHRS_EKF_TYPE: {ahrs_ekf_type}')
 
-    logging.info(f'response type: {type(response)}')
+    ek2_enable = get_parameter("EK2_ENABLE")
+    logging.info(f'EK2_ENABLE: {ek2_enable}')
 
-
-    try:
-        logging.info(f'\r\n\r\njson.loads(response.text):')
-        logging.info(f'{json.loads(response.text)}')
-        logging.info('\r\n\r\n')
-    except Exception as e:
-        logging.warning(f'json.loads(response.text) failed: {e}\r\n\r\n')
-        pass
-
-    try:
-        logging.info(f'\r\n\r\nresponse.text:')
-        logging.info(f'{response.text}')
-        logging.info('\r\n\r\n')
-    except Exception as e:
-        logging.warning(f'response.text failed: {e}\r\n\r\n')
-        pass
-
-    try:
-        logging.info(f'\r\n\r\nresponse.json():')
-        logging.info(f'{response.json()}')
-        logging.info(f'\r\n\r\n')
-    except Exception as e:
-        logging.warning(f'response.json() failed: {e}\r\n\r\n')
-        pass
-
-    response = get_parameter("EK2_ENABLE")
-    logging.info(f'AHRS_EKF_TYPE: {response}')
-
-    return response.json()
+    return ek2_enable
 
 
 class RovLink:
