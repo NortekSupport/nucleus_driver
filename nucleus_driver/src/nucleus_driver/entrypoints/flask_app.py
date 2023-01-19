@@ -199,68 +199,86 @@ def mavlink_get_param():
 @app.route('/mavlink/get_specific_param', methods=['GET'])
 def mavlink_get_specific_param():
 
-    parameter = request.args.get('parameter')
+    parameter_name = request.args.get('parameter_name')
 
-    logging.warning(parameter)
+    if parameter_name is None:
+        response = jsonify({'message': 'parameter_name must be specified'})
+        response.status_code = 400
+        return response
 
-    def get_parameter(parameter_name):
+    parameter_name = parameter_name.upper()
 
-        try:
+    try:
 
-            data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
+        data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
 
-            for index, char in enumerate(parameter_name):
-                data['message']['param_id'][index] = char
+        for index, char in enumerate(parameter_name):
+            data['message']['param_id'][index] = char
 
-            data['message']['param_index'] = -1
-            data['message']['target_system'] = 1
-            data['message']['target_component'] = 1
+        data['message']['param_index'] = -1
+        data['message']['target_system'] = 1
+        data['message']['target_component'] = 1
 
-            post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
+        post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
-            logging.info(f'POST_RESULT:\r\n{post_result}\r\n\r\n')
-            logging.info(f'status_code: {post_result.status_code}')
-            logging.info(f'headers    : {post_result.headers}')
-            logging.info(f'raw        : {post_result.raw}')
-            logging.info(f'url        : {post_result.url}')
-            logging.info(f'encoding   : {post_result.encoding}')
-            logging.info(f'history    : {post_result.history}')
-            logging.info(f'reason     : {post_result.reason}')
-            logging.info(f'cookies    : {post_result.cookies}')
-            logging.info(f'elapsed    : {post_result.elapsed}')
-            logging.info(f'request    : {post_result.request}')
-            logging.info(f'type(POST_RESULT):\r\n{type(post_result)}\r\n\r\n')
+        logging.info(f'POST_RESULT:\r\n{post_result}\r\n\r\n')
+        logging.info(f'status_code: {post_result.status_code}')
+        logging.info(f'headers    : {post_result.headers}')
+        logging.info(f'raw        : {post_result.raw}')
+        logging.info(f'url        : {post_result.url}')
+        logging.info(f'encoding   : {post_result.encoding}')
+        logging.info(f'history    : {post_result.history}')
+        logging.info(f'reason     : {post_result.reason}')
+        logging.info(f'cookies    : {post_result.cookies}')
+        logging.info(f'elapsed    : {post_result.elapsed}')
+        logging.info(f'request    : {post_result.request}')
+        logging.info(f'type(POST_RESULT):\r\n{type(post_result)}\r\n\r\n')
 
-            get_result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+        get_result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
-            logging.info(f'GET_RESULT:\r\n{get_result}\r\n\r\n')
-            logging.info(f'status_code: {get_result.status_code}')
-            logging.info(f'headers    : {get_result.headers}')
-            logging.info(f'raw        : {get_result.raw}')
-            logging.info(f'url        : {get_result.url}')
-            logging.info(f'encoding   : {get_result.encoding}')
-            logging.info(f'history    : {get_result.history}')
-            logging.info(f'reason     : {get_result.reason}')
-            logging.info(f'cookies    : {get_result.cookies}')
-            logging.info(f'elapsed    : {get_result.elapsed}')
-            logging.info(f'request    : {get_result.request}')
-            logging.info(f'type(GET_RESULT):\r\n{type(get_result)}\r\n\r\n')
+        logging.info(f'GET_RESULT:\r\n{get_result}\r\n\r\n')
+        logging.info(f'status_code: {get_result.status_code}')
+        logging.info(f'headers    : {get_result.headers}')
+        logging.info(f'raw        : {get_result.raw}')
+        logging.info(f'url        : {get_result.url}')
+        logging.info(f'encoding   : {get_result.encoding}')
+        logging.info(f'history    : {get_result.history}')
+        logging.info(f'reason     : {get_result.reason}')
+        logging.info(f'cookies    : {get_result.cookies}')
+        logging.info(f'elapsed    : {get_result.elapsed}')
+        logging.info(f'request    : {get_result.request}')
+        logging.info(f'type(GET_RESULT):\r\n{type(get_result)}\r\n\r\n')
 
-            return get_result.json()
+        #return get_result.json()
 
-        except Exception as error:
-            logging.warning(f"Error setting parameter '{parameter_name}': {error}")
-            return False
+    except Exception as error:
+        response = jsonify({'message': f'Failed to obtain parameter {parameter_name}: {error}'})
+        response.status_code = 400
+        return response
 
     #ahrs_ekf_type = get_parameter("AHRS_EKF_TYPE")
     #ahrs_ekf_type = get_parameter("ABCDEFGH")
     #logging.info(f'AHRS_EKF_TYPE: {ahrs_ekf_type}')
 
-    ek2_enable = get_parameter("EK2_ENABLE")
-    logging.info(f'EK2_ENABLE: {ek2_enable}')
-    logging.info(f'type(EK2_ENABLE): {type(ek2_enable)}')
+    #ek2_enable = get_parameter("EK2_ENABLE")
+    #logging.info(f'EK2_ENABLE: {ek2_enable}')
+    #logging.info(f'type(EK2_ENABLE): {type(ek2_enable)}')
 
-    return ek2_enable
+    response = get_result.json()
+
+    response_parameter_name = ''
+    for char in response['message']['param_id']:
+        if char == '\u0000':
+            break
+
+        response_parameter_name += char
+
+    logging.info('\r\n\r\n\r\n\n')
+    logging.info(response_parameter_name)
+    logging.info(response_parameter_name == parameter_name)
+    logging.info('\r\n\r\n\r\n\n')
+
+    return response
 
 
 class RovLink:
