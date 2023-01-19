@@ -5,6 +5,7 @@ import requests
 import json
 import logging
 
+
 from nucleus_driver import NucleusDriver
 
 
@@ -194,6 +195,7 @@ def mavlink_get_param():
 
     return param_get
 
+
 @app.route('/mavlink/get_specific_param', methods=['GET'])
 def mavlink_get_specific_param():
 
@@ -202,7 +204,6 @@ def mavlink_get_specific_param():
         try:
 
             data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
-
 
             logging.info(f'DEFAULT DATA:\r\n{data}\r\n\r\n')
 
@@ -219,11 +220,13 @@ def mavlink_get_specific_param():
 
             #result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_REQUEST_READ", json=data)
             #result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages", json=data)
-            result = requests.get(MAVLINK2REST_URL + "/mavlink", json=data)
+            post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
-            logging.info(f'RESULT:\r\n{result}\r\n\r\n')
+            logging.info(f'POST_RESULT:\r\n{post_result}\r\n\r\n')
 
-            return result.status_code == 200
+            get_result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+            return get_result
 
         except Exception as error:
             logging.warning(f"Error setting parameter '{parameter_name}': {error}")
@@ -233,8 +236,23 @@ def mavlink_get_specific_param():
     #response = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/AHRS_EKF_TYPE") #, json=data)
     logging.info(f'AHRS_EKF_TYPE: {response}')
 
+    try:
+        logging.info(f'json.loads(response):\r\r{json.loads(response)}\r\n\r\n')
+    except:
+        pass
 
-    return response.json()
+    try:
+        logging.info(f'json.loads(response.text):\r\r{json.loads(response.text)}\r\n\r\n')
+    except:
+        pass
+
+    try:
+        logging.info(f'response.json():\r\r{response.json()}\r\n\r\n')
+    except:
+        pass
+
+    return response
+
 
 class RovLink:
 
@@ -322,7 +340,7 @@ class RovLink:
                 return result.status_code == 200
 
             except Exception as error:
-                logging.warning(f"Error setting parameter '{param_name}': {error}")
+                logging.warning(f"Error setting parameter '{parameter_name}': {error}")
                 return False
 
         response = set_parameter("AHRS_EKF_TYPE", "MAV_PARAM_TYPE_UINT8", 3)
