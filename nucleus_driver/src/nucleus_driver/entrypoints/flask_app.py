@@ -233,23 +233,30 @@ def mavlink_get_specific_param():
             return False
 
     response = get_parameter("AHRS_EKF_TYPE")
-    #response = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/AHRS_EKF_TYPE") #, json=data)
     logging.info(f'AHRS_EKF_TYPE: {response}')
+
+    logging.info(f'response type: {type(response)}')
 
     try:
         logging.info(f'json.loads(response):\r\r{json.loads(response)}\r\n\r\n')
     except:
+        logging.warning('json.laods(response) failed')
         pass
 
     try:
         logging.info(f'json.loads(response.text):\r\r{json.loads(response.text)}\r\n\r\n')
     except:
+        logging.warning('json.laods(response.text) failed')
         pass
 
     try:
         logging.info(f'response.json():\r\r{response.json()}\r\n\r\n')
     except:
+        logging.warning('response.json() failed')
         pass
+
+    response = get_parameter("EK2_ENABLE")
+    logging.info(f'AHRS_EKF_TYPE: {response}')
 
     return response
 
