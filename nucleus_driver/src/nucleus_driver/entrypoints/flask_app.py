@@ -219,13 +219,12 @@ def mavlink_get_specific_param():
 
             result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_REQUEST_READ", json=data)
 
-            logging.info(result.text)
-            logging.info(json.loads(result.text))
+            logging.info(f'RESULT:\r\n{result}\r\n\r\n')
 
             return result.status_code == 200
 
         except Exception as error:
-            logging.warning(f"Error setting parameter '{param_name}': {error}")
+            logging.warning(f"Error setting parameter '{parameter_name}': {error}")
             return False
 
     response = get_parameter("AHRS_EKF_TYPE")
