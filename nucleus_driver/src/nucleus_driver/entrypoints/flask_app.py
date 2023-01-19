@@ -205,8 +205,6 @@ def mavlink_get_specific_param():
 
             data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
 
-            logging.info(f'DEFAULT DATA:\r\n{data}\r\n\r\n')
-
             for index, char in enumerate(parameter_name):
                 data['message']['param_id'][index] = char
 
@@ -214,12 +212,6 @@ def mavlink_get_specific_param():
             data['message']['target_system'] = 1
             data['message']['target_component'] = 1
 
-            logging.info(f'REQUEST DATA:\r\n{data}\r\n\r\n')
-
-            #result = requests.get(MAVLINK2REST_URL + "/mavlink", json=data)
-
-            #result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_REQUEST_READ", json=data)
-            #result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages", json=data)
             post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
             logging.info(f'POST_RESULT:\r\n{post_result}\r\n\r\n')
@@ -238,21 +230,35 @@ def mavlink_get_specific_param():
     logging.info(f'response type: {type(response)}')
 
     try:
-        logging.info(f'json.loads(response):\r\r{json.loads(response)}\r\n\r\n')
-    except:
-        logging.warning('json.laods(response) failed')
+        logging.info('\r\n\r\njson.loads(response):')
+        logging.info(f'{json.loads(response)}')
+        logging.info('\r\n\r\n')
+    except Exception as e:
+        logging.warning(f'json.loads(response) failed: {e}\r\n\r\n')
         pass
 
     try:
-        logging.info(f'json.loads(response.text):\r\r{json.loads(response.text)}\r\n\r\n')
-    except:
-        logging.warning('json.laods(response.text) failed')
+        logging.info(f'\r\n\r\njson.loads(response.text):')
+        logging.info(f'{json.loads(response.text)}')
+        logging.info('\r\n\r\n')
+    except Exception as e:
+        logging.warning(f'json.loads(response.text) failed: {e}\r\n\r\n')
         pass
 
     try:
-        logging.info(f'response.json():\r\r{response.json()}\r\n\r\n')
-    except:
-        logging.warning('response.json() failed')
+        logging.info(f'\r\n\r\njson.loads(response.text):')
+        logging.info(f'{response.text}')
+        logging.info('\r\n\r\n')
+    except Exception as e:
+        logging.warning(f'response.text failed: {e}\r\n\r\n')
+        pass
+
+    try:
+        logging.info(f'\r\n\r\nresponse.json():')
+        logging.info(f'{response.json()}')
+        logging.info(f'\r\n\r\n')
+    except Exception as e:
+        logging.warning(f'response.json() failed: {e}\r\n\r\n')
         pass
 
     response = get_parameter("EK2_ENABLE")
