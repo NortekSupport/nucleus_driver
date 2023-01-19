@@ -229,13 +229,6 @@ def mavlink_get_specific_param():
 
     logging.info(f'response type: {type(response)}')
 
-    try:
-        logging.info('\r\n\r\njson.loads(response):')
-        logging.info(f'{json.loads(response)}')
-        logging.info('\r\n\r\n')
-    except Exception as e:
-        logging.warning(f'json.loads(response) failed: {e}\r\n\r\n')
-        pass
 
     try:
         logging.info(f'\r\n\r\njson.loads(response.text):')
@@ -246,7 +239,7 @@ def mavlink_get_specific_param():
         pass
 
     try:
-        logging.info(f'\r\n\r\njson.loads(response.text):')
+        logging.info(f'\r\n\r\nresponse.text:')
         logging.info(f'{response.text}')
         logging.info('\r\n\r\n')
     except Exception as e:
@@ -264,7 +257,7 @@ def mavlink_get_specific_param():
     response = get_parameter("EK2_ENABLE")
     logging.info(f'AHRS_EKF_TYPE: {response}')
 
-    return response
+    return response.json()
 
 
 class RovLink:
