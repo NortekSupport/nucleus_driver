@@ -217,7 +217,9 @@ def mavlink_get_specific_param():
 
             #result = requests.get(MAVLINK2REST_URL + "/mavlink", json=data)
 
-            result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_REQUEST_READ", json=data)
+            #result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_REQUEST_READ", json=data)
+            #result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages", json=data)
+            result = requests.get(MAVLINK2REST_URL + "/mavlink", json=data)
 
             logging.info(f'RESULT:\r\n{result}\r\n\r\n')
 
