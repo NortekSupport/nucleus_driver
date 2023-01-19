@@ -219,7 +219,8 @@ def mavlink_get_specific_param():
 
             result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_REQUEST_READ", json=data)
 
-            logging.info(result)
+            logging.info(result.text)
+            logging.info(json.loads(result.text))
 
             return result.status_code == 200
 
@@ -229,7 +230,7 @@ def mavlink_get_specific_param():
 
     response = get_parameter("AHRS_EKF_TYPE")
     #response = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/AHRS_EKF_TYPE") #, json=data)
-    logging.info(f'AHRS_EKF_TYPE: {response.json()}')
+    logging.info(f'AHRS_EKF_TYPE: {response}')
 
 
     return response.json()
