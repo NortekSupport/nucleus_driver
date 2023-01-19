@@ -215,6 +215,16 @@ def mavlink_get_specific_param():
             post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
             logging.info(f'POST_RESULT:\r\n{post_result}\r\n\r\n')
+            logging.info(f'status_code: {post_result.status_code}')
+            logging.info(f'headers    : {post_result.headers}')
+            logging.info(f'raw        : {post_result.raw}')
+            logging.info(f'url        : {post_result.url}')
+            logging.info(f'encoding   : {post_result.encoding}')
+            logging.info(f'history    : {post_result.history}')
+            logging.info(f'reason     : {post_result.reason}')
+            logging.info(f'cookies    : {post_result.cookies}')
+            logging.info(f'elapsed    : {post_result.elapsed}')
+            logging.info(f'request    : {post_result.request}')
             logging.info(f'type(POST_RESULT):\r\n{type(post_result)}\r\n\r\n')
 
             get_result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
@@ -227,6 +237,16 @@ def mavlink_get_specific_param():
 
     ahrs_ekf_type = get_parameter("AHRS_EKF_TYPE")
     logging.info(f'AHRS_EKF_TYPE: {ahrs_ekf_type}')
+    logging.info(f'status_code: {ahrs_ekf_type.status_code}')
+    logging.info(f'headers    : {ahrs_ekf_type.headers}')
+    logging.info(f'raw        : {ahrs_ekf_type.raw}')
+    logging.info(f'url        : {ahrs_ekf_type.url}')
+    logging.info(f'encoding   : {ahrs_ekf_type.encoding}')
+    logging.info(f'history    : {ahrs_ekf_type.history}')
+    logging.info(f'reason     : {ahrs_ekf_type.reason}')
+    logging.info(f'cookies    : {ahrs_ekf_type.cookies}')
+    logging.info(f'elapsed    : {ahrs_ekf_type.elapsed}')
+    logging.info(f'request    : {ahrs_ekf_type.request}')
 
     ek2_enable = get_parameter("EK2_ENABLE")
     logging.info(f'EK2_ENABLE: {ek2_enable}')
