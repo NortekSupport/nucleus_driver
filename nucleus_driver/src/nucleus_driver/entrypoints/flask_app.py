@@ -199,6 +199,10 @@ def mavlink_get_param():
 @app.route('/mavlink/get_specific_param', methods=['GET'])
 def mavlink_get_specific_param():
 
+    parameter = request.args.get('parameter')
+
+    logging.warning(parameter)
+
     def get_parameter(parameter_name):
 
         try:
@@ -240,7 +244,7 @@ def mavlink_get_specific_param():
             logging.info(f'cookies    : {get_result.cookies}')
             logging.info(f'elapsed    : {get_result.elapsed}')
             logging.info(f'request    : {get_result.request}')
-            logging.info(f'type(POST_RESULT):\r\n{type(get_result)}\r\n\r\n')
+            logging.info(f'type(GET_RESULT):\r\n{type(get_result)}\r\n\r\n')
 
             return get_result.json()
 
@@ -249,11 +253,12 @@ def mavlink_get_specific_param():
             return False
 
     #ahrs_ekf_type = get_parameter("AHRS_EKF_TYPE")
-    ahrs_ekf_type = get_parameter("ABCDEFGH")
-    logging.info(f'AHRS_EKF_TYPE: {ahrs_ekf_type}')
+    #ahrs_ekf_type = get_parameter("ABCDEFGH")
+    #logging.info(f'AHRS_EKF_TYPE: {ahrs_ekf_type}')
 
     ek2_enable = get_parameter("EK2_ENABLE")
     logging.info(f'EK2_ENABLE: {ek2_enable}')
+    logging.info(f'type(EK2_ENABLE): {type(ek2_enable)}')
 
     return ek2_enable
 
