@@ -43,7 +43,7 @@ class NucleusDriver:
 
         self.connection.set_tcp_configuration(host=host)
 
-    def connect(self, connection_type) -> bool:
+    def connect(self, connection_type, password=None) -> bool:
 
         CONNECTION_TYPES = ['serial', 'tcp']
 
@@ -51,7 +51,7 @@ class NucleusDriver:
             self.messages.write_warning('Connection type {} not in {}'.format(connection_type, CONNECTION_TYPES))
             return False
 
-        return self.connection.connect(connection_type=connection_type)
+        return self.connection.connect(connection_type=connection_type, password=password)
 
     def disconnect(self) -> bool:
 
@@ -167,7 +167,7 @@ class NucleusDriver:
     # Flash
     ###########################################
 
-    def flash_firmware(self, path: str) -> bool:
+    def flash_firmware(self, path: str, password: str=None) -> bool:
 
         self.flash.reset_flash_files()
 
@@ -175,7 +175,7 @@ class NucleusDriver:
             self.messages.write_warning('Was not able to set flash file: {}'.format(path))
             return False
 
-        result = self.flash.flash_firmware()
+        result = self.flash.flash_firmware(password=password)
 
         if result == 0:
             self.messages.write_message('Successfully flashed firmware')

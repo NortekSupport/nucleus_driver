@@ -93,18 +93,21 @@ class App(cmd2.Cmd):
             return True
 
         config_status = False
+        password = None
 
         if connect_args.connection_type == 'serial':
             config_status = serial_configuration()
 
         elif connect_args.connection_type == 'tcp':
             config_status = tcp_configuration()
+            if config_status:
+                password = input('\ntcp - password: ')
 
         if not config_status:
             self.nucleus_driver.messages.write_warning('Failed to set connection configuration')
             return
 
-        if self.nucleus_driver.connect(connection_type=connect_args.connection_type):
+        if self.nucleus_driver.connect(connection_type=connect_args.connection_type, password=password):
             self.nucleus_driver.messages.write_message('\r\nSuccessfully connected to Nucleus device\r\n')
             self.nucleus_driver.messages.write_message('ID:    {}'.format(self.nucleus_driver.connection.nucleus_id))
             self.nucleus_driver.messages.write_message('GETFW: {}\r\n'.format(self.nucleus_driver.connection.firmware_version))
@@ -229,7 +232,11 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
-        self.nucleus_driver.flash_firmware(path=path)
+        password = None
+        if self.nucleus_driver.connection.get_connection_type() == 'tcp':
+            password = input('password: ')
+
+        self.nucleus_driver.flash_firmware(path=path, password=password)
 
     ###########################################
     # Assert

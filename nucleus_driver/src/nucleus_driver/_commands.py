@@ -1433,7 +1433,7 @@ class Commands:
 
         return get_reply
 
-    def set_eth(self, ipmethod=None, ip=None, netmask=None, gateway=None):
+    def set_eth(self, ipmethod=None, ip=None, netmask=None, gateway=None, password=None):
 
         self._reset_buffer()
 
@@ -1462,6 +1462,9 @@ class Commands:
                 command += b',GATEWAY="' + gateway.encode() + b'"'
             else:
                 self.messages.write_warning('Invalid value for GATEWAY in SETETH command')
+
+        if password is not None:
+            command += b',PASSWORD="' + password.encode() + b'"'
 
         command += b'\r\n'
 
