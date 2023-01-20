@@ -247,6 +247,8 @@ def mavlink_get_specific_parameter():
 
             param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
+            logging.info(f'\r\n\r\n{param_value.json()}\r\n')
+
             param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
 
             if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
@@ -276,7 +278,10 @@ def mavlink_get_specific_parameter():
         param_value = jsonify(param_value)
         param_value.status_code = 210
 
-    logging.info(f'PARAM_VALUE: {response_parameter_name} = {param_value["message"]["param_value"]}')
+    try:
+        logging.info(f'PARAM_VALUE: {response_parameter_name} = {param_value["message"]["param_value"]}')
+    except TypeError:
+        logging.warning('Failed to display PARAM_VALUE')
 
     return param_value
 
@@ -284,7 +289,10 @@ def mavlink_get_specific_parameter():
 @app.route('/mavlink/set_default_parameter')
 def mavlink_set_default_parameters():
 
-    pass
+    AHRS_EKF_TYPE = 3.0
+    EK2_ENABLE = 0.0
+    EK3_ENABLE = 1.0
+
 
 class RovLink:
 
