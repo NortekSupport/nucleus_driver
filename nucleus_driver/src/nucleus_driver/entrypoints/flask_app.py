@@ -292,6 +292,11 @@ def mavlink_set_default_parameters():
     AHRS_EKF_TYPE = 3.0
     EK2_ENABLE = 0.0
     EK3_ENABLE = 1.0
+    VISO_TYPE = None
+    EK3_GPS_TYPE = 3.0
+    EK3_SRC1_POSXY = None
+    EK3_SRC1_VELXY = None
+    EK3_SRC1_POSZ = None
 
 
 class RovLink:
