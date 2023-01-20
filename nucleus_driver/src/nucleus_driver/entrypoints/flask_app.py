@@ -201,6 +201,7 @@ def mavlink_get_param():
 @app.route('/mavlink/get_specific_param', methods=['GET'])
 def mavlink_get_specific_param():
 
+    # Check if a parameter_name is given
     parameter_name = request.args.get('parameter_name')
 
     if parameter_name is None:
@@ -210,6 +211,7 @@ def mavlink_get_specific_param():
 
     parameter_name = parameter_name.upper()
 
+    # Extract timestamp of current PARAM_VALUE
     param_value_pre_timestamp = None
     try:
         param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
@@ -218,6 +220,8 @@ def mavlink_get_specific_param():
     except Exception as e:
         logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
 
+    # Get PARAM_VALUE
+    param_value = jsonify({'message': 'no PARAM_VALUE obtained'})
     try:
         data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
 
@@ -230,27 +234,19 @@ def mavlink_get_specific_param():
 
         post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
-        logging.info(f'POST_RESULT:\r\n{post_result}\r\n\r\n')
-        logging.info(f'status_code: {post_result.status_code}')
-        logging.info(f'headers    : {post_result.headers}')
-        logging.info(f'raw        : {post_result.raw}')
-        logging.info(f'url        : {post_result.url}')
-        logging.info(f'encoding   : {post_result.encoding}')
-        logging.info(f'history    : {post_result.history}')
-        logging.info(f'reason     : {post_result.reason}')
-        logging.info(f'cookies    : {post_result.cookies}')
-        logging.info(f'elapsed    : {post_result.elapsed}')
-        logging.info(f'request    : {post_result.request}')
-        logging.info(f'type(POST_RESULT):\r\n{type(post_result)}\r\n\r\n')
+        if post_result.status_code != 200:
+            logging.warning(type(post_result.status_code)) # TODO: Remove
 
+            param_value = jsonify({'message': f'PARAM_REQUEST_READ command did not respond with 200: {post_result.status_code}'})
+            param_value.status_code = 400
+            return param_value
 
-
-        param_value = {}
         for _ in range(10):
             param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
             param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
 
+            # TODO: REMOVE
             name = ''
             for char in param_value.json()['message']['param_id']:
                 if char == '\u0000':
@@ -259,45 +255,24 @@ def mavlink_get_specific_param():
                 name += char
 
             logging.info(f'\r\n\r\nITERATION   :{_}')
-            
+
             logging.info(f'\r\nPARAMETER   :{name}')
             logging.info(f'FIRST_UPDATE:{param_value.json()["status"]["time"]["first_update"]}')
             logging.info(f'LAST_UPDATE :{param_value.json()["status"]["time"]["last_update"]}\r\n\r\n')
 
-
-
-
+            # TODO: Remove until here
 
             if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
                 break
 
-            time.sleep(0.005)
+            time.sleep(0.01)  # TODO: Move to start of loop
 
-
-        '''
-        get_result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-
-        logging.info(f'GET_RESULT:\r\n{get_result}\r\n\r\n')
-        logging.info(f'status_code: {get_result.status_code}')
-        logging.info(f'headers    : {get_result.headers}')
-        logging.info(f'raw        : {get_result.raw}')
-        logging.info(f'url        : {get_result.url}')
-        logging.info(f'encoding   : {get_result.encoding}')
-        logging.info(f'history    : {get_result.history}')
-        logging.info(f'reason     : {get_result.reason}')
-        logging.info(f'cookies    : {get_result.cookies}')
-        logging.info(f'elapsed    : {get_result.elapsed}')
-        logging.info(f'request    : {get_result.request}')
-        logging.info(f'type(GET_RESULT):\r\n{type(get_result)}\r\n\r\n')
-        '''
+        param_value = param_value.json()
 
     except Exception as error:
         param_value = jsonify({'message': f'Failed to obtain parameter {parameter_name}: {error}'})
         param_value.status_code = 400
         return param_value
-
-
-    param_value = param_value.json()
 
     response_parameter_name = ''
     for char in param_value['message']['param_id']:
@@ -306,6 +281,7 @@ def mavlink_get_specific_param():
 
         response_parameter_name += char
 
+    # TODO: Remove
     logging.info('\r\n\r\n\r\n\n')
     logging.info(response_parameter_name)
     logging.info(response_parameter_name == parameter_name)
