@@ -249,6 +249,76 @@ def mavlink_get_specific_param():
         logging.info(f'request    : {get_result.request}')
         logging.info(f'type(GET_RESULT):\r\n{type(get_result)}\r\n\r\n')
 
+        get_result_temp = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+        logging.info(f'GET_RESULT:\r\n{get_result_temp}\r\n\r\n')
+        logging.info(f'status_code: {get_result_temp.status_code}')
+        logging.info(f'headers    : {get_result_temp.headers}')
+        logging.info(f'raw        : {get_result_temp.raw}')
+        logging.info(f'url        : {get_result_temp.url}')
+        logging.info(f'encoding   : {get_result_temp.encoding}')
+        logging.info(f'history    : {get_result_temp.history}')
+        logging.info(f'reason     : {get_result_temp.reason}')
+        logging.info(f'cookies    : {get_result_temp.cookies}')
+        logging.info(f'elapsed    : {get_result_temp.elapsed}')
+        logging.info(f'request    : {get_result_temp.request}')
+
+        get_result_temp = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+        logging.info(f'GET_RESULT:\r\n{get_result_temp}\r\n\r\n')
+        logging.info(f'status_code: {get_result_temp.status_code}')
+        logging.info(f'headers    : {get_result_temp.headers}')
+        logging.info(f'raw        : {get_result_temp.raw}')
+        logging.info(f'url        : {get_result_temp.url}')
+        logging.info(f'encoding   : {get_result_temp.encoding}')
+        logging.info(f'history    : {get_result_temp.history}')
+        logging.info(f'reason     : {get_result_temp.reason}')
+        logging.info(f'cookies    : {get_result_temp.cookies}')
+        logging.info(f'elapsed    : {get_result_temp.elapsed}')
+        logging.info(f'request    : {get_result_temp.request}')
+
+        get_result_temp = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+        logging.info(f'GET_RESULT:\r\n{get_result_temp}\r\n\r\n')
+        logging.info(f'status_code: {get_result_temp.status_code}')
+        logging.info(f'headers    : {get_result_temp.headers}')
+        logging.info(f'raw        : {get_result_temp.raw}')
+        logging.info(f'url        : {get_result_temp.url}')
+        logging.info(f'encoding   : {get_result_temp.encoding}')
+        logging.info(f'history    : {get_result_temp.history}')
+        logging.info(f'reason     : {get_result_temp.reason}')
+        logging.info(f'cookies    : {get_result_temp.cookies}')
+        logging.info(f'elapsed    : {get_result_temp.elapsed}')
+        logging.info(f'request    : {get_result_temp.request}')
+
+        get_result_temp = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+        logging.info(f'GET_RESULT:\r\n{get_result_temp}\r\n\r\n')
+        logging.info(f'status_code: {get_result_temp.status_code}')
+        logging.info(f'headers    : {get_result_temp.headers}')
+        logging.info(f'raw        : {get_result_temp.raw}')
+        logging.info(f'url        : {get_result_temp.url}')
+        logging.info(f'encoding   : {get_result_temp.encoding}')
+        logging.info(f'history    : {get_result_temp.history}')
+        logging.info(f'reason     : {get_result_temp.reason}')
+        logging.info(f'cookies    : {get_result_temp.cookies}')
+        logging.info(f'elapsed    : {get_result_temp.elapsed}')
+        logging.info(f'request    : {get_result_temp.request}')
+
+        get_result_temp = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+        logging.info(f'GET_RESULT:\r\n{get_result_temp}\r\n\r\n')
+        logging.info(f'status_code: {get_result_temp.status_code}')
+        logging.info(f'headers    : {get_result_temp.headers}')
+        logging.info(f'raw        : {get_result_temp.raw}')
+        logging.info(f'url        : {get_result_temp.url}')
+        logging.info(f'encoding   : {get_result_temp.encoding}')
+        logging.info(f'history    : {get_result_temp.history}')
+        logging.info(f'reason     : {get_result_temp.reason}')
+        logging.info(f'cookies    : {get_result_temp.cookies}')
+        logging.info(f'elapsed    : {get_result_temp.elapsed}')
+        logging.info(f'request    : {get_result_temp.request}')
+
         #return get_result.json()
 
     except Exception as error:
@@ -256,13 +326,6 @@ def mavlink_get_specific_param():
         response.status_code = 400
         return response
 
-    #ahrs_ekf_type = get_parameter("AHRS_EKF_TYPE")
-    #ahrs_ekf_type = get_parameter("ABCDEFGH")
-    #logging.info(f'AHRS_EKF_TYPE: {ahrs_ekf_type}')
-
-    #ek2_enable = get_parameter("EK2_ENABLE")
-    #logging.info(f'EK2_ENABLE: {ek2_enable}')
-    #logging.info(f'type(EK2_ENABLE): {type(ek2_enable)}')
 
     response = get_result.json()
 
