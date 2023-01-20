@@ -258,7 +258,9 @@ def mavlink_get_specific_param():
 
                 name += char
 
-            logging.info(f'\r\n\r\nPARAMETER   :{name}')
+            logging.info(f'\r\n\r\nITERATION   :{_}')
+            
+            logging.info(f'\r\nPARAMETER   :{name}')
             logging.info(f'FIRST_UPDATE:{param_value.json()["status"]["time"]["first_update"]}')
             logging.info(f'LAST_UPDATE :{param_value.json()["status"]["time"]["last_update"]}\r\n\r\n')
 
@@ -314,10 +316,10 @@ def mavlink_get_specific_param():
                                'requested_parameter': parameter_name,
                                'obtained_parameter': response_parameter_name
                                }
-        response = jsonify(param_value)
-        response.status_code = 210
+        param_value = jsonify(param_value)
+        param_value.status_code = 210
 
-    return response
+    return param_value
 
 
 class RovLink:
