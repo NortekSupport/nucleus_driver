@@ -198,8 +198,8 @@ def mavlink_get_param():
     return param_get
 
 
-@app.route('/mavlink/get_specific_param', methods=['GET'])
-def mavlink_get_specific_param():
+@app.route('/mavlink/get_specific_parameter', methods=['GET'])
+def mavlink_get_specific_parameter():
 
     # Check if a parameter_name is given
     parameter_name = request.args.get('parameter_name')
@@ -280,6 +280,11 @@ def mavlink_get_specific_param():
 
     return param_value
 
+
+@app.route('/mavlink/set_default_parameter')
+def mavlink_set_default_parameters():
+
+    pass
 
 class RovLink:
 
