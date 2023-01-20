@@ -262,6 +262,8 @@ def mavlink_get_specific_param():
         logging.info(f'cookies    : {get_result_temp.cookies}')
         logging.info(f'elapsed    : {get_result_temp.elapsed}')
         logging.info(f'request    : {get_result_temp.request}')
+        logging.info(f'\r\n\r\nFIRST_UPDATE:{get_result_temp.json()["status"]["time"]["first_update"]}')
+        logging.info(f'LAST_UPDATE:{get_result_temp.json()["status"]["time"]["last_update"]}')
 
         get_result_temp = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
@@ -276,6 +278,8 @@ def mavlink_get_specific_param():
         logging.info(f'cookies    : {get_result_temp.cookies}')
         logging.info(f'elapsed    : {get_result_temp.elapsed}')
         logging.info(f'request    : {get_result_temp.request}')
+        logging.info(f'\r\n\r\nFIRST_UPDATE:{get_result_temp.json()["status"]["time"]["first_update"]}')
+        logging.info(f'LAST_UPDATE:{get_result_temp.json()["status"]["time"]["last_update"]}')
 
         get_result_temp = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
@@ -290,6 +294,8 @@ def mavlink_get_specific_param():
         logging.info(f'cookies    : {get_result_temp.cookies}')
         logging.info(f'elapsed    : {get_result_temp.elapsed}')
         logging.info(f'request    : {get_result_temp.request}')
+        logging.info(f'\r\n\r\nFIRST_UPDATE:{get_result_temp.json()["status"]["time"]["first_update"]}')
+        logging.info(f'LAST_UPDATE:{get_result_temp.json()["status"]["time"]["last_update"]}')
 
         get_result_temp = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
@@ -304,6 +310,8 @@ def mavlink_get_specific_param():
         logging.info(f'cookies    : {get_result_temp.cookies}')
         logging.info(f'elapsed    : {get_result_temp.elapsed}')
         logging.info(f'request    : {get_result_temp.request}')
+        logging.info(f'\r\n\r\nFIRST_UPDATE:{get_result_temp.json()["status"]["time"]["first_update"]}')
+        logging.info(f'LAST_UPDATE:{get_result_temp.json()["status"]["time"]["last_update"]}')
 
         get_result_temp = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
@@ -318,6 +326,8 @@ def mavlink_get_specific_param():
         logging.info(f'cookies    : {get_result_temp.cookies}')
         logging.info(f'elapsed    : {get_result_temp.elapsed}')
         logging.info(f'request    : {get_result_temp.request}')
+        logging.info(f'\r\n\r\nFIRST_UPDATE:{get_result_temp.json()["status"]["time"]["first_update"]}')
+        logging.info(f'LAST_UPDATE:{get_result_temp.json()["status"]["time"]["last_update"]}')
 
         #return get_result.json()
 
