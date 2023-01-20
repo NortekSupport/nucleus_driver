@@ -1,3 +1,5 @@
+import time
+
 from flask import Flask, json, request, jsonify
 from flask_restful import Api, reqparse
 from threading import Thread
@@ -208,8 +210,15 @@ def mavlink_get_specific_param():
 
     parameter_name = parameter_name.upper()
 
+    param_value_pre_timestamp = None
     try:
+        param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+        param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
 
+    except Exception as e:
+        logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
+
+    try:
         data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
 
         for index, char in enumerate(parameter_name):
@@ -234,6 +243,36 @@ def mavlink_get_specific_param():
         logging.info(f'request    : {post_result.request}')
         logging.info(f'type(POST_RESULT):\r\n{type(post_result)}\r\n\r\n')
 
+
+
+        param_value = {}
+        for _ in range(10):
+            param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+            param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
+
+            name = ''
+            for char in param_value.json()['message']['param_id']:
+                if char == '\u0000':
+                    break
+
+                name += char
+
+            logging.info(f'\r\n\r\nPARAMETER   :{name}')
+            logging.info(f'FIRST_UPDATE:{param_value.json()["status"]["time"]["first_update"]}')
+            logging.info(f'LAST_UPDATE :{param_value.json()["status"]["time"]["last_update"]}\r\n\r\n')
+
+
+
+
+
+            if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
+                break
+
+            time.sleep(0.005)
+
+
+        '''
         get_result = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
         logging.info(f'GET_RESULT:\r\n{get_result}\r\n\r\n')
@@ -248,48 +287,18 @@ def mavlink_get_specific_param():
         logging.info(f'elapsed    : {get_result.elapsed}')
         logging.info(f'request    : {get_result.request}')
         logging.info(f'type(GET_RESULT):\r\n{type(get_result)}\r\n\r\n')
-
-        for _ in range(10):
-
-            get_result_temp = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-
-            #logging.info(f'GET_RESULT:\r\n{get_result_temp}\r\n\r\n')
-            #logging.info(f'status_code: {get_result_temp.status_code}')
-            #logging.info(f'headers    : {get_result_temp.headers}')
-            #logging.info(f'raw        : {get_result_temp.raw}')
-            #logging.info(f'url        : {get_result_temp.url}')
-            #logging.info(f'encoding   : {get_result_temp.encoding}')
-            #logging.info(f'history    : {get_result_temp.history}')
-            #logging.info(f'reason     : {get_result_temp.reason}')
-            #logging.info(f'cookies    : {get_result_temp.cookies}')
-            #logging.info(f'elapsed    : {get_result_temp.elapsed}')
-            #logging.info(f'request    : {get_result_temp.request}')
-
-            name = ''
-            for char in get_result_temp.json()['message']['param_id']:
-                if char == '\u0000':
-                    break
-
-                name += char
-
-            logging.info(f'\r\n\r\nPARAMETER   :{name}')
-            logging.info(f'FIRST_UPDATE:{get_result_temp.json()["status"]["time"]["first_update"]}')
-            logging.info(f'LAST_UPDATE :{get_result_temp.json()["status"]["time"]["last_update"]}\r\n\r\n')
-
-
-
-        #return get_result.json()
+        '''
 
     except Exception as error:
-        response = jsonify({'message': f'Failed to obtain parameter {parameter_name}: {error}'})
-        response.status_code = 400
-        return response
+        param_value = jsonify({'message': f'Failed to obtain parameter {parameter_name}: {error}'})
+        param_value.status_code = 400
+        return param_value
 
 
-    response = get_result.json()
+    param_value = param_value.json()
 
     response_parameter_name = ''
-    for char in response['message']['param_id']:
+    for char in param_value['message']['param_id']:
         if char == '\u0000':
             break
 
@@ -301,11 +310,11 @@ def mavlink_get_specific_param():
     logging.info('\r\n\r\n\r\n\n')
 
     if response_parameter_name != parameter_name:
-        response['WARNING'] = {'message': 'The obtained parameter is not the same as the requested parameter',
+        param_value['WARNING'] = {'message': 'The obtained parameter is not the same as the requested parameter',
                                'requested_parameter': parameter_name,
                                'obtained_parameter': response_parameter_name
                                }
-        response = jsonify(response)
+        response = jsonify(param_value)
         response.status_code = 210
 
     return response
