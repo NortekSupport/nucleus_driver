@@ -234,38 +234,23 @@ def mavlink_get_specific_param():
 
         post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
+        # Check if PARAM_REQUEST_READ responded with 200
         if post_result.status_code != 200:
-            logging.warning(type(post_result.status_code)) # TODO: Remove
-
             param_value = jsonify({'message': f'PARAM_REQUEST_READ command did not respond with 200: {post_result.status_code}'})
             param_value.status_code = 400
             return param_value
 
+        # Read PARAM_VALUE until it has been updated
         for _ in range(10):
+
+            time.sleep(0.01)  # It typically takes this amount of time for PARAM_VALUE to change
+
             param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
             param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
 
-            # TODO: REMOVE
-            name = ''
-            for char in param_value.json()['message']['param_id']:
-                if char == '\u0000':
-                    break
-
-                name += char
-
-            logging.info(f'\r\n\r\nITERATION   :{_}')
-
-            logging.info(f'\r\nPARAMETER   :{name}')
-            logging.info(f'FIRST_UPDATE:{param_value.json()["status"]["time"]["first_update"]}')
-            logging.info(f'LAST_UPDATE :{param_value.json()["status"]["time"]["last_update"]}\r\n\r\n')
-
-            # TODO: Remove until here
-
             if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
                 break
-
-            time.sleep(0.01)  # TODO: Move to start of loop
 
         param_value = param_value.json()
 
@@ -274,6 +259,7 @@ def mavlink_get_specific_param():
         param_value.status_code = 400
         return param_value
 
+    # Extract PARAM_VALUE id (name)
     response_parameter_name = ''
     for char in param_value['message']['param_id']:
         if char == '\u0000':
@@ -281,19 +267,16 @@ def mavlink_get_specific_param():
 
         response_parameter_name += char
 
-    # TODO: Remove
-    logging.info('\r\n\r\n\r\n\n')
-    logging.info(response_parameter_name)
-    logging.info(response_parameter_name == parameter_name)
-    logging.info('\r\n\r\n\r\n\n')
-
+    # Check if obtained PARAM_VALUE is the same as requested
     if response_parameter_name != parameter_name:
         param_value['WARNING'] = {'message': 'The obtained parameter is not the same as the requested parameter',
-                               'requested_parameter': parameter_name,
-                               'obtained_parameter': response_parameter_name
-                               }
+                                  'requested_parameter': parameter_name,
+                                  'obtained_parameter': response_parameter_name
+                                  }
         param_value = jsonify(param_value)
         param_value.status_code = 210
+
+    logging.info(f'PARAM_VALUE: {response_parameter_name} = {param_value["message"]["param_value"]}')
 
     return param_value
 
