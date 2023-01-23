@@ -394,6 +394,9 @@ def mavlink_set_parameter():
         response_parameter_id += char
 
     logging.info(f'\r\nCOMPARING PARAM ID\r\n')  # TODO: Remove
+
+    valid_response = True
+
     # Check if obtained PARAM_ID is the same as requested
     if response_parameter_id != parameter_id:
         logging.info(f'\tPARAM_ID MATCHES\r\n')  # TODO: Remove
@@ -401,8 +404,7 @@ def mavlink_set_parameter():
                                   'requested_parameter': parameter_id,
                                   'obtained_parameter': response_parameter_id
                                   }
-        param_value = jsonify(param_value)
-        param_value.status_code = 210
+        valid_response = False
 
     logging.info(f'\r\nCHECKING PÅARAM VALUE: {param_value["message"]}\r\n')  # TODO: Remove
     logging.info(f'\r\nCHECKING PÅARAM VALUE: {param_value["message"]["param_value"]}\r\n')  # TODO: Remove
@@ -413,8 +415,7 @@ def mavlink_set_parameter():
                                       'requested_parameter': parameter_id,
                                       'obtained_parameter': response_parameter_id
                                       }
-            param_value = jsonify(param_value)
-            param_value.status_code = 210
+            valid_response = False
 
     except Exception as e:
         logging.warning(f'\r\n\r\n{param_value}\r\n\r\n')
@@ -423,6 +424,12 @@ def mavlink_set_parameter():
         logging.info(f'PARAM_VALUE: {response_parameter_id} = {param_value["message"]["param_value"]}')
     except TypeError:
         logging.warning('Failed to display PARAM_VALUE')
+
+    param_value = jsonify(param_value)
+    if valid_response:
+        param_value.status_code = 200
+    else:
+        param_value.status_code = 210
 
     return param_value
 
