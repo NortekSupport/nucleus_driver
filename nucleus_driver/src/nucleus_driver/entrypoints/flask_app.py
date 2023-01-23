@@ -367,13 +367,14 @@ def mavlink_set_parameter():
 
             param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
-            logging.info(f'\r\n\r\n{param_value.json()}\r\n')
+            logging.info(f'\r\nRECEIVED_PARAM:\r\n{param_value.json()}\r\n')
 
             param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
 
             if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
                 break
 
+        logging.info(f'\r\nPARAM_VALUE.json()\r\n')  # TODO: Remove
         param_value = param_value.json()
 
     except Exception as error:
@@ -381,6 +382,7 @@ def mavlink_set_parameter():
         param_value.status_code = 400
         return param_value
 
+    logging.info(f'\r\nLOOPING THROUGH PARAM_VALUE[MESSAGE][PARAM_ID]\r\n')  # TODO: Remove
     # Extract PARAM_VALUE id (name)
     response_parameter_id = ''
     for char in param_value['message']['param_id']:
@@ -389,6 +391,7 @@ def mavlink_set_parameter():
 
         response_parameter_id += char
 
+    logging.info(f'\r\nCOMPARING PARAM ID\r\n')  # TODO: Remove
     # Check if obtained PARAM_ID is the same as requested
     if response_parameter_id != parameter_id:
         param_value['WARNING'] = {'param_id': 'The obtained parameter is not the same as the requested parameter',
@@ -398,6 +401,7 @@ def mavlink_set_parameter():
         param_value = jsonify(param_value)
         param_value.status_code = 210
 
+    logging.info(f'\r\nCHECKING PÅARAM VALUE\r\n')  # TODO: Remove
     # Check if obtained PARAM_VALUE is the same as set
     try:
         if int(param_value['message']['param_value']) != int(parameter_value):
