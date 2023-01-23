@@ -399,13 +399,17 @@ def mavlink_set_parameter():
         param_value.status_code = 210
 
     # Check if obtained PARAM_VALUE is the same as set
-    if int(param_value['message']['param_value']) != int(parameter_value):
-        param_value['WARNING'] = {'param_value': 'The obtained parameter is not the same as the requested parameter',
-                                  'requested_parameter': parameter_id,
-                                  'obtained_parameter': response_parameter_id
-                                  }
-        param_value = jsonify(param_value)
-        param_value.status_code = 210
+    try:
+        if int(param_value['message']['param_value']) != int(parameter_value):
+            param_value['WARNING'] = {'param_value': 'The obtained parameter is not the same as the requested parameter',
+                                      'requested_parameter': parameter_id,
+                                      'obtained_parameter': response_parameter_id
+                                      }
+            param_value = jsonify(param_value)
+            param_value.status_code = 210
+
+    except Exception as e:
+        logging.warning(f'\r\n\r\n{param_value}\r\n\r\n')
 
     try:
         logging.info(f'PARAM_VALUE: {response_parameter_id} = {param_value["message"]["param_value"]}')
