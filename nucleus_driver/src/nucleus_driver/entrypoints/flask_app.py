@@ -198,18 +198,18 @@ def mavlink_get_param():
     return param_get
 
 
-@app.route('/mavlink/get_specific_parameter', methods=['GET'])
-def mavlink_get_specific_parameter():
+@app.route('/mavlink/get_parameter', methods=['GET'])
+def mavlink_get_parameter():
 
-    # Check if a parameter_name is given
-    parameter_name = request.args.get('parameter_name')
+    # Check if a parameter_id is given
+    parameter_id = request.args.get('parameter_id')
 
-    if parameter_name is None:
-        response = jsonify({'message': 'parameter_name must be specified'})
+    if parameter_id is None:
+        response = jsonify({'message': 'parameter_id must be specified'})
         response.status_code = 400
         return response
 
-    parameter_name = parameter_name.upper()
+    parameter_id = parameter_id.upper()
 
     # Extract timestamp of current PARAM_VALUE
     param_value_pre_timestamp = None
@@ -225,7 +225,7 @@ def mavlink_get_specific_parameter():
     try:
         data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
 
-        for index, char in enumerate(parameter_name):
+        for index, char in enumerate(parameter_id):
             data['message']['param_id'][index] = char
 
         data['message']['param_index'] = -1
@@ -257,37 +257,39 @@ def mavlink_get_specific_parameter():
         param_value = param_value.json()
 
     except Exception as error:
-        param_value = jsonify({'message': f'Failed to obtain parameter {parameter_name}: {error}'})
+        param_value = jsonify({'message': f'Failed to obtain parameter {parameter_id}: {error}'})
         param_value.status_code = 400
         return param_value
 
     # Extract PARAM_VALUE id (name)
-    response_parameter_name = ''
+    response_parameter_id = ''
     for char in param_value['message']['param_id']:
         if char == '\u0000':
             break
 
-        response_parameter_name += char
+        response_parameter_id += char
 
     # Check if obtained PARAM_VALUE is the same as requested
-    if response_parameter_name != parameter_name:
-        param_value['WARNING'] = {'message': 'The obtained parameter is not the same as the requested parameter',
-                                  'requested_parameter': parameter_name,
-                                  'obtained_parameter': response_parameter_name
+    if response_parameter_id != parameter_id:
+        param_value['WARNING'] = {'PARAMETER_NAME': 'The obtained parameter is not the same as the requested parameter',
+                                  'requested_parameter': parameter_id,
+                                  'obtained_parameter': response_parameter_id
                                   }
         param_value = jsonify(param_value)
         param_value.status_code = 210
 
     try:
-        logging.info(f'PARAM_VALUE: {response_parameter_name} = {param_value["message"]["param_value"]}')
+        logging.info(f'PARAM_VALUE: {response_parameter_id} = {param_value["message"]["param_value"]}')
     except TypeError:
         logging.warning('Failed to display PARAM_VALUE')
 
     return param_value
 
 
-@app.route('/mavlink/set_default_parameter')
-def mavlink_set_default_parameters():
+@app.route('/mavlink/set_parameter', methods=['GET'])
+def mavlink_set_parameter():
+
+    PARAMETER_TYPES = ["MAV_PARAM_TYPE_UINT8"]
 
     AHRS_EKF_TYPE = 3.0
     EK2_ENABLE = 0.0
@@ -297,6 +299,120 @@ def mavlink_set_default_parameters():
     EK3_SRC1_POSXY = None
     EK3_SRC1_VELXY = None
     EK3_SRC1_POSZ = None
+
+    # Check if a parameter_id is given
+    parameter_id = request.args.get('parameter_id')
+    parameter_value = request.args.get('parameter_value')
+    parameter_type = request.args.get('parameter_type')
+
+    if parameter_id is None:
+        response = jsonify({'message': 'parameter_id must be specified'})
+        response.status_code = 400
+        return response
+
+    if parameter_value is None:
+        response = jsonify({'message': 'parameter_value must be specified'})
+        response.status_code = 400
+        return response
+
+    if parameter_type is None:
+        response = jsonify({'message': 'parameter_type must be specified'})
+        response.status_code = 400
+        return response
+
+    parameter_id = parameter_id.upper()
+
+    if parameter_type not in PARAMETER_TYPES:
+        response = jsonify({'message': f'invalid parameter_type, must be in {PARAMETER_TYPES}'})
+        response.status_code = 400
+        return response
+
+    try:
+        if parameter_type in ["MAV_PARAM_TYPE_UINT8"]:
+            parameter_value = int(parameter_value)
+    except ValueError:
+        response = jsonify({'message': 'parameter_value must be a number'})
+        response.status_code = 400
+        return response
+
+    # Extract timestamp of current PARAM_VALUE
+    param_value_pre_timestamp = None
+    try:
+        param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+        param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
+
+    except Exception as e:
+        logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
+
+    try:
+        data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_SET").text)
+
+        for index, char in enumerate(parameter_id):
+            data["message"]["param_id"][index] = char
+
+        data["message"]["param_type"] = {"type": parameter_type}
+        data["message"]["param_value"] = parameter_value
+
+        post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
+
+        # Check if PARAM_REQUEST_READ responded with 200
+        if post_result.status_code != 200:
+            param_value = jsonify({'message': f'PARAM_REQUEST_READ command did not respond with 200: {post_result.status_code}'})
+            param_value.status_code = 400
+            return param_value
+
+        for _ in range(10):
+
+            time.sleep(0.01)  # It typically takes this amount of time for PARAM_VALUE to change
+
+            param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+            logging.info(f'\r\n\r\n{param_value.json()}\r\n')
+
+            param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
+
+            if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
+                break
+
+        param_value = param_value.json()
+
+    except Exception as error:
+        param_value = jsonify({'message': f'Failed to set parameter {parameter_id}: {error}'})
+        param_value.status_code = 400
+        return param_value
+
+    # Extract PARAM_VALUE id (name)
+    response_parameter_id = ''
+    for char in param_value['message']['param_id']:
+        if char == '\u0000':
+            break
+
+        response_parameter_id += char
+
+    # Check if obtained PARAM_ID is the same as requested
+    if response_parameter_id != parameter_id:
+        param_value['WARNING'] = {'param_id': 'The obtained parameter is not the same as the requested parameter',
+                                  'requested_parameter': parameter_id,
+                                  'obtained_parameter': response_parameter_id
+                                  }
+        param_value = jsonify(param_value)
+        param_value.status_code = 210
+
+    # Check if obtained PARAM_VALUE is the same as set
+    if int(param_value['message']['param_value']) != int(parameter_value):
+        param_value['WARNING'] = {'param_value': 'The obtained parameter is not the same as the requested parameter',
+                                  'requested_parameter': parameter_id,
+                                  'obtained_parameter': response_parameter_id
+                                  }
+        param_value = jsonify(param_value)
+        param_value.status_code = 210
+
+    try:
+        logging.info(f'PARAM_VALUE: {response_parameter_id} = {param_value["message"]["param_value"]}')
+    except TypeError:
+        logging.warning('Failed to display PARAM_VALUE')
+
+    return param_value
 
 
 class RovLink:
@@ -365,13 +481,13 @@ class RovLink:
 
     def setup_parameters(self):
 
-        def set_parameter(parameter_name, parameter_type, parameter_value):
+        def set_parameter(parameter_id, parameter_type, parameter_value):
 
             try:
 
                 data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_SET").text)
 
-                for index, char in enumerate(parameter_name):
+                for index, char in enumerate(parameter_id):
 
                     data['message']['param_id'][index] = char
 
@@ -385,7 +501,7 @@ class RovLink:
                 return result.status_code == 200
 
             except Exception as error:
-                logging.warning(f"Error setting parameter '{parameter_name}': {error}")
+                logging.warning(f"Error setting parameter '{parameter_id}': {error}")
                 return False
 
         response = set_parameter("AHRS_EKF_TYPE", "MAV_PARAM_TYPE_UINT8", 3)
