@@ -395,8 +395,8 @@ def mavlink_set_parameter():
     if response_parameter_id != parameter_id:
         if 'WARNING' not in param_value.keys():
             param_value.update({'WARNING': {}})
-        param_value['WARNING'].update({'param_id': {'message': 'The obtained parameter is not the same as the requested parameter',
-                                                    'requested_parameter': parameter_id,
+        param_value['WARNING'].update({'param_id': {'message': 'The obtained parameter is not the same as the specified parameter',
+                                                    'specified_parameter': parameter_id,
                                                     'obtained_parameter': response_parameter_id
                                                     }})
         valid_response = False
@@ -404,9 +404,9 @@ def mavlink_set_parameter():
     if int(param_value['message']['param_value']) != int(parameter_value):
         if 'WARNING' not in param_value.keys():
             param_value.update({'WARNING': {}})
-        param_value['WARNING'].update({'param_value': {'message': 'The obtained parameter is not the same as the requested parameter',
-                                                       'requested_parameter': parameter_id,
-                                                       'obtained_parameter': response_parameter_id
+        param_value['WARNING'].update({'param_value': {'message': 'The obtained parameter value is not the same as the specified value',
+                                                       'specified_parameter': parameter_value,
+                                                       'obtained_parameter': int(param_value['message']['param_value'])
                                                        }})
         valid_response = False
 
