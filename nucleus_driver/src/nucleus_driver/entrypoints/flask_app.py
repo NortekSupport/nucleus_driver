@@ -404,7 +404,8 @@ def mavlink_set_parameter():
         param_value = jsonify(param_value)
         param_value.status_code = 210
 
-    logging.info(f'\r\nCHECKING PÅARAM VALUE\r\n')  # TODO: Remove
+    logging.info(f'\r\nCHECKING PÅARAM VALUE: {param_value["message"]}\r\n')  # TODO: Remove
+    logging.info(f'\r\nCHECKING PÅARAM VALUE: {param_value["message"]["param_value"]}\r\n')  # TODO: Remove
     # Check if obtained PARAM_VALUE is the same as set
     try:
         if int(param_value['message']['param_value']) != int(parameter_value):
