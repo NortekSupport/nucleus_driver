@@ -474,14 +474,12 @@ def set_parameter(parameter_id, parameter_value, parameter_type):
 
                 param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
-                logging.info(f'\r\nRECEIVED_PARAM:\r\n{param_value.json()}\r\n')
-
                 param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
 
                 if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
                     break
 
-            return param_value.json()
+            return param_value
 
         post_response = post()
 
@@ -557,7 +555,7 @@ def set_parameter(parameter_id, parameter_value, parameter_type):
     if parameter.status_code != 200:
         return parameter
 
-    parameter = check_parameter(parameter)
+    parameter = check_parameter(parameter.json())
 
     return parameter
 
@@ -585,8 +583,6 @@ def get_parameter(parameter_id):
                 time.sleep(0.01)  # It typically takes this amount of time for PARAM_VALUE to change
 
                 param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-
-                logging.info(f'\r\n\r\n{param_value.json()}\r\n')
 
                 param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
 
