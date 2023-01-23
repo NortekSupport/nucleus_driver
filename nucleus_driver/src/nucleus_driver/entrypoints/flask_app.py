@@ -374,51 +374,37 @@ def mavlink_set_parameter():
             if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
                 break
 
-        logging.info(f'\r\nPARAM_VALUE.json()\r\n')  # TODO: Remove
         param_value = param_value.json()
-        logging.info(f'\t{param_value}\r\n')  # TODO: Remove
 
     except Exception as error:
         param_value = jsonify({'message': f'Failed to set parameter {parameter_id}: {error}'})
         param_value.status_code = 400
         return param_value
 
-    logging.info(f'\r\nLOOPING THROUGH PARAM_VALUE[MESSAGE][PARAM_ID]\r\n')  # TODO: Remove
     # Extract PARAM_VALUE id (name)
     response_parameter_id = ''
     for char in param_value['message']['param_id']:
-        logging.info(f'\tlooping: {char}\r\n')  # TODO: Remove
         if char == '\u0000':
             break
 
         response_parameter_id += char
 
-    logging.info(f'\r\nCOMPARING PARAM ID\r\n')  # TODO: Remove
-
     valid_response = True
 
     # Check if obtained PARAM_ID is the same as requested
     if response_parameter_id != parameter_id:
-        logging.info(f'\tPARAM_ID MATCHES\r\n')  # TODO: Remove
-        param_value['WARNING'] = {'param_id': 'The obtained parameter is not the same as the requested parameter',
-                                  'requested_parameter': parameter_id,
-                                  'obtained_parameter': response_parameter_id
-                                  }
+        param_value['WARNING']['param_id'] = {'message': 'The obtained parameter is not the same as the requested parameter',
+                                              'requested_parameter': parameter_id,
+                                              'obtained_parameter': response_parameter_id
+                                              }
         valid_response = False
 
-    logging.info(f'\r\nCHECKING PÅARAM VALUE: {param_value["message"]}\r\n')  # TODO: Remove
-    logging.info(f'\r\nCHECKING PÅARAM VALUE: {param_value["message"]["param_value"]}\r\n')  # TODO: Remove
-    # Check if obtained PARAM_VALUE is the same as set
-    try:
-        if int(param_value['message']['param_value']) != int(parameter_value):
-            param_value['WARNING'] = {'param_value': 'The obtained parameter is not the same as the requested parameter',
-                                      'requested_parameter': parameter_id,
-                                      'obtained_parameter': response_parameter_id
-                                      }
-            valid_response = False
-
-    except Exception as e:
-        logging.warning(f'\r\n\r\n{param_value}\r\n\r\n')
+    if int(param_value['message']['param_value']) != int(parameter_value):
+        param_value['WARNING']['param_value'] = {'message': 'The obtained parameter is not the same as the requested parameter',
+                                                 'requested_parameter': parameter_id,
+                                                 'obtained_parameter': response_parameter_id
+                                                 }
+        valid_response = False
 
     try:
         logging.info(f'PARAM_VALUE: {response_parameter_id} = {param_value["message"]["param_value"]}')
