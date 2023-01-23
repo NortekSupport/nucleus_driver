@@ -211,6 +211,9 @@ def mavlink_get_parameter():
 
     parameter_id = parameter_id.upper()
 
+    return get_parameter(parameter_id)
+
+    '''
     # Extract timestamp of current PARAM_VALUE
     param_value_pre_timestamp = None
     try:
@@ -284,21 +287,13 @@ def mavlink_get_parameter():
         logging.warning('Failed to display PARAM_VALUE')
 
     return param_value
+    '''
 
 
 @app.route('/mavlink/set_parameter', methods=['GET'])
 def mavlink_set_parameter():
 
     PARAMETER_TYPES = ["MAV_PARAM_TYPE_UINT8"]
-
-    AHRS_EKF_TYPE = 3.0
-    EK2_ENABLE = 0.0
-    EK3_ENABLE = 1.0
-    VISO_TYPE = None
-    EK3_GPS_TYPE = 3.0
-    EK3_SRC1_POSXY = None
-    EK3_SRC1_VELXY = None
-    EK3_SRC1_POSZ = None
 
     # Check if a parameter_id is given
     parameter_id = request.args.get('parameter_id')
@@ -335,6 +330,9 @@ def mavlink_set_parameter():
         response.status_code = 400
         return response
 
+    return set_parameter(parameter_id, parameter_value, parameter_type)
+
+    '''
     # Extract timestamp of current PARAM_VALUE
     param_value_pre_timestamp = None
     try:
@@ -422,25 +420,42 @@ def mavlink_set_parameter():
         param_value.status_code = 210
 
     return param_value
+    '''
+
+
+@app.route('/mavlink/set_default_parameters', methods=['GET'])
+def mavlink_set_default_parameters():
+    AHRS_EKF_TYPE = 3.0
+    EK2_ENABLE = 0.0
+    EK3_ENABLE = 1.0
+    VISO_TYPE = None
+    EK3_GPS_TYPE = 3.0
+    EK3_SRC1_POSXY = None
+    EK3_SRC1_VELXY = None
+    EK3_SRC1_POSZ = None
+
+    return
+
+
+def _get_param_value_timestamp():
+
+    param_value_pre_timestamp = None
+    try:
+        param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+        param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
+
+    except Exception as e:
+        logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
+
+    return param_value_pre_timestamp
 
 
 def set_parameter(parameter_id, parameter_value, parameter_type):
 
-    def get_param_value_pre_timestamp():
+    def set_through_mavlink(param_value_pre_timestamp):
 
-        param_value_pre_timestamp = None
-        try:
-            param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-            param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
+        def post():
 
-        except Exception as e:
-            logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
-
-        return param_value_pre_timestamp
-
-    def set_parameter(param_value_pre_timestamp):
-
-        try:
             data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_SET").text)
 
             for index, char in enumerate(parameter_id):
@@ -449,13 +464,9 @@ def set_parameter(parameter_id, parameter_value, parameter_type):
             data["message"]["param_type"] = {"type": parameter_type}
             data["message"]["param_value"] = parameter_value
 
-            post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
+            return requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
-            # Check if PARAM_REQUEST_READ responded with 200
-            if post_result.status_code != 200:
-                param_value = jsonify({'message': f'PARAM_REQUEST_READ command did not respond with 200: {post_result.status_code}'})
-                param_value.status_code = 400
-                return param_value
+        def get():
 
             for _ in range(10):
 
@@ -470,65 +481,182 @@ def set_parameter(parameter_id, parameter_value, parameter_type):
                 if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
                     break
 
-            param_value = param_value.json()
+            return param_value.json()
 
-        except Exception as error:
-            param_value = jsonify({'message': f'Failed to set parameter {parameter_id}: {error}'})
-            param_value.status_code = 400
+        post_response = post()
 
-        return param_value
+        if post_response.status_code != 200:
+            param_value = jsonify({'message': f'PARAM_SET command did not respond with 200: {post_response.status_code}'})
+            param_value.status_code = post_response.status_code
+            return param_value
+
+        get_response = get()
+
+        if get_response.status_code != 200:
+            param_value = jsonify({'message': f'PARAM_VALUE command did not respond with 200: {get_response.status_code}'})
+            param_value.status_code = get_response.status_code
+            return param_value
+
+        return get_response
 
     def check_parameter(param_value):
 
-        # Extract PARAM_VALUE id (name)
-        response_parameter_id = ''
-        for char in param_value['message']['param_id']:
-            if char == '\u0000':
-                break
+        def check_parameter_id():
 
-            response_parameter_id += char
+            # Extract PARAM_VALUE id (name)
+            response_parameter_id = ''
+            for char in param_value['message']['param_id']:
+                if char == '\u0000':
+                    break
 
-        valid_response = True
+                response_parameter_id += char
 
-        # Check if obtained PARAM_ID is the same as requested
-        if response_parameter_id != parameter_id:
-            if 'WARNING' not in param_value.keys():
-                param_value.update({'WARNING': {}})
-            param_value['WARNING'].update({'param_id': {'message': 'The obtained parameter is not the same as the specified parameter',
-                                                        'specified_parameter': parameter_id,
-                                                        'obtained_parameter': response_parameter_id
-                                                        }})
-            valid_response = False
+            # Check if obtained PARAM_ID is the same as requested
+            if response_parameter_id != parameter_id:
+                if 'WARNING' not in param_value.keys():
+                    param_value.update({'WARNING': {}})
 
-        if int(param_value['message']['param_value']) != int(parameter_value):
-            if 'WARNING' not in param_value.keys():
-                param_value.update({'WARNING': {}})
-            param_value['WARNING'].update({'param_value': {'message': 'The obtained parameter value is not the same as the specified value',
-                                                           'specified_parameter': parameter_value,
-                                                           'obtained_parameter': int(param_value['message']['param_value'])
-                                                           }})
-            valid_response = False
+                param_value['WARNING'].update({'param_id': {'message': 'The obtained parameter is not the same as the specified parameter',
+                                                            'specified_parameter': parameter_id,
+                                                            'obtained_parameter': response_parameter_id
+                                                            }})
+                return False
 
-        try:
-            logging.info(f'PARAM_VALUE: {response_parameter_id} = {param_value["message"]["param_value"]}')
-        except TypeError:
-            logging.warning('Failed to display PARAM_VALUE')
+            return True
+
+        def check_parameter_value():
+
+            if int(param_value['message']['param_value']) != int(parameter_value):
+                if 'WARNING' not in param_value.keys():
+                    param_value.update({'WARNING': {}})
+
+                param_value['WARNING'].update({'param_value': {'message': 'The obtained parameter value is not the same as the specified value',
+                                                               'specified_parameter': parameter_value,
+                                                               'obtained_parameter': int(param_value['message']['param_value'])
+                                                               }})
+                return False
+
+            return True
+
+        parameter_id_status = check_parameter_id()
+
+        parameter_value_status = check_parameter_value()
 
         param_value = jsonify(param_value)
-        if valid_response:
+        if parameter_id_status and parameter_value_status:
             param_value.status_code = 200
         else:
             param_value.status_code = 210
 
         return param_value
 
-    pre_timestamp = get_param_value_pre_timestamp()
+    timestamp = _get_param_value_timestamp()
 
-    param = set_parameter(param_value_pre_timestamp=pre_timestamp)
+    parameter = set_through_mavlink(param_value_pre_timestamp=timestamp)
 
-    param_value = check_parameter()
+    if parameter.status_code != 200:
+        return parameter
 
-    return param_value
+    parameter = check_parameter(parameter)
+
+    return parameter
+
+
+def get_parameter(parameter_id):
+
+    def get_from_mavlink(param_value_pre_timestamp):
+
+        def post():
+            data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
+
+            for index, char in enumerate(parameter_id):
+                data['message']['param_id'][index] = char
+
+            data['message']['param_index'] = -1
+            data['message']['target_system'] = 1
+            data['message']['target_component'] = 1
+
+            return requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
+
+        def get():
+
+            for _ in range(10):
+
+                time.sleep(0.01)  # It typically takes this amount of time for PARAM_VALUE to change
+
+                param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+                logging.info(f'\r\n\r\n{param_value.json()}\r\n')
+
+                param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
+
+                if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
+                    break
+
+            return param_value.json()
+
+        post_response = post()
+
+        if post_response.status_code != 200:
+            param_value = jsonify({'message': f'PARAM_SREQUEST_READ command did not respond with 200: {post_response.status_code}'})
+            param_value.status_code = post_response.status_code
+            return param_value
+
+        get_response = get()
+
+        if get_response.status_code != 200:
+            param_value = jsonify({'message': f'PARAM_VALUE command did not respond with 200: {get_response.status_code}'})
+            param_value.status_code = get_response.status_code
+            return param_value
+
+        return get_response
+
+    def check_parameter(param_value):
+
+        def check_parameter_id():
+
+            # Extract PARAM_VALUE id (name)
+            response_parameter_id = ''
+            for char in param_value['message']['param_id']:
+                if char == '\u0000':
+                    break
+
+                response_parameter_id += char
+
+            # Check if obtained PARAM_ID is the same as requested
+            if response_parameter_id != parameter_id:
+                if 'WARNING' not in param_value.keys():
+                    param_value.update({'WARNING': {}})
+
+                param_value['WARNING'].update({'param_id': {'message': 'The obtained parameter is not the same as the specified parameter',
+                                                            'specified_parameter': parameter_id,
+                                                            'obtained_parameter': response_parameter_id
+                                                            }})
+                return False
+
+            return True
+
+        parameter_id_status = check_parameter_id()
+
+        param_value = jsonify(param_value)
+        if parameter_id_status:
+            param_value.status_code = 200
+        else:
+            param_value.status_code = 210
+
+        return param_value
+
+    timestamp = _get_param_value_timestamp()
+
+    parameter = get_from_mavlink(param_value_pre_timestamp=timestamp)
+
+    if parameter.status_code != 200:
+        return parameter
+
+    parameter = check_parameter(parameter)
+
+    return parameter
+
 
 class RovLink:
 
