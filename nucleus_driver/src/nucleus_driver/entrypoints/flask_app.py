@@ -593,7 +593,7 @@ def get_parameter(parameter_id):
                 if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
                     break
 
-            return param_value.json()
+            return param_value
 
         post_response = post()
 
@@ -653,7 +653,7 @@ def get_parameter(parameter_id):
     if parameter.status_code != 200:
         return parameter
 
-    parameter = check_parameter(parameter)
+    parameter = check_parameter(parameter.json())
 
     return parameter
 
