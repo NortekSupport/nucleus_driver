@@ -698,6 +698,8 @@ class RovLink(Thread):
 
     def run(self):
 
+        time.sleep(2)
+
         self.load_settings()
         self.discover_nucleus()
 
