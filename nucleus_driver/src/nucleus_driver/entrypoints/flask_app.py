@@ -566,8 +566,8 @@ class RovLink(Thread):
         self.nucleus_firmware = self.nucleus_driver.connection.firmware_version
 
         logging.info(f'Nucleus connected: {self.nucleus_driver.connection.get_connection_status()}')
-        logging.info(f'Nucleus ID: {self.nucleus_id}')
-        logging.info(f'Nucleus firmware: {self.nucleus_firmware}')
+        logging.info(f'Nucleus ID:        {self.nucleus_id}')
+        logging.info(f'Nucleus firmware:  {self.nucleus_firmware}')
 
         return True
 
@@ -788,7 +788,9 @@ if __name__ == "flask_app":
 
     #app.run(debug=True, host=DOCKER_HOST, port=DOCKER_PORT)
 
+    logging.info('initiating RovLink')
     rov_link = RovLink(nucleus_driver=nucleus_driver)
-    rov_link.start()
+    #rov_link.start()
+    logging.info('RovLink running')
 
     print('INITIATED DRIVER')
