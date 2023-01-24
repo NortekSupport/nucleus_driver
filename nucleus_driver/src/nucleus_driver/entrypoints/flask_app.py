@@ -559,7 +559,7 @@ class RovLink(Thread):
 
         self.nucleus_driver.set_tcp_configuration(host=self.hostname)
 
-        if not self.nucleus_driver.connect(connection_type='TCP'):
+        if not self.nucleus_driver.connect(connection_type='tcp'):
             return False
 
         self.nucleus_id = self.nucleus_driver.connection.nucleus_id
