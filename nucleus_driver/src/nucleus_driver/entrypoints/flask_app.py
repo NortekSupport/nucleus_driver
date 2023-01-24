@@ -565,7 +565,7 @@ class RovLink(Thread):
         self.nucleus_id = self.nucleus_driver.connection.nucleus_id
         self.nucleus_firmware = self.nucleus_driver.connection.firmware_version
 
-        logging.info(f'Nucleus connected: {self.nucleus_driver.connect.get_connection_status()}')
+        logging.info(f'Nucleus connected: {self.nucleus_driver.connection.get_connection_status()}')
         logging.info(f'Nucleus ID: {self.nucleus_id}')
         logging.info(f'Nucleus firmware: {self.nucleus_firmware}')
 
