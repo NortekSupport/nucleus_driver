@@ -543,7 +543,7 @@ class RovLink(Thread):
         def get_cableguy_status():
             response = requests.get("http://127.0.0.1/cable-guy/v1.0/ethernet")
 
-            logging.info(f'\r\n\r\nCABLEGUY:\r\n{response}\r\n\r\n{response.status_code}\r\n\r\n'
+            logging.info(f'\r\n\r\nCABLEGUY:\r\n{response}\r\n\r\n{response.status_code}\r\n\r\n')
 
             return False
 
