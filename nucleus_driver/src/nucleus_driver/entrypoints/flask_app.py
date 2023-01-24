@@ -509,6 +509,8 @@ class RovLink(Thread):
 
     def __init__(self, nucleus_driver):
 
+        Thread.__init__(self)
+
         self.nucleus_driver = nucleus_driver
 
         self.thread = Thread()
