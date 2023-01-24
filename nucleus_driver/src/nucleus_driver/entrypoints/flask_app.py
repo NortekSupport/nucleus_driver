@@ -6,6 +6,7 @@ from threading import Thread
 import requests
 import json
 import logging
+import socket
 
 
 from nucleus_driver import NucleusDriver
@@ -20,6 +21,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 #HOSTNAME = 'NORTEK-300004.local'
 HOSTNAME = '192.168.2.201'
+PORT = 5000  # TODO: Is this the port?
 
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
 
@@ -182,22 +184,6 @@ def nucleus_driver_get_all():
     return jsonify({'get_all': reply_list})
 
 
-@app.route('/mavlink/get_param', methods=['GET'])
-def mavlink_get_param():
-
-    param_get = requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_SET")
-
-    param_get_text = param_get.text
-
-    param_json_laods = json.loads(param_get_text)
-
-    logging.info(f'param_get: {param_get}\r\n')
-    logging.info(f'param_get_text: {param_get_text}\r\n')
-    logging.info(f'param_json_loads: {param_json_laods}\r\n')
-
-    return param_get
-
-
 @app.route('/mavlink/get_parameter', methods=['GET'])
 def mavlink_get_parameter():
 
@@ -212,82 +198,6 @@ def mavlink_get_parameter():
     parameter_id = parameter_id.upper()
 
     return get_parameter(parameter_id)
-
-    '''
-    # Extract timestamp of current PARAM_VALUE
-    param_value_pre_timestamp = None
-    try:
-        param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-        param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
-
-    except Exception as e:
-        logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
-
-    # Get PARAM_VALUE
-    param_value = jsonify({'message': 'no PARAM_VALUE obtained'})
-    try:
-        data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
-
-        for index, char in enumerate(parameter_id):
-            data['message']['param_id'][index] = char
-
-        data['message']['param_index'] = -1
-        data['message']['target_system'] = 1
-        data['message']['target_component'] = 1
-
-        post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
-
-        # Check if PARAM_REQUEST_READ responded with 200
-        if post_result.status_code != 200:
-            param_value = jsonify({'message': f'PARAM_REQUEST_READ command did not respond with 200: {post_result.status_code}'})
-            param_value.status_code = 400
-            return param_value
-
-        # Read PARAM_VALUE until it has been updated
-        for _ in range(10):
-
-            time.sleep(0.01)  # It typically takes this amount of time for PARAM_VALUE to change
-
-            param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-
-            logging.info(f'\r\n\r\n{param_value.json()}\r\n')
-
-            param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
-
-            if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
-                break
-
-        param_value = param_value.json()
-
-    except Exception as error:
-        param_value = jsonify({'message': f'Failed to obtain parameter {parameter_id}: {error}'})
-        param_value.status_code = 400
-        return param_value
-
-    # Extract PARAM_VALUE id (name)
-    response_parameter_id = ''
-    for char in param_value['message']['param_id']:
-        if char == '\u0000':
-            break
-
-        response_parameter_id += char
-
-    # Check if obtained PARAM_VALUE is the same as requested
-    if response_parameter_id != parameter_id:
-        param_value['WARNING'] = {'PARAMETER_NAME': 'The obtained parameter is not the same as the requested parameter',
-                                  'requested_parameter': parameter_id,
-                                  'obtained_parameter': response_parameter_id
-                                  }
-        param_value = jsonify(param_value)
-        param_value.status_code = 210
-
-    try:
-        logging.info(f'PARAM_VALUE: {response_parameter_id} = {param_value["message"]["param_value"]}')
-    except TypeError:
-        logging.warning('Failed to display PARAM_VALUE')
-
-    return param_value
-    '''
 
 
 @app.route('/mavlink/set_parameter', methods=['GET'])
@@ -331,96 +241,6 @@ def mavlink_set_parameter():
         return response
 
     return set_parameter(parameter_id, parameter_value, parameter_type)
-
-    '''
-    # Extract timestamp of current PARAM_VALUE
-    param_value_pre_timestamp = None
-    try:
-        param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-        param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
-
-    except Exception as e:
-        logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
-
-    try:
-        data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_SET").text)
-
-        for index, char in enumerate(parameter_id):
-            data["message"]["param_id"][index] = char
-
-        data["message"]["param_type"] = {"type": parameter_type}
-        data["message"]["param_value"] = parameter_value
-
-        post_result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
-
-        # Check if PARAM_REQUEST_READ responded with 200
-        if post_result.status_code != 200:
-            param_value = jsonify({'message': f'PARAM_REQUEST_READ command did not respond with 200: {post_result.status_code}'})
-            param_value.status_code = 400
-            return param_value
-
-        for _ in range(10):
-
-            time.sleep(0.01)  # It typically takes this amount of time for PARAM_VALUE to change
-
-            param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-
-            logging.info(f'\r\nRECEIVED_PARAM:\r\n{param_value.json()}\r\n')
-
-            param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
-
-            if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
-                break
-
-        param_value = param_value.json()
-
-    except Exception as error:
-        param_value = jsonify({'message': f'Failed to set parameter {parameter_id}: {error}'})
-        param_value.status_code = 400
-        return param_value
-
-    # Extract PARAM_VALUE id (name)
-    response_parameter_id = ''
-    for char in param_value['message']['param_id']:
-        if char == '\u0000':
-            break
-
-        response_parameter_id += char
-
-    valid_response = True
-
-    # Check if obtained PARAM_ID is the same as requested
-    if response_parameter_id != parameter_id:
-        if 'WARNING' not in param_value.keys():
-            param_value.update({'WARNING': {}})
-        param_value['WARNING'].update({'param_id': {'message': 'The obtained parameter is not the same as the specified parameter',
-                                                    'specified_parameter': parameter_id,
-                                                    'obtained_parameter': response_parameter_id
-                                                    }})
-        valid_response = False
-
-    if int(param_value['message']['param_value']) != int(parameter_value):
-        if 'WARNING' not in param_value.keys():
-            param_value.update({'WARNING': {}})
-        param_value['WARNING'].update({'param_value': {'message': 'The obtained parameter value is not the same as the specified value',
-                                                       'specified_parameter': parameter_value,
-                                                       'obtained_parameter': int(param_value['message']['param_value'])
-                                                       }})
-        valid_response = False
-
-    try:
-        logging.info(f'PARAM_VALUE: {response_parameter_id} = {param_value["message"]["param_value"]}')
-    except TypeError:
-        logging.warning('Failed to display PARAM_VALUE')
-
-    param_value = jsonify(param_value)
-    if valid_response:
-        param_value.status_code = 200
-    else:
-        param_value.status_code = 210
-
-    return param_value
-    '''
 
 
 @app.route('/mavlink/set_default_parameters', methods=['GET'])
@@ -567,12 +387,56 @@ def get_parameter(parameter_id):
         def post():
             data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
 
+            logging.info(f'\r\n\r\nPARAM_REQUEST_READ:\r\n\r\n{data}\r\n\r\n')
+
+            data = {'header': {'system_id': 255,
+                               'component_id': 0,
+                               'sequence': 0},
+                    'message': {'type': "PARAM_REQUEST_READ",
+                                'param_index': -1,
+                                'target_system': 1,
+                                'target_component': 1,
+                                #'param_id': {0: "\u0000",
+                                #             1: "\u0000",
+                                #             2: "\u0000",
+                                #             3: "\u0000",
+                                #             4: "\u0000",
+                                #             5: "\u0000",
+                                #             6: "\u0000",
+                                #             7: "\u0000",
+                                #             8: "\u0000",
+                                #             9: "\u0000",
+                                #             10: "\u0000",
+                                #             11: "\u0000",
+                                #             12: "\u0000",
+                                #             13: "\u0000",
+                                #             14: "\u0000",
+                                #             15: "\u0000"}
+                                'param_id': ["\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000"]
+                                }
+                    }
+
             for index, char in enumerate(parameter_id):
                 data['message']['param_id'][index] = char
 
-            data['message']['param_index'] = -1
-            data['message']['target_system'] = 1
-            data['message']['target_component'] = 1
+            #data['message']['param_index'] = -1
+            #data['message']['target_system'] = 1
+            #data['message']['target_component'] = 1
 
             return requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
@@ -656,11 +520,26 @@ def get_parameter(parameter_id):
 
 class RovLink:
 
-    def __init__(self):
+    TIMEOUT = 1
+
+    PARAMETERS = {'AHRS_EKF_TYPE': {'value': 3, 'type': "MAV_PARAM_TYPE_UINT8"},
+                  'EK2_ENABLE': {'value': 0, 'type': "MAV_PARAM_TYPE_UINT8"},
+                  'EK3_ENABLE': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
+                  'VISO_TYPE': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
+                  'EK3_GPS_TYPE': {'value': 3, 'type': "MAV_PARAM_TYPE_UINT8"},
+                  'EK3_SRC1_POSXY': {'value': 6, 'type': "MAV_PARAM_TYPE_UINT8"},
+                  'EK3_SRC1_VELXY': {'value': 6, 'type': "MAV_PARAM_TYPE_UINT8"},
+                  'EK3_SRC1_POSZ': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"}
+                  }
+
+    def __init__(self, nucleus_driver):
+
+        self.nucleus_driver = nucleus_driver
 
         self.thread = Thread()
         self.thread_running = False
 
+        self.timestamp_previous = None
         self.orientation_current = None
         self.orientation_previous = None
 
@@ -668,13 +547,13 @@ class RovLink:
         self.nucleus_id = None
         self.nucleus_firmware = None
 
-        self.timeout = 1
+        self.packet_received_timestamp = None
 
-    def reconnect(self):
+    #def reconnect(self):
 
         # TODO: Add reconnect funtionality
 
-        pass
+    #    pass
 
     def load_settings(self):
 
@@ -684,88 +563,133 @@ class RovLink:
 
     def discover_nucleus(self):
 
-        # TODO: Implement funcitonality for discovering the Nucleus?
+        # TODO: Waterlinked implementation uses Nmap. Necessary?
 
-        pass
+        for _ in range(21):
+            try:
+                socket.getaddrinfo(self.hostname, self.port)  # 5 sec timeout
+                break
+            except socket.gaierror:
+                continue
+        else:
+            logging.warning('Failed to discover Nucleus on the network')
+            return False
+
+        return True
 
     def connect_nucleus(self):
 
         # TODO: implement an active search algorithm before connecting?
 
-        nucleus_driver.set_tcp_configuration(host=self.hostname)
+        self.nucleus_driver.set_tcp_configuration(host=self.hostname)
 
-        if not nucleus_driver.connect(connection_type='TCP'):
+        if not self.nucleus_driver.connect(connection_type='TCP'):
             return False
 
-        self.nucleus_id = nucleus_driver.connection.nucleus_id
-        self.nucleus_firmware = nucleus_driver.connection.firmware_version
+        self.nucleus_id = self.nucleus_driver.connection.nucleus_id
+        self.nucleus_firmware = self.nucleus_driver.connection.firmware_version
 
-        logging.info(f'Nucleus connected: {nucleus_driver.connect.get_connection_status()}')
+        logging.info(f'Nucleus connected: {self.nucleus_driver.connect.get_connection_status()}')
         logging.info(f'Nucleus ID: {self.nucleus_id}')
         logging.info(f'Nucleus firmware: {self.nucleus_firmware}')
 
         return True
 
-    def wait_for_vehicle(self):
+    def setup_nucleus(self):
+
+        reply = self.nucleus_driver.commands.set_default_config()
+        if b'OK\r\n' not in reply:
+            logging.warning(f'Did not receive OK when sending SETDEFAULT,CONFIG: {reply}')
+
+        reply = self.nucleus_driver.commands.set_default_mission()
+        if b'OK\r\n' not in reply:
+            logging.warning(f'Did not receive OK when sending SETDEFAULT,MISSION: {reply}')
+
+        reply = self.nucleus_driver.commands.set_default_magcal()
+        if b'OK\r\n' not in reply:
+            logging.warning(f'Did not receive OK when sending SETDEFAULT,MAGCAL: {reply}')
+
+        reply = self.nucleus_driver.commands.set_ahrs(ds="ON")
+        if b'OK\r\n' not in reply:
+            logging.warning(f'Did not receive OK when sending SETAHRS,DS="ON": {reply}')
+
+        reply = self.nucleus_driver.commands.set_bt(wt="OFF", ds="ON")
+        if b'OK\r\n' not in reply:
+            logging.warning(f'Did not receive OK when sending SETBT,WT="OFF",DS="ON": {reply}')
+
+        reply = self.nucleus_driver.commands.set_alti(ds="OFF")
+        if b'OK\r\n' not in reply:
+            logging.warning(f'Did not receive OK when sending SETALTI,DS="OFF": {reply}')
+
+        reply = self.nucleus_driver.commands.set_cur_prof(ds="OFF")
+        if b'OK\r\n' not in reply:
+            logging.warning(f'Did not receive OK when sending SETCURPROF,DS="OFF": {reply}')
+
+    def wait_for_heartbeat(self):
         """
         Waits for a valid heartbeat to Mavlink2Rest
         """
+
+        def get_heartbeat():
+
+            response = requests.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT')
+
+            if response.status_code != 200:
+                logging.warning(f'HEARTBEAT request did not respond with 200')
+                return False
+
+            status = False
+            try:
+                if response.json()["message"]["type"] == "HEARTBEAT":
+                    status = True
+            except Exception as e:
+                logging.warning(f'Unable to extract data from HEARTBEAT request: {e}')
+
+            return status
+
         vehicle = 1
         component = 1
 
         vehicle_path = f"/vehicles/{vehicle}/components/{component}/messages"
-        while not requests.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT'):
-            logging.info('waiting for vehicle heartbeat')
+
+        logging.info('waiting for vehicle heartbeat...')
+
+        while not get_heartbeat():
+
             time.sleep(1)
 
     def setup_parameters(self):
 
-        def set_parameter(parameter_id, parameter_type, parameter_value):
+        for parameter in self.PARAMETERS.keys():
+            response = set_parameter(parameter, self.PARAMETERS[parameter]['value'], self.PARAMETERS[parameter]['type'])
+            if response.status_code != 200:
+                logging.warning(f'Failed to set {parameter} to {self.PARAMETERS[parameter]["value"]}')
 
-            try:
-
-                data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_SET").text)
-
-                for index, char in enumerate(parameter_id):
-
-                    data['message']['param_id'][index] = char
-
-                data['message']['param_type'] = {'type': parameter_type}
-                data['message']['param_value'] = parameter_value
-
-                result = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
-
-                logging.info(result)
-
-                return result.status_code == 200
-
-            except Exception as error:
-                logging.warning(f"Error setting parameter '{parameter_id}': {error}")
-                return False
-
-        response = set_parameter("AHRS_EKF_TYPE", "MAV_PARAM_TYPE_UINT8", 3)
+        '''
+        response = set_parameter("AHRS_EKF_TYPE", 3, "MAV_PARAM_TYPE_UINT8")
         logging.info(f'AHRS_EKF_TYPE: {response}')
 
-        response = set_parameter("EK2_ENABLE", "MAV_PARAM_TYPE_UINT8", 0)
+        response = set_parameter("EK2_ENABLE", 0, "MAV_PARAM_TYPE_UINT8")
         logging.info(f'EK2_ENABLE: {response}')
 
-        response = set_parameter("EK3_ENABLE", "MAV_PARAM_TYPE_UINT8", 1)
+        response = set_parameter("EK3_ENABLE", 1, "MAV_PARAM_TYPE_UINT8")
         logging.info(f'EK3_ENABLE: {response}')
 
-        response = set_parameter("VISO_TYPE", "MAV_PARAM_TYPE_UINT8", 1)
+        response = set_parameter("VISO_TYPE", 1, "MAV_PARAM_TYPE_UINT8")
         logging.info(f'VISO_TYPE: {response}')
 
-        response = set_parameter("EK3_GPS_TYPE", "MAV_PARAM_TYPE_UINT8", 3)
+        response = set_parameter("EK3_GPS_TYPE", 3, "MAV_PARAM_TYPE_UINT8")
         logging.info(f'EK3_GPS_TYPE: {response}')
 
-        response = set_parameter("EK3_SRC1_POSXY", "MAV_PARAM_TYPE_UINT8", 6)  # EXTNAV
+        response = set_parameter("EK3_SRC1_POSXY", 6, "MAV_PARAM_TYPE_UINT8")  # EXTNAV
         logging.info(f'EK3_SRC1_POSXY: {response}')
 
-        response = set_parameter("EK3_SRC1_VELXY", "MAV_PARAM_TYPE_UINT8", 6)  # EXTNAV
+        response = set_parameter("EK3_SRC1_VELXY", 6, "MAV_PARAM_TYPE_UINT8")  # EXTNAV
         logging.info(f'EK3_SRC1_VELXY: {response}')
 
-        response = set_parameter("EK3_SRC1_POSZ", "MAV_PARAM_TYPE_UINT8", 1)
+        response = set_parameter("EK3_SRC1_POSZ", 1, "MAV_PARAM_TYPE_UINT8")
         logging.info(f'EK3_SRC1_POSZ: {response}')
+        '''
 
     def send_vision_position_delta(self, position_delta, angle_delta, confidence, dt):
 
@@ -804,30 +728,30 @@ class RovLink:
     def run(self):
 
         self.load_settings()
-        self.discover_nucleus()  # TODO
+        self.discover_nucleus()
         self.connect_nucleus()
-        self.wait_for_vehicle()
+        self.setup_nucleus()
+        self.wait_for_heartbeat()
         #self.setup_mavlink()  # TODO
         self.setup_parameters()
         time.sleep(1)  # TODO
         logging.debug("Running")  # TODO
-        self.packet_received_timestamp = time.time()  # TODO
+        #self.packet_received_timestamp = time.time()  # TODO
 
-        connected = True  # TODO
-
+        #self.connected = True  # TODO
 
         while self.thread_running:
 
-            packet = nucleus_driver.read_packet()
+            packet = self.nucleus_driver.read_packet()
 
-            if packet is None:
-                if time.time() - self.packet_received_timestamp > self.timeout:
-                    logging.warning('Timeout, restarting')
-                    self.reconnect()
-                time.sleep(0.005)
-                continue
+            #if packet is None:
+            #    if time.time() - self.packet_received_timestamp > self.TIMEOUT:
+            #        logging.warning('Timeout, restarting')
+            #        self.reconnect()  # TODO
+            #    time.sleep(0.005)
+            #    continue
 
-            self.packet_received_timestamp = time.time()
+            #self.packet_received_timestamp = time.time()
 
             if packet['id'] == 0xb4:
 
@@ -848,8 +772,7 @@ class RovLink:
                 if self.timestamp_previous is None:
                     dt = 0
                 else:
-                    dt = timestamp - self.timestamp_prevous
-                    self.timestamp_previous = timestamp
+                    dt = timestamp - self.timestamp_previous
 
                 dx = velocity_x * dt
                 dy = velocity_y * dt
@@ -860,17 +783,20 @@ class RovLink:
                 if self.orientation_current is None:
                     delta_orientation = [0, 0, 0]
 
-                elif self.timestamp_previous is None:
+                elif self.orientation_previous is None or self.timestamp_previous is None:
                     delta_orientation = [0, 0, 0]
                     self.orientation_previous = self.orientation_current
 
                 else:
-                    for (angle_current, angle_previous) in zip(self.orientation_current - self.orientation_previous):
+                    for (angle_current, angle_previous) in zip(self.orientation_current, self.orientation_previous):
                         delta_orientation.append(angle_current - angle_previous)
 
                     self.orientation_previous = self.orientation_current
 
+                self.timestamp_previous = timestamp
+
                 self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=confidence, dt=dt)
+                logging.info(f'VISION_POSITION_DELTA - POS_DELTA={[dx, dy, dz]} - ANG_DELTA={delta_orientation} - FOM={confidence} - dt={dt}')
 
             if packet['id'] == 0xd2:
 
