@@ -711,10 +711,12 @@ class RovLink(Thread):
 
     def run(self):
 
-        time.sleep(2)
+        logging.info('Waiting 10 seconds...')
+        time.sleep(10)
+        logging.info('continuing')
 
         self.load_settings()
-        self.wait_for_cableguy()
+        #self.wait_for_cableguy()
         self.discover_nucleus()
 
 
