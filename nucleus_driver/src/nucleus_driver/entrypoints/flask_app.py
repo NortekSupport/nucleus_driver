@@ -700,6 +700,9 @@ class RovLink(Thread):
         self.discover_nucleus()
         if not self.connect_nucleus():
             logging.warning('Failed to connect to Nucleus')
+
+        return 
+
         self.setup_nucleus()
         self.wait_for_heartbeat()
         #self.setup_mavlink()  # TODO
@@ -790,7 +793,7 @@ if __name__ == "flask_app":
 
     logging.info('initiating RovLink')
     rov_link = RovLink(nucleus_driver=nucleus_driver)
-    #rov_link.start()
+    rov_link.start()
     logging.info('RovLink running')
 
     print('INITIATED DRIVER')
