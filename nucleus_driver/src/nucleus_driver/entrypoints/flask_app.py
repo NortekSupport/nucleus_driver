@@ -276,17 +276,20 @@ def set_parameter(parameter_id, parameter_value, parameter_type):
 
         def post():
 
-            data = {'header': {'system_id': 255,
-                               'component_id': 0,
-                               'sequence': 0},
-                    'message': {'type': "PARAM_SET",
-                                'param_value': parameter_value,
-                                'target_system': 0,  # Should this be 1?
-                                'target_component': 0,  # Should this be 1?
-                                'param_id': ["\u0000" for _ in range(16)],
-                                'param_type': {'type': parameter_type}
-                                }
-                    }
+            data = {
+                'header': {
+                    'system_id': 255,
+                    'component_id': 0,
+                    'sequence': 0},
+                'message': {
+                    'type': "PARAM_SET",
+                    'param_value': parameter_value,
+                    'target_system': 0,
+                    'target_component': 0,
+                    'param_id': ["\u0000" for _ in range(16)],
+                    'param_type': {'type': parameter_type}
+                }
+            }
 
             for index, char in enumerate(parameter_id):
                 data["message"]["param_id"][index] = char
@@ -393,16 +396,19 @@ def get_parameter(parameter_id):
 
         def post():
 
-            data = {'header': {'system_id': 255,
-                               'component_id': 0,
-                               'sequence': 0},
-                    'message': {'type': "PARAM_REQUEST_READ",
-                                'param_index': -1,
-                                'target_system': 1,
-                                'target_component': 1,
-                                'param_id': ["\u0000" for _ in range(16)]
-                                }
-                    }
+            data = {
+                'header': {
+                    'system_id': 255,
+                    'component_id': 0,
+                    'sequence': 0},
+                'message': {
+                    'type': "PARAM_REQUEST_READ",
+                    'param_index': -1,
+                    'target_system': 1,
+                    'target_component': 1,
+                    'param_id': ["\u0000" for _ in range(16)]
+                }
+            }
 
             for index, char in enumerate(parameter_id):
                 data['message']['param_id'][index] = char
@@ -487,7 +493,7 @@ def get_parameter(parameter_id):
     return parameter
 
 
-class RovLink:
+class RovLink(Thread):
 
     TIMEOUT = 1
 
@@ -517,13 +523,13 @@ class RovLink:
         self.nucleus_firmware = None
 
         self.packet_received_timestamp = None
-
-    #def reconnect(self):
+    '''
+    def reconnect(self):
 
         # TODO: Add reconnect funtionality
 
-    #    pass
-
+        pass
+    '''
     def load_settings(self):
 
         # TODO: How to implement settings? .config/dvl/settings.json?
@@ -536,7 +542,7 @@ class RovLink:
 
         for _ in range(21):
             try:
-                socket.getaddrinfo(self.hostname, self.port)  # 5 sec timeout
+                socket.getaddrinfo(self.hostname, 9000)  # 5 sec timeout
                 break
             except socket.gaierror:
                 continue
@@ -544,11 +550,10 @@ class RovLink:
             logging.warning('Failed to discover Nucleus on the network')
             return False
 
+        logging.info('Discovered Nucleus on network')
         return True
 
     def connect_nucleus(self):
-
-        # TODO: implement an active search algorithm before connecting?
 
         self.nucleus_driver.set_tcp_configuration(host=self.hostname)
 
@@ -667,38 +672,32 @@ class RovLink:
                 "header": {
                     "system_id": 255,
                     "component_id": 0,
-                    "sequence": 0
-                },
+                    "sequence": 0},
                 "message": {
                     "type": "VISION_POSITION_DELTA",
                     "time_usec": 0,
                     "time_delta_usec": dt,
-                    "angle_delta": [
-                        angle_delta[0],
-                        angle_delta[1],
-                        angle_delta[2]
-                    ],
-                    "position_delta": [
-                        position_delta[0],
-                        position_delta[1],
-                        position_delta[2]
-                    ],
+                    "angle_delta": [angle_delta[0], angle_delta[1], angle_delta[2]],
+                    "position_delta": [position_delta[0], position_delta[1], position_delta[2]],
                     "confidence": confidence
                 }
             }
 
         except IndexError:
 
-            print('Failed to send VISION_POSITION_DELTA packet')
+            logging.warning('Failed to create VISION_POSITION_DELTA packet')
             return
 
         response = requests.post(MAVLINK2REST_URL + "/mavlink", data=vision_position_delta)
+
+        logging.info(f'\r\nVISION_POSITION_DELTA response: \r\n{response}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
 
     def run(self):
 
         self.load_settings()
         self.discover_nucleus()
-        self.connect_nucleus()
+        if not self.connect_nucleus():
+            logging.warning('Failed to connect to Nucleus')
         self.setup_nucleus()
         self.wait_for_heartbeat()
         #self.setup_mavlink()  # TODO
@@ -786,5 +785,8 @@ if __name__ == "flask_app":
     packet_args.add_argument('size', type=int, help="Number of packets returned by packets")
 
     #app.run(debug=True, host=DOCKER_HOST, port=DOCKER_PORT)
+
+    rov_link = RovLink(nucleus_driver=nucleus_driver)
+    rov_link.start()
 
     print('INITIATED DRIVER')
