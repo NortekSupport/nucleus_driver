@@ -538,6 +538,19 @@ class RovLink(Thread):
 
         self.hostname = HOSTNAME
 
+    def wait_for_cableguy(self):
+
+        def get_cableguy_status():
+            response = requests.get("http://127.0.0.1/cable-guy/v1.0/ethernet")
+
+            logging.info(f'\r\n\r\nCABLEGUY:\r\n{response}\r\n\r\n{response.status_code}\r\n\r\n'
+
+            return False
+
+        while not get_cableguy_status():
+            logging.info("waiting for cable-guy to come online...")
+            time.sleep(1)
+
     def discover_nucleus(self):
 
         # TODO: Waterlinked implementation uses Nmap. Necessary?
@@ -701,6 +714,7 @@ class RovLink(Thread):
         time.sleep(2)
 
         self.load_settings()
+        self.wait_for_cableguy()
         self.discover_nucleus()
 
 
