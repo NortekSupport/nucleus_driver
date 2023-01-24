@@ -276,13 +276,40 @@ def set_parameter(parameter_id, parameter_value, parameter_type):
 
         def post():
 
-            data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_SET").text)
+            #data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_SET").text)
+
+            data = {'header': {'system_id': 255,
+                               'component_id': 0,
+                               'sequence': 0},
+                    'message': {'type': "PARAM_SET",
+                                'param_value': parameter_value,
+                                'target_system': 0,  # Should this be 1?
+                                'target_component': 0,  # Should this be 1?
+                                'param_id': ["\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000",
+                                             "\u0000"],
+                                'param_type': {'type': parameter_type}
+                                }
+                    }
 
             for index, char in enumerate(parameter_id):
                 data["message"]["param_id"][index] = char
 
-            data["message"]["param_type"] = {"type": parameter_type}
-            data["message"]["param_value"] = parameter_value
+            #data["message"]["param_type"] = {"type": parameter_type}
+            #data["message"]["param_value"] = parameter_value
 
             return requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
@@ -385,9 +412,6 @@ def get_parameter(parameter_id):
     def get_from_mavlink(param_value_pre_timestamp):
 
         def post():
-            data = json.loads(requests.get(MAVLINK2REST_URL + "/helper/mavlink?name=PARAM_REQUEST_READ").text)
-
-            logging.info(f'\r\n\r\nPARAM_REQUEST_READ:\r\n\r\n{data}\r\n\r\n')
 
             data = {'header': {'system_id': 255,
                                'component_id': 0,
@@ -396,22 +420,6 @@ def get_parameter(parameter_id):
                                 'param_index': -1,
                                 'target_system': 1,
                                 'target_component': 1,
-                                #'param_id': {0: "\u0000",
-                                #             1: "\u0000",
-                                #             2: "\u0000",
-                                #             3: "\u0000",
-                                #             4: "\u0000",
-                                #             5: "\u0000",
-                                #             6: "\u0000",
-                                #             7: "\u0000",
-                                #             8: "\u0000",
-                                #             9: "\u0000",
-                                #             10: "\u0000",
-                                #             11: "\u0000",
-                                #             12: "\u0000",
-                                #             13: "\u0000",
-                                #             14: "\u0000",
-                                #             15: "\u0000"}
                                 'param_id': ["\u0000",
                                              "\u0000",
                                              "\u0000",
@@ -433,10 +441,6 @@ def get_parameter(parameter_id):
 
             for index, char in enumerate(parameter_id):
                 data['message']['param_id'][index] = char
-
-            #data['message']['param_index'] = -1
-            #data['message']['target_system'] = 1
-            #data['message']['target_component'] = 1
 
             return requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
