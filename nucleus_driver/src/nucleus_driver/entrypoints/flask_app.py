@@ -816,7 +816,7 @@ if __name__ == "flask_app":
 
     logging.info('initiating RovLink')
     rov_link = RovLink(nucleus_driver=nucleus_driver)
-    rov_link.start()
+    #rov_link.start()
     logging.info('RovLink running')
 
     print('INITIATED DRIVER')
