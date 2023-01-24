@@ -557,6 +557,8 @@ class RovLink(Thread):
 
     def connect_nucleus(self):
 
+        logging.info('####################  TRIGGERDED connect_nucleus() function  ##################')
+
         self.nucleus_driver.set_tcp_configuration(host=self.hostname)
 
         if not self.nucleus_driver.connect(connection_type='tcp'):
@@ -699,12 +701,12 @@ class RovLink(Thread):
         self.load_settings()
         self.discover_nucleus()
 
-        return
+
 
         if not self.connect_nucleus():
             logging.warning('Failed to connect to Nucleus')
 
-        #return
+        return
 
         self.setup_nucleus()
         self.wait_for_heartbeat()
