@@ -698,10 +698,13 @@ class RovLink(Thread):
 
         self.load_settings()
         self.discover_nucleus()
+
+        return
+
         if not self.connect_nucleus():
             logging.warning('Failed to connect to Nucleus')
 
-        return 
+        #return
 
         self.setup_nucleus()
         self.wait_for_heartbeat()
