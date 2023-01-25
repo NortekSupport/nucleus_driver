@@ -514,7 +514,7 @@ class RovLink(Thread):
                   'EK2_ENABLE': {'value': 0, 'type': "MAV_PARAM_TYPE_UINT8"},
                   'EK3_ENABLE': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
                   'VISO_TYPE': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
-                  'EK3_GPS_TYPE': {'value': 3, 'type': "MAV_PARAM_TYPE_UINT8"},
+                  #'EK3_GPS_TYPE': {'value': 3, 'type': "MAV_PARAM_TYPE_UINT8"},
                   'EK3_SRC1_POSXY': {'value': 6, 'type': "MAV_PARAM_TYPE_UINT8"},
                   'EK3_SRC1_VELXY': {'value': 6, 'type': "MAV_PARAM_TYPE_UINT8"},
                   'EK3_SRC1_POSZ': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"}
@@ -913,6 +913,32 @@ class RovLink(Thread):
         logging.info(f'EK3_SRC1_POSZ: {response}')
         '''
 
+    def handle_parameters(self):
+
+        parameter_change = False
+
+        for parameter in self.PARAMETERS.keys():
+
+            response = self.get_parameter(parameter)
+
+            if response.status_code == 200 and response.json()['message']['param_value'] == self.PARAMETERS[parameter]['value']:
+                continue
+
+            parameter_change = True
+
+            logging.info(f"{parameter}, {self.PARAMETERS[parameter]['value']}, {self.PARAMETERS[parameter]['type']}")
+
+            response = self.set_parameter(parameter, self.PARAMETERS[parameter]['value'], self.PARAMETERS[parameter]['type'])
+
+            logging.info(f'parameter set response: {response}')
+
+            if response.status_code == 200:
+                logging.warning(f'{parameter} set to {self.PARAMETERS[parameter]["value"]}')
+            else:
+                logging.warning(f'Failed to set {parameter} to {self.PARAMETERS[parameter]["value"]}')
+
+        return parameter_change
+
     def start_nucleus(self):
 
         if b'OK\r\n' not in self.nucleus_driver.start_measurement():
@@ -968,6 +994,9 @@ class RovLink(Thread):
         self.wait_for_heartbeat()
         #self.setup_mavlink()  # TODO
         # self.setup_parameters()  # Change to "handle" and only set if necessary and promt for restart if changes were necessary
+        if self.handle_parameters():
+            logging.warning('Parameters had to be set to enable Nucleus integration into ROV. Power cycle the ROV for parameters to take effect!')
+            return
         time.sleep(1)  # TODO
         logging.debug("Running")  # TODO
         self.start_nucleus()
@@ -996,12 +1025,13 @@ class RovLink(Thread):
                 fom = max(fom_x, fom_y, fom_z)
 
                 confidence = (10 - fom) * 10
+                confidence = 100  # TODO: REMOVE
 
                 velocity_x = packet['velocityX']
                 velocity_y = packet['velocityY']
                 velocity_z = packet['velocityZ']
 
-                timestamp = (packet['timeStamp'] + packet['microSeconds'] * 1e-6) / 1000
+                timestamp = (packet['timeStamp'] + packet['microSeconds'] * 1e-6) * 1e6
 
                 if self.timestamp_previous is None:
                     dt = 0
