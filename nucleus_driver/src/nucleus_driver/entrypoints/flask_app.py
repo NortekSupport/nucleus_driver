@@ -918,6 +918,11 @@ class RovLink(Thread):
         if b'OK\r\n' not in self.nucleus_driver.start_measurement():
             logging.warning('Failed to start Nucleus')
 
+    def stop_nucleus(self):
+
+        if b'OK\r\n' in self.nucleus_driver.stop():
+            logging.warning('Nucleus was already running. Nucleus is now stopped')
+
     def send_vision_position_delta(self, position_delta, angle_delta, confidence, dt):
 
         try:
@@ -958,7 +963,7 @@ class RovLink(Thread):
             logging.warning('Failed to connect to Nucleus')
 
         #return
-
+        self.stop_nucleus()
         self.setup_nucleus()
         self.wait_for_heartbeat()
         #self.setup_mavlink()  # TODO
