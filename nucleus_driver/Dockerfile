@@ -33,4 +33,4 @@ RUN pip install --user .
 #CMD ["python3.9", "./src/nucleus_driver/entrypoints/flask_app.py"]
 
 ENV FLASK_APP=src/nucleus_driver/entrypoints/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000", "--no-reload"]
