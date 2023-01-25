@@ -536,7 +536,7 @@ class RovLink(Thread):
         self.nucleus_id = None
         self.nucleus_firmware = None
 
-        self.packet_received_timestamp = None
+        #self.packet_received_timestamp = None
     '''
     def reconnect(self):
 
@@ -991,9 +991,9 @@ class RovLink(Thread):
             packet = self.nucleus_driver.read_packet()
 
             if packet is None:
-                if time.time() - self.packet_received_timestamp > self.TIMEOUT:
-                    logging.warning('Timeout, restarting')
-                    self.reconnect()  # TODO
+                #if time.time() - self.packet_received_timestamp > self.TIMEOUT:
+                #    logging.warning('Timeout, restarting')
+                #    self.reconnect()  # TODO
                 time.sleep(0.005)
                 logging.info('\r\n\r\nPACKET WAS None\r\n\r\n')
                 time.sleep(1)
