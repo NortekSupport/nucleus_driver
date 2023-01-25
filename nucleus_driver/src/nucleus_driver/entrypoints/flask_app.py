@@ -1198,7 +1198,8 @@ if __name__ == "flask_app":
 
             parameter_value_status = check_parameter_value()
 
-            param_value = jsonify(param_value)
+            param_value = json.dumps(param_value)
+            #param_value = jsonify(param_value)
             if parameter_id_status and parameter_value_status:
                 param_value.status_code = 200
             else:
@@ -1309,7 +1310,8 @@ if __name__ == "flask_app":
 
             parameter_id_status = check_parameter_id()
 
-            param_value = jsonify(param_value)
+            param_value = json.dumps(param_value)
+            #param_value = jsonify(param_value)
             if parameter_id_status:
                 param_value.status_code = 200
             else:
@@ -1328,4 +1330,3 @@ if __name__ == "flask_app":
 
         return parameter
 
-    
