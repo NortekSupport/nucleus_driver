@@ -729,7 +729,7 @@ class RovLink(Thread):
         #self.wait_for_cableguy()
         self.discover_nucleus()
 
-
+        return
 
         if not self.connect_nucleus():
             logging.warning('Failed to connect to Nucleus')
@@ -826,7 +826,7 @@ if __name__ == "flask_app":
 
     logging.info('initiating RovLink')
     rov_link = RovLink(driver=nucleus_driver)
-    #rov_link.start()
+    rov_link.start()
     logging.info('RovLink running')
 
     print('INITIATED DRIVER')
