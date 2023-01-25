@@ -536,9 +536,13 @@ class RovLink(Thread):
 
         # TODO: How to implement settings? .config/dvl/settings.json?
 
+        logging.info('Loading settings')
+
         self.hostname = HOSTNAME
 
     def wait_for_cableguy(self):
+
+        logging.info('waiting for cableguy')
 
         def get_cableguy_status():
             response = requests.get("http://127.0.0.1/cable-guy/v1.0/ethernet")
@@ -554,6 +558,8 @@ class RovLink(Thread):
     def discover_nucleus(self):
 
         # TODO: Waterlinked implementation uses Nmap. Necessary?
+
+        logging.info('discovering nucleus')
 
         for _ in range(21):
             try:
@@ -587,6 +593,8 @@ class RovLink(Thread):
         return True
 
     def setup_nucleus(self):
+
+        logging.info('setting up nucleus')
 
         reply = self.nucleus_driver.commands.set_default_config()
         if b'OK\r\n' not in reply:
@@ -714,6 +722,8 @@ class RovLink(Thread):
         logging.info('Waiting 10 seconds...')
         time.sleep(10)
         logging.info('continuing')
+
+        logging.info('RUN STARTED')
 
         self.load_settings()
         #self.wait_for_cableguy()
