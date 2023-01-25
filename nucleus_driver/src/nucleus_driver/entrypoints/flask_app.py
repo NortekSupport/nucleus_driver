@@ -25,11 +25,12 @@ PORT = 5000  # TODO: Is this the port?
 
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
 
+'''
 logging.info('RUNNING Flask(__name__)')
 app = Flask(__name__)
 api = Api(app)
 logging.info('Flask(__name__) has been executed')
-
+'''
 
 @app.route("/nucleus_driver/connect_serial", methods=['GET'])
 def connect_serial():
@@ -832,6 +833,11 @@ class RovLink(Thread):
 
 
 if __name__ == "flask_app":
+
+    logging.info('RUNNING Flask(__name__)')
+    app = Flask(__name__)
+    api = Api(app)
+    logging.info('Flask(__name__) has been executed')
 
     nucleus_driver = NucleusDriver()
     #nucleus_driver.connection.set_tcp_configuration(host=NUCLEUS_HOST)
