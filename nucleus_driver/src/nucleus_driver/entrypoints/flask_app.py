@@ -967,7 +967,7 @@ class RovLink(Thread):
         self.setup_nucleus()
         self.wait_for_heartbeat()
         #self.setup_mavlink()  # TODO
-        self.setup_parameters()
+        # self.setup_parameters()  # Change to "handle" and only set if necessary and promt for restart if changes were necessary
         time.sleep(1)  # TODO
         logging.debug("Running")  # TODO
         self.start_nucleus()
@@ -1057,8 +1057,8 @@ if __name__ == "flask_app":
     #app.run(debug=True, host=DOCKER_HOST, port=DOCKER_PORT)
 
     logging.info('initiating RovLink')
-    #rov_link = RovLink(driver=nucleus_driver)
-    #rov_link.start()
+    rov_link = RovLink(driver=nucleus_driver)
+    rov_link.start()
     logging.info('RovLink running')
 
     logging.info('RUNNING Flask(__name__)')
@@ -1289,7 +1289,8 @@ if __name__ == "flask_app":
         EK2_ENABLE = 0.0
         EK3_ENABLE = 1.0
         VISO_TYPE = 1.0
-        EK3_GPS_TYPE = 3.0
+        EK3_GPS_TYPE = 3.0  # outdated?
+        GPS_TYPE = 1.0  # replacing EK3_GPS_TYPE?
         EK3_SRC1_POSXY = 3.0
         EK3_SRC1_VELXY = 3.0
         EK3_SRC1_POSZ = 1.0
