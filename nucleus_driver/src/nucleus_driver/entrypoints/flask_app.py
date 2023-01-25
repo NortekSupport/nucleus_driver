@@ -526,7 +526,7 @@ class RovLink(Thread):
         self.nucleus_driver = driver
 
         self.thread = Thread()
-        self.thread_running = False
+        self.thread_running = True
 
         self.timestamp_previous = None
         self.orientation_current = None
