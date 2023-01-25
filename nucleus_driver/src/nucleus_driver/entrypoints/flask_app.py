@@ -378,7 +378,7 @@ def set_parameter(parameter_id, parameter_value, parameter_type):
 
         return param_value
 
-    logging('set_param')
+    logging.info('set_param')
 
     timestamp = _get_param_value_timestamp()
 
