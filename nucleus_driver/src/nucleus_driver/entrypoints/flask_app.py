@@ -948,7 +948,7 @@ class RovLink(Thread):
 
         response = requests.post(MAVLINK2REST_URL + "/mavlink", data=vision_position_delta)
 
-        logging.info(f'\r\n\r\nVISION_POSITION_DELTA response: \r\n{response.json()}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
+        logging.info(f'\r\n\r\nVISION_POSITION_DELTA response: \r\n{response.text}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
 
     def run(self):
 
