@@ -393,6 +393,8 @@ def set_parameter(parameter_id, parameter_value, parameter_type):
 
     parameter = check_parameter(parameter.json())
 
+    logging.info('parameter checked')
+
     return parameter
 
 
@@ -670,6 +672,9 @@ class RovLink(Thread):
             logging.info(f"{parameter}, {self.PARAMETERS[parameter]['value']}, {self.PARAMETERS[parameter]['type']}")
 
             response = set_parameter(parameter, self.PARAMETERS[parameter]['value'], self.PARAMETERS[parameter]['type'])
+
+            logging.info(f'parameter set response: {response}')
+
             if response.status_code != 200:
                 logging.warning(f'Failed to set {parameter} to {self.PARAMETERS[parameter]["value"]}')
 
