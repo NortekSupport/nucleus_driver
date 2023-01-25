@@ -378,9 +378,15 @@ def set_parameter(parameter_id, parameter_value, parameter_type):
 
         return param_value
 
+    logging('set_param')
+
     timestamp = _get_param_value_timestamp()
 
+    logging.info('timestamp received')
+
     parameter = set_through_mavlink(param_value_pre_timestamp=timestamp)
+
+    logging.info('parameter set')
 
     if parameter.status_code != 200:
         return parameter
@@ -660,6 +666,9 @@ class RovLink(Thread):
     def setup_parameters(self):
 
         for parameter in self.PARAMETERS.keys():
+
+            logging.info(f"{parameter}, {self.PARAMETERS[parameter]['value']}, {self.PARAMETERS[parameter]['type']}")
+
             response = set_parameter(parameter, self.PARAMETERS[parameter]['value'], self.PARAMETERS[parameter]['type'])
             if response.status_code != 200:
                 logging.warning(f'Failed to set {parameter} to {self.PARAMETERS[parameter]["value"]}')
