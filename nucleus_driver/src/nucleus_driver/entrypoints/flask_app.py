@@ -958,7 +958,7 @@ class RovLink(Thread):
                     "component_id": 0,
                     "sequence": 0},
                 "message": {
-                    "type": "VISION_POSITION_DELTAs",   # TODO: FIX TYPO!
+                    "type": "VISION_POSITION_DELTA",
                     "time_usec": 0,
                     "time_delta_usec": dt,
                     "angle_delta": [angle_delta[0], angle_delta[1], angle_delta[2]],
