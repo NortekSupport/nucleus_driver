@@ -149,7 +149,7 @@ class Connection:
 
         return True
 
-    def connect(self, connection_type: str, get_device_info=True) -> bool:
+    def connect(self, connection_type: str, get_device_info=True, password=None) -> bool:
 
         def _set_connection_type() -> bool:
             if connection_type in self.CONNECTION_TYPES:
@@ -196,16 +196,22 @@ class Connection:
 
                 login = self.readline()
 
+                if b'Welcome to Nortek' in login:
+                    return True
+
                 if b'Please enter password:\r\n' not in login:
-                    self.messages.write_warning(message='Did not recevie login promp when connecting to TCP')
+                    self.messages.write_warning(message='Did not receive login promp when connecting to TCP')
                     return False
 
-                self.write(command=b'nortek\r\n')
+                if password is not None:
+                    self.write(command=password.encode().rstrip(b'\n').rstrip(b'\r') + b'\r\n')
+                else:
+                    self.write(command=b'nortek\r\n')
 
                 reply = self.readline()
 
                 if b'Welcome to Nortek' not in reply:
-                    self.messages.write_warning(message='Did not recevie welcome message after login attempt')
+                    self.messages.write_warning(message=f'Did not receive welcome message after login attempt: {reply}')
                     return False
 
                 return True

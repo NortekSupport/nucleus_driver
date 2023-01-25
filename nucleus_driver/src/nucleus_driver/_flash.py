@@ -189,7 +189,7 @@ class Flash:
 
         return firmware_package
 
-    def flash_firmware(self) -> int:
+    def flash_firmware(self, password=None) -> int:
 
         if self.nucleus_firmware is None and self.dvl_firmware is None:
             self.messages.write_message(message='No firmware has been selected for flashing')
@@ -200,7 +200,7 @@ class Flash:
         nucleus_firmware_match, dvl_firmware_match = self.compare_firmware()[:2]
 
         if self.nucleus_firmware is not None and condition == 0 and nucleus_firmware_match is not True:
-            condition = self.flash_nucleus_firmware()
+            condition = self.flash_nucleus_firmware(password=password)
         elif nucleus_firmware_match is True:
             self.messages.write_message(message='New Nucleus firmware matches old firmware. Nucleus flashing will not be executed')
 
@@ -217,7 +217,7 @@ class Flash:
 
         return condition
 
-    def flash_nucleus_firmware(self) -> int:
+    def flash_nucleus_firmware(self, password=None) -> int:
 
         if not self.connection.get_connection_status():
             self.messages.write_message(message='Nucleus not connected')
@@ -273,7 +273,11 @@ class Flash:
             if condition is not True:
                 self.messages.write_warning(message='Failed to retrieve hostname. Attempting to reconnect with old hostname')
 
-            self.connection.connect(connection_type='tcp')
+            self.connection.connect(connection_type='tcp', password=password)
+
+            if not self.connection.get_connection_status():
+                self.messages.write_warning(message='Failed to connect through TCP with specified password. Trying default password...')
+                self.connection.connect(connection_type='tcp', password='nortek')
 
             if not self.connection.get_connection_status():
                 self.messages.write_warning(message='Failed to reconnect to TCP after Nucleus flashing')
@@ -345,6 +349,8 @@ class Flash:
 
     def set_default_values(self) -> int:
 
+        return 0  # TODO: This prevents setting of default values after flash
+
         if not self.connection.get_connection_status():
             self.messages.write_message(message='Nucleus not connected')
             return -301
@@ -387,7 +393,7 @@ class Flash:
 
         return 0
 
-    def confirm_firmware(self) -> int:
+    def confirm_firmware(self, password=None) -> int:
 
         if self.nucleus_firmware_name is None and self.dvl_firmware_name is None:
             return -401
@@ -423,7 +429,7 @@ class Flash:
 
                 time.sleep(20)
 
-                self.connection.connect(connection_type='tcp')
+                self.connection.connect(connection_type='tcp', password=password)
 
                 if not self.connection.get_connection_status():
                     self.messages.write_warning(message='Failed to reconnect to TCP after Nucleus flashing')
@@ -431,6 +437,6 @@ class Flash:
 
             return -405
 
-        self.messages.write_warning(message='Firmware update complete')
+        self.messages.write_message(message='Firmware update complete')
 
         return 0
