@@ -995,6 +995,8 @@ class RovLink(Thread):
                     logging.warning('Timeout, restarting')
                     self.reconnect()  # TODO
                 time.sleep(0.005)
+                logging.info('\r\n\r\nPACKET WAS None\r\n\r\n')
+                time.sleep(1)
                 continue
 
             #self.packet_received_timestamp = time.time()
