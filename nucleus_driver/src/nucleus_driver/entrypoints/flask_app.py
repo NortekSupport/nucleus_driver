@@ -507,11 +507,11 @@ class RovLink(Thread):
                   'EK3_SRC1_POSZ': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"}
                   }
 
-    def __init__(self, nucleus_driver):
+    def __init__(self, driver):
 
         Thread.__init__(self)
 
-        self.nucleus_driver = nucleus_driver
+        self.nucleus_driver = driver
 
         self.thread = Thread()
         self.thread_running = False
@@ -825,7 +825,7 @@ if __name__ == "flask_app":
     #app.run(debug=True, host=DOCKER_HOST, port=DOCKER_PORT)
 
     logging.info('initiating RovLink')
-    rov_link = RovLink(nucleus_driver=nucleus_driver)
+    rov_link = RovLink(driver=nucleus_driver)
     #rov_link.start()
     logging.info('RovLink running')
 
