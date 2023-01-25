@@ -948,7 +948,7 @@ class RovLink(Thread):
 
         response = requests.post(MAVLINK2REST_URL + "/mavlink", data=vision_position_delta)
 
-        logging.info(f'\r\nVISION_POSITION_DELTA response: \r\n{response}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
+        logging.info(f'\r\n\r\nVISION_POSITION_DELTA response: \r\n{response.json()}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
 
     def run(self):
 
@@ -981,15 +981,13 @@ class RovLink(Thread):
                 #    logging.warning('Timeout, restarting')
                 #    self.reconnect()  # TODO
                 time.sleep(0.005)
-                logging.info('\r\n\r\nPACKET WAS None\r\n\r\n')
-                time.sleep(1)
                 continue
 
             #self.packet_received_timestamp = time.time()
 
             if packet['id'] == 0xb4:
 
-                logging.info('received BT package')
+                logging.info('received BT packet')
 
                 fom_x = packet['fomX']
                 fom_y = packet['fomY']
@@ -1035,6 +1033,8 @@ class RovLink(Thread):
                 logging.info(f'VISION_POSITION_DELTA - POS_DELTA={[dx, dy, dz]} - ANG_DELTA={delta_orientation} - FOM={confidence} - dt={dt}')
 
             if packet['id'] == 0xd2:
+
+                logging.info('received AHRS packet')
 
                 roll = packet['ahrsData.roll']
                 pitch = packet['ahrsData.pitch']
