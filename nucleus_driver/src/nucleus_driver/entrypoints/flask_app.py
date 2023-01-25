@@ -601,16 +601,13 @@ class RovLink(Thread):
             post_response = post()
 
             if post_response.status_code != 200:
-                param_value = jsonify({'message': f'PARAM_SET command did not respond with 200: {post_response.status_code}'})
-                param_value.status_code = post_response.status_code
-                return param_value
+                logging.warning(f'PARAM_SET command did not respond with 200: {post_response.status_code}')
+                return post_response
 
             get_response = get()
 
             if get_response.status_code != 200:
-                param_value = jsonify({'message': f'PARAM_VALUE command did not respond with 200: {get_response.status_code}'})
-                param_value.status_code = get_response.status_code
-                return param_value
+                logging.warning(f'PARAM_VALUE command did not respond with 200: {get_response.status_code}')
 
             return get_response
 
@@ -620,7 +617,7 @@ class RovLink(Thread):
 
                 # Extract PARAM_VALUE id (name)
                 response_parameter_id = ''
-                for char in param_value['message']['param_id']:
+                for char in param_value.json()['message']['param_id']:
                     if char == '\u0000':
                         break
 
@@ -628,27 +625,13 @@ class RovLink(Thread):
 
                 # Check if obtained PARAM_ID is the same as requested
                 if response_parameter_id != parameter_id:
-                    if 'WARNING' not in param_value.keys():
-                        param_value.update({'WARNING': {}})
-
-                    param_value['WARNING'].update({'param_id': {'message': 'The obtained parameter is not the same as the specified parameter',
-                                                                'specified_parameter': parameter_id,
-                                                                'obtained_parameter': response_parameter_id
-                                                                }})
                     return False
 
                 return True
 
             def check_parameter_value():
 
-                if int(param_value['message']['param_value']) != int(parameter_value):
-                    if 'WARNING' not in param_value.keys():
-                        param_value.update({'WARNING': {}})
-
-                    param_value['WARNING'].update({'param_value': {'message': 'The obtained parameter value is not the same as the specified value',
-                                                                   'specified_parameter': parameter_value,
-                                                                   'obtained_parameter': int(param_value['message']['param_value'])
-                                                                   }})
+                if int(param_value.json()['message']['param_value']) != int(parameter_value):
                     return False
 
                 return True
@@ -657,11 +640,7 @@ class RovLink(Thread):
 
             parameter_value_status = check_parameter_value()
 
-            #param_value = json.dumps(param_value)
-            param_value = jsonify(param_value)
-            if parameter_id_status and parameter_value_status:
-                param_value.status_code = 200
-            else:
+            if not parameter_id_status or not parameter_value_status:
                 param_value.status_code = 210
 
             return param_value
@@ -679,7 +658,7 @@ class RovLink(Thread):
         if parameter.status_code != 200:
             return parameter
 
-        parameter = check_parameter(parameter.json())
+        parameter = check_parameter(parameter)
 
         logging.info('parameter checked')
 
@@ -740,16 +719,13 @@ class RovLink(Thread):
             post_response = post()
 
             if post_response.status_code != 200:
-                param_value = jsonify({'message': f'PARAM_SREQUEST_READ command did not respond with 200: {post_response.status_code}'})
-                param_value.status_code = post_response.status_code
-                return param_value
+                logging.warning(f'PARAM_SREQUEST_READ command did not respond with 200: {post_response.status_code}')
+                return post_response
 
             get_response = get()
 
             if get_response.status_code != 200:
-                param_value = jsonify({'message': f'PARAM_VALUE command did not respond with 200: {get_response.status_code}'})
-                param_value.status_code = get_response.status_code
-                return param_value
+                logging.warning(f'PARAM_VALUE command did not respond with 200: {get_response.status_code}')
 
             return get_response
 
@@ -759,7 +735,7 @@ class RovLink(Thread):
 
                 # Extract PARAM_VALUE id (name)
                 response_parameter_id = ''
-                for char in param_value['message']['param_id']:
+                for char in param_value.json()['message']['param_id']:
                     if char == '\u0000':
                         break
 
@@ -767,24 +743,13 @@ class RovLink(Thread):
 
                 # Check if obtained PARAM_ID is the same as requested
                 if response_parameter_id != parameter_id:
-                    if 'WARNING' not in param_value.keys():
-                        param_value.update({'WARNING': {}})
-
-                    param_value['WARNING'].update({'param_id': {'message': 'The obtained parameter is not the same as the specified parameter',
-                                                                'specified_parameter': parameter_id,
-                                                                'obtained_parameter': response_parameter_id
-                                                                }})
                     return False
 
                 return True
 
             parameter_id_status = check_parameter_id()
 
-            #param_value = json.dumps(param_value)
-            param_value = jsonify(param_value)
-            if parameter_id_status:
-                param_value.status_code = 200
-            else:
+            if not parameter_id_status:
                 param_value.status_code = 210
 
             return param_value
@@ -796,7 +761,7 @@ class RovLink(Thread):
         if parameter.status_code != 200:
             return parameter
 
-        parameter = check_parameter(parameter.json())
+        parameter = check_parameter(parameter)
 
         return parameter
 
