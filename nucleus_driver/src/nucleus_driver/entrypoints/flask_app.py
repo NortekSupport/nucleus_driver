@@ -505,6 +505,7 @@ def get_parameter(parameter_id):
     return parameter
 '''
 
+
 class RovLink(Thread):
 
     TIMEOUT = 1
@@ -535,15 +536,6 @@ class RovLink(Thread):
         self.hostname = None
         self.nucleus_id = None
         self.nucleus_firmware = None
-
-        #self.packet_received_timestamp = None
-    '''
-    def reconnect(self):
-
-        # TODO: Add reconnect funtionality
-
-        pass
-    '''
 
     def set_parameter(self, parameter_id, parameter_value, parameter_type):
 
@@ -645,22 +637,14 @@ class RovLink(Thread):
 
             return param_value
 
-        logging.info('set_param')
-
         timestamp = get_param_value_timestamp()
 
-        logging.info('timestamp received')
-
         parameter = set_through_mavlink(param_value_pre_timestamp=timestamp)
-
-        logging.info('parameter set')
 
         if parameter.status_code != 200:
             return parameter
 
         parameter = check_parameter(parameter)
-
-        logging.info('parameter checked')
 
         return parameter
 
@@ -765,18 +749,13 @@ class RovLink(Thread):
 
         return parameter
 
-
     def load_settings(self):
 
         # TODO: How to implement settings? .config/dvl/settings.json?
 
-        logging.info('Loading settings')
-
         self.hostname = HOSTNAME
 
     def wait_for_cableguy(self):
-
-        logging.info('waiting for cableguy')
 
         def get_cableguy_status():
             response = requests.get("http://127.0.0.1/cable-guy/v1.0/ethernet")
@@ -788,6 +767,8 @@ class RovLink(Thread):
         while not get_cableguy_status():
             logging.info("waiting for cable-guy to come online...")
             time.sleep(1)
+
+        logging.info('Cable-guy online')
 
     def discover_nucleus(self):
 
@@ -810,8 +791,6 @@ class RovLink(Thread):
 
     def connect_nucleus(self):
 
-        logging.info('####################  TRIGGERDED connect_nucleus() function  ##################')
-
         self.nucleus_driver.set_tcp_configuration(host=self.hostname)
 
         if not self.nucleus_driver.connect(connection_type='tcp'):
@@ -821,7 +800,7 @@ class RovLink(Thread):
         self.nucleus_firmware = self.nucleus_driver.connection.firmware_version
 
         logging.info(f'Nucleus connected: {self.nucleus_driver.connection.get_connection_status()}')
-        logging.info(f'Nucleus ID: -+-    {self.nucleus_id}')
+        logging.info(f'Nucleus ID:        {self.nucleus_id}')
         logging.info(f'Nucleus firmware:  {self.nucleus_firmware}')
 
         return True
@@ -891,6 +870,8 @@ class RovLink(Thread):
 
             time.sleep(1)
 
+        logging.info('Heartbeat detected')
+
     def setup_parameters(self):
 
         for parameter in self.PARAMETERS.keys():
@@ -901,7 +882,9 @@ class RovLink(Thread):
 
             logging.info(f'parameter set response: {response}')
 
-            if response.status_code != 200:
+            if response.status_code == 200:
+                logging.warning(f'{parameter} set to {self.PARAMETERS[parameter]["value"]}')
+            else:
                 logging.warning(f'Failed to set {parameter} to {self.PARAMETERS[parameter]["value"]}')
 
         '''
@@ -929,6 +912,11 @@ class RovLink(Thread):
         response = set_parameter("EK3_SRC1_POSZ", 1, "MAV_PARAM_TYPE_UINT8")
         logging.info(f'EK3_SRC1_POSZ: {response}')
         '''
+
+    def start_nucleus(self):
+
+        if b'OK\r\n' not in self.nucleus_driver.start_measurement():
+            logging.warning('Failed to start Nucleus')
 
     def send_vision_position_delta(self, position_delta, angle_delta, confidence, dt):
 
@@ -959,14 +947,9 @@ class RovLink(Thread):
 
     def run(self):
 
-        logging.info('Waiting 10 seconds...')
-        #time.sleep(10)
-        logging.info('continuing')
-
-        logging.info('RUN STARTED')
 
         self.load_settings()
-        #self.wait_for_cableguy()
+        self.wait_for_cableguy()
         self.discover_nucleus()
 
         #return
@@ -982,9 +965,7 @@ class RovLink(Thread):
         self.setup_parameters()
         time.sleep(1)  # TODO
         logging.debug("Running")  # TODO
-        #self.packet_received_timestamp = time.time()  # TODO
-
-        #self.connected = True  # TODO
+        self.start_nucleus()
 
         while self.thread_running:
 
