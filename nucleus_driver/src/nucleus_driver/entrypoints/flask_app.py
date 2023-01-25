@@ -998,7 +998,7 @@ class RovLink(Thread):
                 velocity_y = packet['velocityY']
                 velocity_z = packet['velocityZ']
 
-                timestamp = (packet['timestamp'] + packet['microseconds'] * 1e-6) / 1000
+                timestamp = (packet['timeStamp'] + packet['microSeconds'] * 1e-6) / 1000
 
                 if self.timestamp_previous is None:
                     dt = 0
