@@ -949,7 +949,7 @@ class RovLink(Thread):
 
 
         self.load_settings()
-        self.wait_for_cableguy()
+        #self.wait_for_cableguy()
         self.discover_nucleus()
 
         #return
