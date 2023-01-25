@@ -720,7 +720,7 @@ class RovLink(Thread):
     def run(self):
 
         logging.info('Waiting 10 seconds...')
-        time.sleep(10)
+        #time.sleep(10)
         logging.info('continuing')
 
         logging.info('RUN STARTED')
@@ -729,12 +729,12 @@ class RovLink(Thread):
         #self.wait_for_cableguy()
         self.discover_nucleus()
 
-        return
+        #return
 
         if not self.connect_nucleus():
             logging.warning('Failed to connect to Nucleus')
 
-        return
+        #return
 
         self.setup_nucleus()
         self.wait_for_heartbeat()
@@ -750,16 +750,18 @@ class RovLink(Thread):
 
             packet = self.nucleus_driver.read_packet()
 
-            #if packet is None:
-            #    if time.time() - self.packet_received_timestamp > self.TIMEOUT:
-            #        logging.warning('Timeout, restarting')
-            #        self.reconnect()  # TODO
-            #    time.sleep(0.005)
-            #    continue
+            if packet is None:
+                if time.time() - self.packet_received_timestamp > self.TIMEOUT:
+                    logging.warning('Timeout, restarting')
+                    self.reconnect()  # TODO
+                time.sleep(0.005)
+                continue
 
             #self.packet_received_timestamp = time.time()
 
             if packet['id'] == 0xb4:
+
+                logging.info('received BT package')
 
                 fom_x = packet['fomX']
                 fom_y = packet['fomY']
