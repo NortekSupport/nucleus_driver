@@ -1062,8 +1062,8 @@ if __name__ == "flask_app":
     logging.info('RovLink running')
 
     logging.info('RUNNING Flask(__name__)')
-    app = Flask(__name__)
-    api = Api(app)
+    #app = Flask(__name__)
+    #api = Api(app)
     logging.info('Flask(__name__) has been executed')
 
     print('INITIATED DRIVER')
