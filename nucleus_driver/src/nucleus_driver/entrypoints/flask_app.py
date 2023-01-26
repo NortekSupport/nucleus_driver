@@ -17,7 +17,7 @@ from nucleus_driver import NucleusDriver
 
 #NUCLEUS_HOST = 'Nucleus-300004.local'
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 #HOSTNAME = 'NORTEK-300004.local'
 HOSTNAME = '192.168.2.201'
@@ -946,7 +946,7 @@ class RovLink(Thread):
 
             parameter_change = True
 
-            logging.info(f"{parameter}, {self.PARAMETERS[parameter]['value']}, {self.PARAMETERS[parameter]['type']}")
+            logging.info(f"{parameter}: Old value: {self.PARAMETERS[parameter]['value']} - New value: {response.json()['message']['param_value']}")
 
             response = self.set_parameter(parameter, self.PARAMETERS[parameter]['value'], self.PARAMETERS[parameter]['type'])
 
