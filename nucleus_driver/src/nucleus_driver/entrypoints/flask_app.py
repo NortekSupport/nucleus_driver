@@ -294,7 +294,9 @@ class RovLink(Thread):
         def get_cableguy_status():
             response = requests.get("http://127.0.0.1/cable-guy/v1.0/ethernet")
 
-            if response.status_code == 200 and response.json()['info']['connected'] is True:
+            logging.info(f'\r\n\r\nCABLEGUY:\r\n{response.json()}\r\n\r\n{response.status_code}\r\n\r\n')
+
+            if response.status_code == 200 and response.json()[0]['info']['connected'] is True:
                 return True
             else:
                 return False
