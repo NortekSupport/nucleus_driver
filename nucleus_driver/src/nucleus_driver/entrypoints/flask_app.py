@@ -515,9 +515,19 @@ class RovLink(Thread):
                   'EK3_ENABLE': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
                   'VISO_TYPE': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
                   #'EK3_GPS_TYPE': {'value': 3, 'type': "MAV_PARAM_TYPE_UINT8"},
+                  'GPS_TYPE': {'value': 0, 'type': "MAV_PARAM_TYPE_INT8"},
                   'EK3_SRC1_POSXY': {'value': 6, 'type': "MAV_PARAM_TYPE_UINT8"},
                   'EK3_SRC1_VELXY': {'value': 6, 'type': "MAV_PARAM_TYPE_UINT8"},
-                  'EK3_SRC1_POSZ': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"}
+                  'EK3_SRC1_POSZ': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
+
+                  'SERIAL0_PROTOCOL': {'value': 2, 'type': "MAV_PARAM_TYPE_INT8"},
+
+                  'PSC_POSXY_P': {'value': 2, 'type': "MAV_PARAM_TYPE_REAL32"},
+                  'PSC_POSZ_P': {'value': 1.0, 'type': "MAV_PARAM_TYPE_REAL32"},
+                  'PSC_VELXY_P': {'value': 5.0, 'type': "MAV_PARAM_TYPE_REAL32"},
+                  'PSC_VELXY_I': {'value': 0.5, 'type': "MAV_PARAM_TYPE_REAL32"},
+                  'PSC_VELXY_D': {'value': 0.8, 'type': "MAV_PARAM_TYPE_REAL32"},
+                  'PSC_VELZ_P': {'value': 5.0, 'type': "MAV_PARAM_TYPE_REAL32"},
                   }
 
     def __init__(self, driver):
@@ -1355,6 +1365,14 @@ if __name__ == "flask_app":
         EK3_SRC1_POSXY = 3.0
         EK3_SRC1_VELXY = 3.0
         EK3_SRC1_POSZ = 1.0
+
+        SERIAL0_PROTOCOL = 2
+        PSC_POSXY_P = 1
+        PSC_POSZ_P = 3
+        PSC_VELXY_P = 1
+        PSC_VELXY_I = 0.5
+        PSC_VELXY_D = 0
+        PSC_VELZ_P = 8
 
         return
 
