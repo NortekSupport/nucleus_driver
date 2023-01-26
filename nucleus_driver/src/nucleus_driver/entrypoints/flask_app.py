@@ -987,6 +987,18 @@ class RovLink(Thread):
                 }
             }
 
+            vision_position_delta = {
+                "header": {
+                    "system_id": 255,
+                    "component_id": 0,
+                    "sequence": 0},
+                "message": {
+                    "type": "RPM",
+                    "rpm1": 0.2,
+                    "rpm2": 0.2
+                }
+            }
+
         except IndexError:
 
             logging.warning('Failed to create VISION_POSITION_DELTA packet')
