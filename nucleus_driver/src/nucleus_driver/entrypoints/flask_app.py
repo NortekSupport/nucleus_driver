@@ -11,7 +11,7 @@ import socket
 from nucleus_driver import NucleusDriver
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 #HOSTNAME = 'NORTEK-300004.local'
 HOSTNAME = '192.168.2.201'
@@ -482,7 +482,9 @@ class RovLink(Thread):
 
         response = requests.post(MAVLINK2REST_URL + "/mavlink", json=vision_position_delta)
 
-        if response.status_code != 200:
+        if response.status_code == 200:
+            logging.debug(f'VISION_POSITION_DELTA - angle_delta: {angle_delta} - position_delta: {position_delta} - confidence: {confidence} - dt: {dt}')
+        else:
             logging.warning(f'VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
 
     def send_vision_speed_estimate(self, velocity, timestamp):
@@ -511,7 +513,9 @@ class RovLink(Thread):
 
         response = requests.post(MAVLINK2REST_URL + "/mavlink", json=vision_speed_estimate)
 
-        if response.status_code != 200:
+        if response.status_code == 200:
+            logging.debug(f'VISION_SPEED_ESTIMATE - velocity: {velocity} - timestamp: {timestamp}')
+        else:
             logging.info(f'VISION_SPEED_ESTIMATE packet did not respond with 200: {response.status_code} - {response.text}')
 
     def run(self):
