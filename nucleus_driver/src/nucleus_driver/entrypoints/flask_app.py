@@ -986,19 +986,7 @@ class RovLink(Thread):
                     "confidence": confidence
                 }
             }
-            '''
-            vision_position_delta = {
-                "header": {
-                    "system_id": 255,
-                    "component_id": 0,
-                    "sequence": 0},
-                "message": {
-                    "type": "RPM",
-                    "rpm1": 0.2,
-                    "rpm2": 0.2
-                }
-            }
-            '''
+
 
         except IndexError:
 
@@ -1020,10 +1008,10 @@ class RovLink(Thread):
                     "sequence": 0},
                 "message": {
                     "type": "VISION_SPEED_ESTIMATE",
-                    "usec": {timestamp},
-                    "x": {velocity[0]},
-                    "y": {velocity[1]},
-                    "z": {velocity[2]},
+                    "usec": timestamp,
+                    "x": velocity[0],
+                    "y": velocity[1],
+                    "z": velocity[2],
                     "covariance": [0.0 for _ in range(9)],
                     "reset_counter": 0
                 }
