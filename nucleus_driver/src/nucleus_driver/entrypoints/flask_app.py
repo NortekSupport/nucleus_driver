@@ -1128,8 +1128,8 @@ if __name__ == "flask_app":
     #app.run(debug=True, host=DOCKER_HOST, port=DOCKER_PORT)
 
     logging.info('initiating RovLink')
-    #rov_link = RovLink(driver=nucleus_driver)
-    #rov_link.start()
+    rov_link = RovLink(driver=nucleus_driver)
+    rov_link.start()
     logging.info('RovLink running')
 
     logging.info('RUNNING Flask(__name__)')
