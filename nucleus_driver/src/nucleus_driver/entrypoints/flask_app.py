@@ -867,7 +867,7 @@ class RovLink(Thread):
             response = requests.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT')
 
             if response.status_code != 200:
-                logging.warning(f'HEARTBEAT request did not respond with 200')
+                logging.warning(f'HEARTBEAT request did not respond with 200: {response.status_code}')
                 return False
 
             status = False
