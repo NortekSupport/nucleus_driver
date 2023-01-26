@@ -941,7 +941,7 @@ class RovLink(Thread):
 
             response = self.get_parameter(parameter)
 
-            if response.status_code == 200 and response.json()['message']['param_value'] == self.PARAMETERS[parameter]['value']:
+            if response.status_code == 200 and self.PARAMETERS[parameter]['value'] - 0.1 <= response.json()['message']['param_value'] <= self.PARAMETERS[parameter]['value'] + 0.1:
                 continue
 
             parameter_change = True
