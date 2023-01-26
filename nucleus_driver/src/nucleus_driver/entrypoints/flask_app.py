@@ -986,7 +986,7 @@ class RovLink(Thread):
                     "confidence": confidence
                 }
             }
-
+            '''
             vision_position_delta = {
                 "header": {
                     "system_id": 255,
@@ -998,13 +998,14 @@ class RovLink(Thread):
                     "rpm2": 0.2
                 }
             }
+            '''
 
         except IndexError:
 
             logging.warning('Failed to create VISION_POSITION_DELTA packet')
             return
 
-        response = requests.post(MAVLINK2REST_URL + "/mavlink", data=vision_position_delta) # TODO: FIX URL
+        response = requests.post(MAVLINK2REST_URL + "/mavlink", json=vision_position_delta) # TODO: FIX URL
 
         logging.info(f'\r\n\r\nVISION_POSITION_DELTA response: \r\n{response.text}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
         logging.info(vision_position_delta)
@@ -1033,7 +1034,7 @@ class RovLink(Thread):
             logging.warning('Failed to create VISION_POSITION_DELTA packet')
             return
 
-        response = requests.post(MAVLINK2REST_URL + "/mavlink", data=vision_speed_estimate)
+        response = requests.post(MAVLINK2REST_URL + "/mavlink", json=vision_speed_estimate)
 
         logging.info(f'\r\n\r\nVISION_SPEED_ESTIMATE response: \r\n{response.text}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
 
