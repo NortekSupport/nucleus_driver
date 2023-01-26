@@ -644,7 +644,6 @@ if __name__ == "flask_app":
                         'ID': nucleus_id,
                         'Firmware': nucleus_firmware})
 
-
     @app.route("/nucleus_driver/connect_tcp", methods=['GET'])
     def connect_tcp():
         host = request.args.get('host')
@@ -663,7 +662,6 @@ if __name__ == "flask_app":
                         'ID': nucleus_id,
                         'Firmware': nucleus_firmware})
 
-
     @app.route("/nucleus_driver/disconnect", methods=['GET'])
     def disconnect():
 
@@ -673,7 +671,6 @@ if __name__ == "flask_app":
             return response
 
         return jsonify({'status': 'Disconnected from Nucleus'})
-
 
     @app.route("/nucleus_driver/start", methods=['GET'])
     def start():
@@ -689,7 +686,6 @@ if __name__ == "flask_app":
             reply = 'index error'
 
         return jsonify({'reply': reply})
-
 
     @app.route("/nucleus_driver/stop", methods=['GET'])
     def stop():
@@ -707,7 +703,6 @@ if __name__ == "flask_app":
             stop_reply = 'decode error'
 
         return jsonify({'reply': stop_reply})
-
 
     @app.route("/nucleus_driver/get_packet", methods=['GET'])
     def get_packet():
@@ -738,7 +733,6 @@ if __name__ == "flask_app":
 
         return jsonify({'packets': packet_list})
 
-
     @app.route("/nucleus_driver/get_all", methods=['GET'])
     def nucleus_driver_get_all():
 
@@ -768,7 +762,6 @@ if __name__ == "flask_app":
 
         return jsonify({'get_all': reply_list})
 
-
     @app.route('/mavlink/get_parameter', methods=['GET'])
     def mavlink_get_parameter():
 
@@ -783,7 +776,6 @@ if __name__ == "flask_app":
         parameter_id = parameter_id.upper()
 
         return get_parameter(parameter_id)
-
 
     @app.route('/mavlink/set_parameter', methods=['GET'])
     def mavlink_set_parameter():
@@ -829,7 +821,6 @@ if __name__ == "flask_app":
 
         return set_parameter(parameter_id, parameter_value, parameter_type)
 
-
     @app.route('/mavlink/set_default_parameters', methods=['GET'])
     def mavlink_set_default_parameters():
         AHRS_EKF_TYPE = 3.0
@@ -852,21 +843,19 @@ if __name__ == "flask_app":
 
         return
 
-
-    def _get_param_value_timestamp():
-
-        param_value_pre_timestamp = None
-        try:
-            param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-            param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
-
-        except Exception as e:
-            logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
-
-        return param_value_pre_timestamp
-
-
     def set_parameter(parameter_id, parameter_value, parameter_type):
+
+        def get_param_value_timestamp():
+
+            param_value_pre_timestamp = None
+            try:
+                param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+                param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
+
+            except Exception as e:
+                logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
+
+            return param_value_pre_timestamp
 
         def set_through_mavlink(param_value_pre_timestamp):
 
@@ -979,7 +968,7 @@ if __name__ == "flask_app":
 
             return param_value
 
-        timestamp = _get_param_value_timestamp()
+        timestamp = get_param_value_timestamp()
 
         parameter = set_through_mavlink(param_value_pre_timestamp=timestamp)
 
@@ -990,8 +979,19 @@ if __name__ == "flask_app":
 
         return parameter
 
-
     def get_parameter(parameter_id):
+
+        def get_param_value_timestamp():
+
+            param_value_pre_timestamp = None
+            try:
+                param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+                param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
+
+            except Exception as e:
+                logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
+
+            return param_value_pre_timestamp
 
         def get_from_mavlink(param_value_pre_timestamp):
 
@@ -1088,7 +1088,7 @@ if __name__ == "flask_app":
 
             return param_value
 
-        timestamp = _get_param_value_timestamp()
+        timestamp = get_param_value_timestamp()
 
         parameter = get_from_mavlink(param_value_pre_timestamp=timestamp)
 
@@ -1098,4 +1098,3 @@ if __name__ == "flask_app":
         parameter = check_parameter(parameter.json())
 
         return parameter
-
