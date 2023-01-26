@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 HOSTNAME = '192.168.2.201'
 PORT = 5000  # TODO: Is this the port?
 
-MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
+MAVLINK2REST_URL = "http://127.0.0.1/mavlink2restA"  # TODO: Fix
 
 '''
 logging.info('RUNNING Flask(__name__)')
@@ -1107,8 +1107,8 @@ class RovLink(Thread):
 
                 self.timestamp_previous = timestamp
 
-                #self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=confidence, dt=dt)
-                self.send_vision_position_delta(position_delta=[0, 0, 0], angle_delta=[0, 0, 0], confidence=100, dt=1000)
+                self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=int(confidence), dt=int(dt))
+                #self.send_vision_position_delta(position_delta=[0.0, 0.0, 0.0], angle_delta=[0.0, 0.0, 0.0], confidence=100, dt=1000)
                 self.send_vision_speed_estimate(velocity=[velocity_x, velocity_y, velocity_z], timestamp=int(timestamp))
                 #logging.info(f'VISION_POSITION_DELTA - POS_DELTA={[dx, dy, dz]} - ANG_DELTA={delta_orientation} - FOM={confidence} - dt={dt}')
                 #logging.info(f'VISION_SPEED_ESTIMATE - POS_DELTA={[dx, dy, dz]} - ANG_DELTA={delta_orientation} - FOM={confidence} - dt={dt}')
