@@ -589,14 +589,19 @@ class RovLink(Thread):
 
                 for _ in range(10):
 
-                    time.sleep(0.01)  # It typically takes this amount of time for PARAM_VALUE to change
+                    try:
+                        time.sleep(0.01)  # It typically takes this amount of time for PARAM_VALUE to change
 
-                    param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+                        param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
-                    param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
+                        param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
 
-                    if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
-                        break
+                        if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
+                            break
+
+                    except Exception as e:
+                        logging.warning(f'Failed to obtain PARAM_VALUE for parameter {parameter_id}: {e}')
+                        continue
 
                 return param_value
 
@@ -699,14 +704,19 @@ class RovLink(Thread):
 
                 for _ in range(10):
 
-                    time.sleep(0.01)  # It typically takes this amount of time for PARAM_VALUE to change
+                    try:
+                        time.sleep(0.01)  # It typically takes this amount of time for PARAM_VALUE to change
 
-                    param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+                        param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
-                    param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
+                        param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
 
-                    if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
-                        break
+                        if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
+                            break
+
+                    except Exception as e:
+                        logging.warning(f'Failed to obtain PARAM_VALUE for parameter {parameter_id}: {e}')
+                        continue
 
                 return param_value
 
