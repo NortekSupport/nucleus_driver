@@ -992,7 +992,7 @@ class RovLink(Thread):
             logging.warning('Failed to create VISION_POSITION_DELTA packet')
             return
 
-        response = requests.post(MAVLINK2REST_URL + "A/mavlink", data=vision_position_delta) # TODO: FIX URL
+        response = requests.post(MAVLINK2REST_URL + "/mavlink") #, data=vision_position_delta) # TODO: FIX URL
 
         logging.info(f'\r\n\r\nVISION_POSITION_DELTA response: \r\n{response.text}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
 
