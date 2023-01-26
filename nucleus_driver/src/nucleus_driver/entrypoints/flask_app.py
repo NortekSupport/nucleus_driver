@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 HOSTNAME = '192.168.2.201'
 PORT = 5000  # TODO: Is this the port?
 
-MAVLINK2REST_URL = "http://127.0.0.1/mavlink2restA"  # TODO: Fix
+MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"  # TODO: Fix
 
 '''
 logging.info('RUNNING Flask(__name__)')
@@ -992,7 +992,7 @@ class RovLink(Thread):
             logging.warning('Failed to create VISION_POSITION_DELTA packet')
             return
 
-        response = requests.post(MAVLINK2REST_URL + "/mavlink", data=vision_position_delta)
+        response = requests.post(MAVLINK2REST_URL + "A/mavlink", data=vision_position_delta) # TODO: FIX URL
 
         logging.info(f'\r\n\r\nVISION_POSITION_DELTA response: \r\n{response.text}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
 
