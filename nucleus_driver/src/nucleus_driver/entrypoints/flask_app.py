@@ -976,6 +976,34 @@ class RovLink(Thread):
 
         logging.info(f'\r\n\r\nVISION_POSITION_DELTA response: \r\n{response.text}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
 
+    def send_vision_speed_estimate(self, velocity, timestamp):
+
+        try:
+            vision_speed_estimate = {
+                "header": {
+                    "system_id": 255,
+                    "component_id": 0,
+                    "sequence": 0},
+                "message": {
+                    "type": "VISION_SPEED_ESTIMATE",
+                    "usec": {timestamp},
+                    "x": {velocity[0]},
+                    "y": {velocity[1]},
+                    "z": {velocity[2]},
+                    "covariance": [0.0 for _ in range(9)],
+                    "reset_counter": 0
+                }
+            }
+
+        except IndexError:
+
+            logging.warning('Failed to create VISION_POSITION_DELTA packet')
+            return
+
+        response = requests.post(MAVLINK2REST_URL + "/mavlink", data=vision_speed_estimate)
+
+        logging.info(f'\r\n\r\nVISION_SPEED_ESTIMATE response: \r\n{response.text}\r\n\r\nstatus_code:\r\n{response.status_code}\r\n\r\n')
+
     def run(self):
 
 
@@ -1059,8 +1087,11 @@ class RovLink(Thread):
 
                 self.timestamp_previous = timestamp
 
-                self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=confidence, dt=dt)
-                logging.info(f'VISION_POSITION_DELTA - POS_DELTA={[dx, dy, dz]} - ANG_DELTA={delta_orientation} - FOM={confidence} - dt={dt}')
+                #self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=confidence, dt=dt)
+                self.send_vision_position_delta(position_delta=[0, 0, 0], angle_delta=[0, 0, 0], confidence=100, dt=1000)
+                self.send_vision_speed_estimate(velocity=[velocity_x, velocity_y, velocity_z], timestamp=int(timestamp))
+                #logging.info(f'VISION_POSITION_DELTA - POS_DELTA={[dx, dy, dz]} - ANG_DELTA={delta_orientation} - FOM={confidence} - dt={dt}')
+                #logging.info(f'VISION_SPEED_ESTIMATE - POS_DELTA={[dx, dy, dz]} - ANG_DELTA={delta_orientation} - FOM={confidence} - dt={dt}')
 
             if packet['id'] == 0xd2:
 
