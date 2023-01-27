@@ -68,6 +68,14 @@ class RovLink(Thread):
         self.enable_vision_speed_estimate = False
         self.enable_global_vision_position_estimate = False
 
+    def d2r(self, deg):
+
+        return deg * 3.14159 / 360
+
+    def r2d(self, rad):
+
+        return rad * 360 / 3.14159
+
     def set_parameter(self, parameter_id, parameter_value, parameter_type):
 
         def get_param_value_timestamp():
@@ -624,7 +632,7 @@ class RovLink(Thread):
                 velocity_y = packet['velocityY']
                 velocity_z = packet['velocityZ']
 
-                timestamp = (packet['timeStamp'] + packet['microSeconds'] * 1e-6) * 1e6
+                timestamp = (packet['timeStamp'] + packet['microSeconds'] * 1e-6)
 
                 if self.timestamp_previous is None:
                     dt = 0
@@ -653,7 +661,7 @@ class RovLink(Thread):
                 self.timestamp_previous = timestamp
 
                 if self.enable_vision_position_delta:
-                    self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=int(confidence), dt=int(dt))
+                    self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=int(confidence), dt=int(dt * 1e6))
 
                 elif self.enable_vision_speed_estimate:
                     self.send_vision_speed_estimate(velocity=[velocity_x, velocity_y, velocity_z], timestamp=int(timestamp))
@@ -661,9 +669,9 @@ class RovLink(Thread):
             if packet['id'] == 0xdc:
 
                 orientation = list()
-                orientation.append(packet['ahrsData.roll'])
-                orientation.append(packet['ahrsData.pitch'])
-                orientation.append(packet['ahrsData.heading'])
+                orientation.append(self.d2r(packet['ahrsData.roll']))
+                orientation.append(self.d2r(packet['ahrsData.pitch']))
+                orientation.append(self.d2r(packet['ahrsData.heading']))
 
                 position = list()
                 position.append(packet['positionFrameX'])
