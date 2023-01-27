@@ -920,17 +920,62 @@ if __name__ == "flask_app":
         enable_vision_speed_estimate = request.args.get('enable_vision_speed_estimate')
         enable_global_vision_position_estimate = request.args.get('enable_global_vision_position_estimate')
 
-        if enable_nucleus_input is not None and isinstance(enable_nucleus_input, bool):
-            rov_link.enable_nucleus_input = enable_nucleus_input
+        status = 200
 
-        if enable_vision_position_delta is not None and isinstance(enable_vision_position_delta, bool):
-            rov_link.enable_vision_position_delta = enable_vision_position_delta
+        response_dict = dict()
 
-        if enable_vision_speed_estimate is not None and isinstance(enable_vision_speed_estimate, bool):
-            rov_link.enable_vision_speed_estimate = enable_vision_speed_estimate
+        if enable_nucleus_input is not None:
+            if enable_nucleus_input.lower() in ["true", '1']:
+                rov_link.enable_nucleus_input = True
+                response_dict.update({'enable_nucleus_input': True})
+            elif enable_nucleus_input.lower() == ["false", '0']:
+                rov_link.enable_nucleus_input = False
+                response_dict.update({'enable_nucleus_input': False})
+            else:
+                status = 210
+                response_dict.update({'enable_nucleus_input': 'Failed to set value'})
+                logging.warning('Failed to parse value for "enable_nucleus_input"')
 
-        if enable_global_vision_position_estimate is not None and isinstance(enable_global_vision_position_estimate, bool):
-            rov_link.enable_global_vision_position_estimate = enable_global_vision_position_estimate
+        if enable_vision_position_delta is not None:
+            if enable_vision_position_delta.lower() in ["true", '1']:
+                rov_link.enable_vision_position_delta = True
+                response_dict.update({'enable_vision_position_delta': True})
+            elif enable_vision_position_delta.lower() == ["false", '0']:
+                rov_link.enable_vision_position_delta = False
+                response_dict.update({'enable_vision_position_delta': False})
+            else:
+                status = 210
+                response_dict.update({'enable_vision_position_delta': 'Failed to set value'})
+                logging.warning('Failed to parse value for "enable_vision_position_delta"')
+
+        if enable_vision_speed_estimate is not None:
+            if enable_vision_speed_estimate.lower() in ["true", '1']:
+                rov_link.enable_vision_speed_estimate = True
+                response_dict.update({'enable_vision_speed_estimate': True})
+            elif enable_vision_speed_estimate.lower() == ["false", '0']:
+                rov_link.enable_vision_speed_estimate = False
+                response_dict.update({'enable_vision_speed_estimate': False})
+            else:
+                status = 210
+                response_dict.update({'enable_vision_speed_estimate': 'Failed to set value'})
+                logging.warning('Failed to parse value for "enable_vision_speed_estimate"')
+
+        if enable_global_vision_position_estimate is not None:
+            if enable_global_vision_position_estimate.lower() in ["true", '1']:
+                rov_link.enable_global_vision_position_estimate = True
+                response_dict.update({'enable_global_vision_position_estimate': True})
+            elif enable_global_vision_position_estimate.lower() == ["false", '0']:
+                rov_link.enable_global_vision_position_estimate = False
+                response_dict.update({'enable_global_vision_position_estimate': False})
+            else:
+                status = 210
+                response_dict.update({'enable_global_vision_position_estimate': 'Failed to set value'})
+                logging.warning('Failed to parse value for "enable_global_vision_position_estimate"')
+
+        response = jsonify(response_dict)
+        response.status_code = status
+
+        return response
 
     def set_parameter(parameter_id, parameter_value, parameter_type):
 
