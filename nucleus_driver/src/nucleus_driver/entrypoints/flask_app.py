@@ -63,6 +63,11 @@ class RovLink(Thread):
         self.nucleus_id = None
         self.nucleus_firmware = None
 
+        self.enable_nucleus_input = True
+        self.enable_vision_position_delta = True
+        self.enable_vision_speed_estimate = False
+        self.enable_global_vision_position_estimate = False
+
     def set_parameter(self, parameter_id, parameter_value, parameter_type):
 
         def get_param_value_timestamp():
@@ -355,9 +360,9 @@ class RovLink(Thread):
         if b'OK\r\n' not in reply:
             logging.warning(f'Did not receive OK when sending SETDEFAULT,MAGCAL: {reply}')
 
-        reply = self.nucleus_driver.commands.set_ahrs(ds="ON")
+        reply = self.nucleus_driver.commands.set_ahrs(ds="OFF")
         if b'OK\r\n' not in reply:
-            logging.warning(f'Did not receive OK when sending SETAHRS,DS="ON": {reply}')
+            logging.warning(f'Did not receive OK when sending SETAHRS,DS="OFF": {reply}')
 
         reply = self.nucleus_driver.commands.set_bt(wt="OFF", ds="ON")
         if b'OK\r\n' not in reply:
@@ -370,6 +375,17 @@ class RovLink(Thread):
         reply = self.nucleus_driver.commands.set_cur_prof(ds="OFF")
         if b'OK\r\n' not in reply:
             logging.warning(f'Did not receive OK when sending SETCURPROF,DS="OFF": {reply}')
+
+        reply = self.nucleus_driver.commands.set_cur_prof(ds="OFF")
+        if b'OK\r\n' not in reply:
+            logging.warning(f'Did not receive OK when sending SETCURPROF,DS="OFF": {reply}')
+
+        command = b'SETINST,TYPE="NAV"\r\n'
+        self.nucleus_driver.connection.write(command)
+        reply = self.nucleus_driver.commands._handle_reply(command=command, terminator=b'OK\r\n')
+        if b'OK\r\n' not in reply:
+            logging.warning(f'Did not receive OK when sending SETINST,TYPE="NAV": {reply}')
+
 
     def wait_for_heartbeat(self):
         """
@@ -483,7 +499,7 @@ class RovLink(Thread):
         response = requests.post(MAVLINK2REST_URL + "/mavlink", json=vision_position_delta)
 
         if response.status_code == 200:
-            logging.debug(f'VISION_POSITION_DELTA - angle_delta: {angle_delta} - position_delta: {position_delta} - confidence: {confidence} - dt: {dt}')
+            logging.debug(f'VISION_POSITION_DELTA\r\nangle_delta: {angle_delta}\r\nposition_delta: {position_delta}\r\nconfidence: {confidence}\r\ndt: {dt}')
         else:
             logging.warning(f'VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
 
@@ -514,9 +530,44 @@ class RovLink(Thread):
         response = requests.post(MAVLINK2REST_URL + "/mavlink", json=vision_speed_estimate)
 
         if response.status_code == 200:
-            logging.debug(f'VISION_SPEED_ESTIMATE - velocity: {velocity} - timestamp: {timestamp}')
+            logging.debug(f'VISION_SPEED_ESTIMATE\r\nvelocity: {velocity}\r\ntimestamp: {timestamp}\r\n')
         else:
             logging.info(f'VISION_SPEED_ESTIMATE packet did not respond with 200: {response.status_code} - {response.text}')
+
+    def send_global_vision_position_estimate(self, position, orientation, timestamp):
+
+        try:
+            global_vision_position_estimate = {
+                "header": {
+                    "system_id": 255,
+                    "component_id": 0,
+                    "sequence": 0},
+                "message": {
+                    "type": "GLOBAL_VISION_POSITION_ESTIMATE",
+                    "usec": timestamp,
+                    "x": position[0],
+                    "y": position[1],
+                    "z": position[2],
+                    "roll": orientation[0],
+                    "pitch": orientation[1],
+                    "yaw": orientation[2],
+                    "covariance": [0.0 for _ in range(21)],
+                    "reset_counter": 0
+                }
+            }
+
+        except IndexError:
+
+            logging.warning('Failed to create VISION_POSITION_DELTA packet')
+            return
+
+        response = requests.post(MAVLINK2REST_URL + "/mavlink", json=global_vision_position_estimate)
+
+        if response.status_code == 200:
+            logging.debug(f'GLOBAL_VISION_POSITION_ESTIMATE\r\nposition: {position}\r\norientation: {orientation}\r\ntimestamp: {timestamp}\r\n')
+        else:
+            logging.info(f'VISION_SPEED_ESTIMATE packet did not respond with 200: {response.status_code} - {response.text}')
+
 
     def run(self):
 
@@ -551,6 +602,10 @@ class RovLink(Thread):
             packet = self.nucleus_driver.read_packet()
 
             if packet is None:
+                time.sleep(0.005)
+                continue
+
+            if not self.enable_nucleus_input:
                 time.sleep(0.005)
                 continue
 
@@ -597,16 +652,30 @@ class RovLink(Thread):
 
                 self.timestamp_previous = timestamp
 
-                self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=int(confidence), dt=int(dt))
-                #self.send_vision_speed_estimate(velocity=[velocity_x, velocity_y, velocity_z], timestamp=int(timestamp))
+                if self.enable_vision_position_delta:
+                    self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=int(confidence), dt=int(dt))
 
-            if packet['id'] == 0xd2:
+                elif self.enable_vision_speed_estimate:
+                    self.send_vision_speed_estimate(velocity=[velocity_x, velocity_y, velocity_z], timestamp=int(timestamp))
 
-                roll = packet['ahrsData.roll']
-                pitch = packet['ahrsData.pitch']
-                heading = packet['ahrsData.heading']
+            if packet['id'] == 0xdc:
 
-                self.orientation_current = [roll, pitch, heading]
+                orientation = list()
+                orientation[0] = packet['ahrsData.roll']
+                orientation[1] = packet['ahrsData.pitch']
+                orientation[2] = packet['ahrsData.heading']
+
+                position = list()
+                position[0] = packet['positionFrameX']
+                position[1] = packet['positionFrameY']
+                position[3] = packet['positionFrameZ']
+
+                timestamp = (packet['timeStamp'] + packet['microSeconds'] * 1e-6) * 1e6
+
+                self.orientation_current = orientation
+
+                if self.enable_global_vision_position_estimate:
+                    self.send_global_vision_position_estimate(position=position, orientation=orientation, timestamp=timestamp)
 
 
 if __name__ == "flask_app":
@@ -842,6 +911,26 @@ if __name__ == "flask_app":
         PSC_VELZ_P = 8
 
         return
+
+    @app.route('/mavlink/handle_nucleus_inputs')
+    def mavlink_enable_nucleus_input():
+
+        enable_nucleus_input = request.args.get('enable_nucleus_input')
+        enable_vision_position_delta = request.args.get('enable_vision_position_delta')
+        enable_vision_speed_estimate = request.args.get('enable_vision_speed_estimate')
+        enable_global_vision_position_estimate = request.args.get('enable_global_vision_position_estimate')
+
+        if enable_nucleus_input is not None and isinstance(enable_nucleus_input, bool):
+            rov_link.enable_nucleus_input = enable_nucleus_input
+
+        if enable_vision_position_delta is not None and isinstance(enable_vision_position_delta, bool):
+            rov_link.enable_vision_position_delta = enable_vision_position_delta
+
+        if enable_vision_speed_estimate is not None and isinstance(enable_vision_speed_estimate, bool):
+            rov_link.enable_vision_speed_estimate = enable_vision_speed_estimate
+
+        if enable_global_vision_position_estimate is not None and isinstance(enable_global_vision_position_estimate, bool):
+            rov_link.enable_global_vision_position_estimate = enable_global_vision_position_estimate
 
     def set_parameter(parameter_id, parameter_value, parameter_type):
 
