@@ -663,14 +663,14 @@ class RovLink(Thread):
                 logging.warning(packet)
 
                 orientation = list()
-                orientation[0] = packet['ahrsData.roll']
-                orientation[1] = packet['ahrsData.pitch']
-                orientation[2] = packet['ahrsData.heading']
+                orientation.append(packet['ahrsData.roll'])
+                orientation.append(packet['ahrsData.pitch'])
+                orientation.append(packet['ahrsData.heading'])
 
                 position = list()
-                position[0] = packet['positionFrameX']
-                position[1] = packet['positionFrameY']
-                position[3] = packet['positionFrameZ']
+                position.append(packet['positionFrameX'])
+                position.append(packet['positionFrameY'])
+                position.append(packet['positionFrameZ'])
 
                 timestamp = (packet['timeStamp'] + packet['microSeconds'] * 1e-6) * 1e6
 
