@@ -566,7 +566,7 @@ class RovLink(Thread):
         if response.status_code == 200:
             logging.debug(f'GLOBAL_VISION_POSITION_ESTIMATE\r\nposition: {position}\r\norientation: {orientation}\r\ntimestamp: {timestamp}\r\n')
         else:
-            logging.info(f'VISION_SPEED_ESTIMATE packet did not respond with 200: {response.status_code} - {response.text}')
+            logging.info(f'GLOBAL_VISION_POSITION_ESTIMATE packet did not respond with 200: {response.status_code} - {response.text}')
 
 
     def run(self):
@@ -675,7 +675,7 @@ class RovLink(Thread):
                 self.orientation_current = orientation
 
                 if self.enable_global_vision_position_estimate:
-                    self.send_global_vision_position_estimate(position=position, orientation=orientation, timestamp=timestamp)
+                    self.send_global_vision_position_estimate(position=position, orientation=orientation, timestamp=int(timestamp))
 
 
 if __name__ == "flask_app":
