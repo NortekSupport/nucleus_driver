@@ -660,8 +660,6 @@ class RovLink(Thread):
 
             if packet['id'] == 0xdc:
 
-                logging.warning(packet)
-
                 orientation = list()
                 orientation.append(packet['ahrsData.roll'])
                 orientation.append(packet['ahrsData.pitch'])
@@ -930,7 +928,7 @@ if __name__ == "flask_app":
             if enable_nucleus_input.lower() in ["true", '1']:
                 rov_link.enable_nucleus_input = True
                 response_dict.update({'enable_nucleus_input': True})
-            elif enable_nucleus_input.lower() == ["false", '0']:
+            elif enable_nucleus_input.lower() in ["false", '0']:
                 rov_link.enable_nucleus_input = False
                 response_dict.update({'enable_nucleus_input': False})
             else:
@@ -942,7 +940,7 @@ if __name__ == "flask_app":
             if enable_vision_position_delta.lower() in ["true", '1']:
                 rov_link.enable_vision_position_delta = True
                 response_dict.update({'enable_vision_position_delta': True})
-            elif enable_vision_position_delta.lower() == ["false", '0']:
+            elif enable_vision_position_delta.lower() in ["false", '0']:
                 rov_link.enable_vision_position_delta = False
                 response_dict.update({'enable_vision_position_delta': False})
             else:
@@ -954,7 +952,7 @@ if __name__ == "flask_app":
             if enable_vision_speed_estimate.lower() in ["true", '1']:
                 rov_link.enable_vision_speed_estimate = True
                 response_dict.update({'enable_vision_speed_estimate': True})
-            elif enable_vision_speed_estimate.lower() == ["false", '0']:
+            elif enable_vision_speed_estimate.lower() in ["false", '0']:
                 rov_link.enable_vision_speed_estimate = False
                 response_dict.update({'enable_vision_speed_estimate': False})
             else:
@@ -966,7 +964,7 @@ if __name__ == "flask_app":
             if enable_global_vision_position_estimate.lower() in ["true", '1']:
                 rov_link.enable_global_vision_position_estimate = True
                 response_dict.update({'enable_global_vision_position_estimate': True})
-            elif enable_global_vision_position_estimate.lower() == ["false", '0']:
+            elif enable_global_vision_position_estimate.lower() in ["false", '0']:
                 rov_link.enable_global_vision_position_estimate = False
                 response_dict.update({'enable_global_vision_position_estimate': False})
             else:
