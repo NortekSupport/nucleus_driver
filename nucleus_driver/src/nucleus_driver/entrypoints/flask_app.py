@@ -660,6 +660,8 @@ class RovLink(Thread):
 
             if packet['id'] == 0xdc:
 
+                logging.warning(packet)
+
                 orientation = list()
                 orientation[0] = packet['ahrsData.roll']
                 orientation[1] = packet['ahrsData.pitch']
