@@ -394,7 +394,6 @@ class RovLink(Thread):
         if b'OK\r\n' not in reply:
             logging.warning(f'Did not receive OK when sending SETINST,TYPE="NAV": {reply}')
 
-
     def wait_for_heartbeat(self):
         """
         Waits for a valid heartbeat to Mavlink2Rest
@@ -575,7 +574,6 @@ class RovLink(Thread):
             logging.debug(f'GLOBAL_VISION_POSITION_ESTIMATE\r\nposition: {position}\r\norientation: {orientation}\r\ntimestamp: {timestamp}\r\n')
         else:
             logging.info(f'GLOBAL_VISION_POSITION_ESTIMATE packet did not respond with 200: {response.status_code} - {response.text}')
-
 
     def run(self):
 

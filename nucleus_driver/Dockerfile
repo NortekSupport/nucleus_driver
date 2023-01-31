@@ -24,7 +24,19 @@ RUN pip install --user .
 LABEL version="0.0.1"
 LABEL permissions '\
 {\
-    "NetworkMode": "host"\
+  "ExposedPorts": {\
+    "80/tcp": {}\
+  },\
+  "HostConfig": {\
+    "Binds":["/root/.config:/root/.config"],\
+    "PortBindings": {\
+      "80/tcp": [\
+        {\
+          "HostPort": ""\
+        }\
+      ]\
+    }\
+  }\
 }'
 LABEL authors '[\
     {\
