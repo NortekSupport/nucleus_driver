@@ -11,15 +11,10 @@ RUN pip install --upgrade pip
 
 COPY requirements.txt /tmp/
 RUN pip install --user -r /tmp/requirements.txt
-#RUN pip install --user Flask==2.2.2
-#RUN pip install --user Flask-RESTful==0.3.9
-#RUN pip install --user requests==2.28.2
 
 COPY --chown=pi:pi . /home/pi/blueos_extension
 
 WORKDIR /home/pi/blueos_extension
-
-RUN pip install --user nucleus_driver
 
 EXPOSE 80/tcp
 
@@ -57,4 +52,5 @@ LABEL website 'https://github.com/nortekgroup/nucleus_driver/blueos_extension'
 LABEL support ''
 
 ENV FLASK_APP=src/nucleus_extension/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
-CMD ["flask", "run", "--host=0.0.0.0", "--port=80", "--no-reload"]
+#CMD ["flask", "run", "--host=0.0.0.0", "--port=80", "--no-reload"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000", "--no-reload"]
