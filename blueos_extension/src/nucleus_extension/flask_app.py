@@ -11,8 +11,8 @@ from nucleus_driver import NucleusDriver
 
 logging.basicConfig(level=logging.DEBUG)
 
-HOSTNAME = 'NORTEK-300046.local'
-#HOSTNAME = '192.168.2.201'
+#HOSTNAME = 'NORTEK-300046.local'
+HOSTNAME = '192.168.2.201'
 #PORT = 5000  # TODO: Is this the port?
 
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"  # TODO: Fix
