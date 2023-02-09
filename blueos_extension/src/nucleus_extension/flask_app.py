@@ -335,18 +335,15 @@ class RovLink(Thread):
         self.hostname = HOSTNAME
 
     def wait_for_cableguy(self):
-
+        '''
         def get_cableguy_status():
-            #response = requests.get("http://127.0.0.1/cable-guy/v1.0/ethernet")
 
             session = requests.Session()
             retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
             adapter = HTTPAdapter(max_retries=retry)
             session.mount('http://', adapter)
-            #session.mount('https://', adapter)
 
-            url = 'http://127.0.0.1/cable-guy/v1.0/ethernet'
-            response = session.get(url)
+            response = session.get('http://127.0.0.1/cable-guy/v1.0/ethernet')
 
             if response.status_code == 200 and response.json()[0]['info']['connected'] is True:
                 return True
@@ -366,6 +363,24 @@ class RovLink(Thread):
             return False
 
         logging.info(f'{self.timestamp()} Cable-guy online')
+        '''
+
+        logging.info(f'{self.timestamp()} waiting for cable-guy to come online...')
+
+        session = requests.Session()
+        retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+
+        response = session.get('http://127.0.0.1/cable-guy/v1.0/ethernet')
+
+        if response.status_code == 200 and response.json()[0]['info']['connected'] is True:
+            logging.info(f'{self.timestamp()} Cable-guy online')
+            return True
+        else:
+            logging.warning(f'{self.timestamp()} Failed to find cable-guy')
+            return False
+
 
     def discover_nucleus(self):
 
@@ -551,7 +566,8 @@ class RovLink(Thread):
     def run(self):
 
         self.load_settings()
-        self.wait_for_cableguy()
+        if not self.wait_for_cableguy():
+            return
 
         if not self.discover_nucleus():
             return
