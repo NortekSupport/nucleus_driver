@@ -340,10 +340,10 @@ class RovLink(Thread):
             #response = requests.get("http://127.0.0.1/cable-guy/v1.0/ethernet")
 
             session = requests.Session()
-            retry = Retry(connect=20, backoff_factor=0.5)
+            retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
             adapter = HTTPAdapter(max_retries=retry)
             session.mount('http://', adapter)
-            session.mount('https://', adapter)
+            #session.mount('https://', adapter)
 
             url = 'http://127.0.0.1/cable-guy/v1.0/ethernet'
             response = session.get(url)
@@ -353,8 +353,9 @@ class RovLink(Thread):
             else:
                 return False
 
+        logging.info(f'{self.timestamp()} Checking Cable-guy...')
+
         for _ in range(21):
-        #for _ in range(5):
             if get_cableguy_status():
                 break
 
