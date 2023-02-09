@@ -396,8 +396,12 @@ class Parser:
 
                     if header_data['id'] == self.ID_INS:
 
+                        ins_status = unpack('<I', data[common_data['offsetOfData'] + 76: common_data['offsetOfData'] + 80])[0]
+
                         sensor = {'serialNumber': unpack('<I', data[16:20])[0],
                                   'operationMode': unpack('<B', data[24:25])[0],  # TODO: add operationModeString?
+                                  'fomAhrs': unpack('<f', data[28:32])[0],
+                                  'fomFc1': unpack('<f', data[32:36])[0],
                                   'ahrsData.roll': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0],
                                   'ahrsData.pitch': unpack('<f', data[common_data['offsetOfData'] + 4: common_data['offsetOfData'] + 8])[0],
                                   'ahrsData.heading': unpack('<f', data[common_data['offsetOfData'] + 8: common_data['offsetOfData'] + 12])[0],
@@ -416,32 +420,29 @@ class Parser:
                                   'ahrsData.rotationMatrix_8': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
                                   'declination': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0],
                                   'depth': unpack('<f', data[common_data['offsetOfData'] + 68: common_data['offsetOfData'] + 72])[0],
-                                  'courseOverGround': unpack('<f', data[common_data['offsetOfData'] + 72: common_data['offsetOfData'] + 76])[0],
-                                  'temperature': unpack('<f', data[common_data['offsetOfData'] + 76: common_data['offsetOfData'] + 80])[0],
-                                  'pressure': unpack('<f', data[common_data['offsetOfData'] + 80: common_data['offsetOfData'] + 84])[0],
-                                  'altitude': unpack('<f', data[common_data['offsetOfData'] + 84: common_data['offsetOfData'] + 88])[0],
-                                  'positionFrameX': unpack('<f', data[common_data['offsetOfData'] + 88: common_data['offsetOfData'] + 92])[0],
-                                  'positionFrameY': unpack('<f', data[common_data['offsetOfData'] + 92: common_data['offsetOfData'] + 96])[0],
-                                  'positionFrameZ': unpack('<f', data[common_data['offsetOfData'] + 96: common_data['offsetOfData'] + 100])[0],
-                                  'velocityNedX': unpack('<f', data[common_data['offsetOfData'] + 100: common_data['offsetOfData'] + 104])[0],
-                                  'velocityNedY': unpack('<f', data[common_data['offsetOfData'] + 104: common_data['offsetOfData'] + 108])[0],
-                                  'velocityNedZ': unpack('<f', data[common_data['offsetOfData'] + 108: common_data['offsetOfData'] + 112])[0],
-                                  'velocityNucleusX': unpack('<f', data[common_data['offsetOfData'] + 112: common_data['offsetOfData'] + 116])[0],
-                                  'velocityNucleusY': unpack('<f', data[common_data['offsetOfData'] + 116: common_data['offsetOfData'] + 120])[0],
-                                  'velocityNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 120: common_data['offsetOfData'] + 124])[0],
-                                  'speedOverGround': unpack('<f', data[common_data['offsetOfData'] + 124: common_data['offsetOfData'] + 128])[0],
-                                  'turnRateX': unpack('<f', data[common_data['offsetOfData'] + 128: common_data['offsetOfData'] + 132])[0],
-                                  'turnRateY': unpack('<f', data[common_data['offsetOfData'] + 132: common_data['offsetOfData'] + 136])[0],
-                                  'turnRateZ': unpack('<f', data[common_data['offsetOfData'] + 136: common_data['offsetOfData'] + 140])[0]
+                                  # End of AHRS data
+                                  'fomIns': unpack('<f', data[common_data['offsetOfData'] + 72: common_data['offsetOfData'] + 76])[0],
+                                  'statusIns.latLonIsValid': _get_status(status_bits=ins_status, bit=0),
+                                  'courseOverGround': unpack('<f', data[common_data['offsetOfData'] + 80: common_data['offsetOfData'] + 84])[0],
+                                  'temperature': unpack('<f', data[common_data['offsetOfData'] + 84: common_data['offsetOfData'] + 88])[0],
+                                  'pressure': unpack('<f', data[common_data['offsetOfData'] + 88: common_data['offsetOfData'] + 92])[0],
+                                  'altitude': unpack('<f', data[common_data['offsetOfData'] + 92: common_data['offsetOfData'] + 96])[0],
+                                  'latitude': unpack('<d', data[common_data['offsetOfData'] + 96: common_data['offsetOfData'] + 104])[0],
+                                  'longitude': unpack('<d', data[common_data['offsetOfData'] + 104: common_data['offsetOfData'] + 112])[0],
+                                  'positionFrameX': unpack('<f', data[common_data['offsetOfData'] + 120: common_data['offsetOfData'] + 124])[0],
+                                  'positionFrameY': unpack('<f', data[common_data['offsetOfData'] + 124: common_data['offsetOfData'] + 128])[0],
+                                  'positionFrameZ': unpack('<f', data[common_data['offsetOfData'] + 128: common_data['offsetOfData'] + 132])[0],
+                                  'velocityNedX': unpack('<f', data[common_data['offsetOfData'] + 132: common_data['offsetOfData'] + 136])[0],
+                                  'velocityNedY': unpack('<f', data[common_data['offsetOfData'] + 136: common_data['offsetOfData'] + 140])[0],
+                                  'velocityNedZ': unpack('<f', data[common_data['offsetOfData'] + 140: common_data['offsetOfData'] + 144])[0],
+                                  'velocityNucleusX': unpack('<f', data[common_data['offsetOfData'] + 144: common_data['offsetOfData'] + 148])[0],
+                                  'velocityNucleusY': unpack('<f', data[common_data['offsetOfData'] + 148: common_data['offsetOfData'] + 152])[0],
+                                  'velocityNucleusZ': unpack('<f', data[common_data['offsetOfData'] + 152: common_data['offsetOfData'] + 156])[0],
+                                  'speedOverGround': unpack('<f', data[common_data['offsetOfData'] + 156: common_data['offsetOfData'] + 160])[0],
+                                  'turnRateX': unpack('<f', data[common_data['offsetOfData'] + 160: common_data['offsetOfData'] + 164])[0],
+                                  'turnRateY': unpack('<f', data[common_data['offsetOfData'] + 164: common_data['offsetOfData'] + 168])[0],
+                                  'turnRateZ': unpack('<f', data[common_data['offsetOfData'] + 168: common_data['offsetOfData'] + 172])[0]
                                   }
-
-                        if common_data['version'] == 1:
-                            sensor['fomAhrs'] = unpack('<B', data[25:26])[0]
-                            sensor['fomFc1'] = unpack('<B', data[26:27])[0]
-
-                        if common_data['version'] == 2:
-                            sensor['fomAhrs'] = unpack('<f', data[28:32])[0]
-                            sensor['fomFc1'] = unpack('<f', data[32:36])[0]
 
                     if header_data['id'] == self.ID_IMU:
                         imu_status = unpack('<I', data[12:16])[0]
@@ -607,13 +608,15 @@ class Parser:
 
             except struct_error:
                 self.messages.write_warning('Failed to unpack sensor data')
-                self.messages.write_warning(data.decode())
+                self.messages.write_warning(data)
 
             return sensor
 
         if not check_header_size():
             self.messages.write_exception('Packet is smaller than specified header length. Extraction aborted')
             return header_checksum, data_checksum, packet
+
+
 
         header_data = get_header_data()
 

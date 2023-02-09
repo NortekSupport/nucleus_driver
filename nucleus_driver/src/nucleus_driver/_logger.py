@@ -50,8 +50,9 @@ class Logger:
                        'ahrsData.rotationMatrix_6', 'ahrsData.rotationMatrix_7', 'ahrsData.rotationMatrix_8',
                        'declination', 'depth', 'fomAhrs', 'fomFc1']
 
-        ins_fields = ['courseOverGround', 'temperature', 'pressure',
-                      'altitude',
+        ins_fields = ['fomIns', 'statusIns.latLonIsValid',
+                      'courseOverGround', 'temperature', 'pressure',
+                      'altitude', 'latitude', 'longitude',
                       'positionFrameX', 'positionFrameY', 'positionFrameZ',
                       'velocityNedX', 'velocityNedY', 'velocityNedZ',
                       'velocityNucleusX', 'velocityNucleusY', 'velocityNucleusZ',
