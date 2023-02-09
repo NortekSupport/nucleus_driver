@@ -435,6 +435,9 @@ class RovLink(Thread):
         for _ in range(21):
             if get_heartbeat():
                 break
+
+            logging.info("waiting for heartbeat...")
+            time.sleep(1)
         else:
             logging.warning('Failed to detect heartbeat')
             return False
