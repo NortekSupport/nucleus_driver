@@ -521,7 +521,7 @@ class RovLink(Thread):
     def run(self):
 
         self.load_settings()
-        self.wait_for_cableguy()
+        #self.wait_for_cableguy()
 
         if not self.discover_nucleus():
             return
