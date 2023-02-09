@@ -368,7 +368,7 @@ class RovLink(Thread):
         logging.info(f'{self.timestamp()} waiting for cable-guy to come online...')
 
         session = requests.Session()
-        retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
+        retry = Retry(connect=20, backoff_factor=1, backoff_max=20, status_forcelist=[502])
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
 
@@ -467,6 +467,7 @@ class RovLink(Thread):
                     status = True
             except Exception as e:
                 logging.warning(f'{self.timestamp()} Unable to extract data from HEARTBEAT request: {e}')
+                logging.warning(f'{response}')
 
             return status
 
@@ -566,6 +567,7 @@ class RovLink(Thread):
     def run(self):
 
         self.load_settings()
+
         if not self.wait_for_cableguy():
             return
 
