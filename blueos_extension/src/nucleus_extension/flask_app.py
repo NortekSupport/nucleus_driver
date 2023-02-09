@@ -623,7 +623,7 @@ if __name__ == "flask_app":
     api = Api(app)
 
     @app.route("/nucleus_driver/start", methods=['GET'])
-    def start():
+    def nucleus_driver_start():
 
         if not nucleus_driver.connection.get_connection_status():
             return jsonify({'reply': 'Nucleus not connected!'})
@@ -638,7 +638,7 @@ if __name__ == "flask_app":
         return jsonify({'reply': reply})
 
     @app.route("/nucleus_driver/stop", methods=['GET'])
-    def stop():
+    def nucleus_driver_stop():
 
         if not nucleus_driver.connection.get_connection_status():
             return jsonify({'reply': 'Nucleus not connected!'})
@@ -655,7 +655,7 @@ if __name__ == "flask_app":
         return jsonify({'reply': stop_reply})
 
     @app.route("/nucleus_driver/get_packet", methods=['GET'])
-    def get_packet():
+    def nucleus_driver_get_packet():
 
         if not nucleus_driver.connection.get_connection_status():
             return jsonify({'reply': 'Nucleus not connected!'})
@@ -688,6 +688,9 @@ if __name__ == "flask_app":
 
         if not nucleus_driver.connection.get_connection_status():
             return jsonify({'reply': 'Nucleus not connected!'})
+
+        if nucleus_driver.parser.thread_running:
+            return jsonify({'reply': 'Nucleus is running, stop before sending "get_all"'})
 
         reply = nucleus_driver.commands.get_all()
 
