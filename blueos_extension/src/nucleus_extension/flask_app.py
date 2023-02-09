@@ -3,6 +3,7 @@ from flask import Flask, json, request, jsonify
 from flask_restful import Api, reqparse
 from threading import Thread
 import requests
+from requests.adapters import HTTPAdapter, Retry
 import logging
 import socket
 from queue import Queue
@@ -318,14 +319,24 @@ class RovLink(Thread):
     def wait_for_cableguy(self):
 
         def get_cableguy_status():
-            response = requests.get("http://127.0.0.1/cable-guy/v1.0/ethernet")
+            #response = requests.get("http://127.0.0.1/cable-guy/v1.0/ethernet")
+
+            session = requests.Session()
+            retry = Retry(connect=20, backoff_factor=1)
+            adapter = HTTPAdapter(max_retries=retry)
+            session.mount('http://', adapter)
+            session.mount('https://', adapter)
+
+            url = 'http://127.0.0.1/cable-guy/v1.0/ethernet'
+            response = session.get(url)
 
             if response.status_code == 200 and response.json()[0]['info']['connected'] is True:
                 return True
             else:
                 return False
 
-        for _ in range(21):
+        #for _ in range(21):
+        for _ in range(5):
             if get_cableguy_status():
                 break
 
@@ -521,7 +532,7 @@ class RovLink(Thread):
     def run(self):
 
         self.load_settings()
-        #self.wait_for_cableguy()
+        self.wait_for_cableguy()
 
         if not self.discover_nucleus():
             return
