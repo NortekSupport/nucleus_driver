@@ -690,7 +690,7 @@ if __name__ == "flask_app":
             return jsonify({'reply': 'Nucleus not connected!'})
 
         if nucleus_driver.parser.thread_running:
-            return jsonify({'reply': 'Nucleus is running, stop before sending "get_all"'})
+            return jsonify({'reply': 'Nucleus is running, stop before sending get_all'})
 
         reply = nucleus_driver.commands.get_all()
 
