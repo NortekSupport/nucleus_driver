@@ -7,6 +7,7 @@ from requests.adapters import HTTPAdapter, Retry
 import logging
 import socket
 from queue import Queue
+from datetime import datetime
 
 from nucleus_driver import NucleusDriver
 
@@ -66,6 +67,8 @@ class RovLink(Thread):
 
         self.packet_queue = Queue(maxsize=1000)
 
+        self.init_time = datetime.now()
+
     def d2r(self, deg):
 
         return deg * 3.14159 / 360
@@ -73,6 +76,21 @@ class RovLink(Thread):
     def r2d(self, rad):
 
         return rad * 360 / 3.14159
+
+    def timestamp(self) -> str:
+
+        time_delta = datetime.now() - self.init_time
+
+        days = time_delta.days
+        hours, reminder = divmod(time_delta.seconds, 3600)
+        minutes, seconds = divmod(reminder, 60)
+
+        if days >= 1:
+            timestamp = f'[{days} - {hours:02}:{minutes:02}:{seconds:02}]'
+        else:
+            timestamp = f'[{hours:02}:{minutes:02}:{seconds:02}]'
+
+        return timestamp
 
     def write_packet(self, packet):
 
@@ -322,7 +340,7 @@ class RovLink(Thread):
             #response = requests.get("http://127.0.0.1/cable-guy/v1.0/ethernet")
 
             session = requests.Session()
-            retry = Retry(connect=20, backoff_factor=1)
+            retry = Retry(connect=20, backoff_factor=0.5)
             adapter = HTTPAdapter(max_retries=retry)
             session.mount('http://', adapter)
             session.mount('https://', adapter)
@@ -335,22 +353,22 @@ class RovLink(Thread):
             else:
                 return False
 
-        #for _ in range(21):
-        for _ in range(5):
+        for _ in range(21):
+        #for _ in range(5):
             if get_cableguy_status():
                 break
 
-            logging.info("waiting for cable-guy to come online...")
+            logging.info(f"{self.timestamp()} waiting for cable-guy to come online...")
             time.sleep(1)
         else:
-            logging.warning('Failed to detect heartbeat')
+            logging.warning(f'{self.timestamp()} Failed to find cable-guy')
             return False
 
-        logging.info('Cable-guy online')
+        logging.info(f'{self.timestamp()} Cable-guy online')
 
     def discover_nucleus(self):
 
-        logging.info('Discovering Nucleus...')
+        logging.info(f'{self.timestamp()} Discovering Nucleus...')
 
         for _ in range(21):
             try:
@@ -359,10 +377,10 @@ class RovLink(Thread):
             except socket.gaierror:
                 continue
         else:
-            logging.warning('Failed to discover Nucleus on the network')
+            logging.warning(f'{self.timestamp()} Failed to discover Nucleus on the network')
             return False
 
-        logging.info('Discovered Nucleus on network')
+        logging.info(f'{self.timestamp()} Discovered Nucleus on network')
         return True
 
     def connect_nucleus(self):
@@ -376,43 +394,43 @@ class RovLink(Thread):
         self.nucleus_id = self.nucleus_driver.connection.nucleus_id
         self.nucleus_firmware = self.nucleus_driver.connection.firmware_version
 
-        logging.info(f'Nucleus connected: {self.nucleus_driver.connection.get_connection_status()}')
-        logging.info(f'Nucleus ID:        {self.nucleus_id}')
-        logging.info(f'Nucleus firmware:  {self.nucleus_firmware}')
+        logging.info(f'{self.timestamp()} Nucleus connected: {self.nucleus_driver.connection.get_connection_status()}')
+        logging.info(f'{self.timestamp()} Nucleus ID:        {self.nucleus_id}')
+        logging.info(f'{self.timestamp()} Nucleus firmware:  {self.nucleus_firmware}')
 
         return True
 
     def setup_nucleus(self):
 
-        logging.info('setting up nucleus')
+        logging.info(f'{self.timestamp()} setting up nucleus')
 
         reply = self.nucleus_driver.commands.set_default_config()
         if b'OK\r\n' not in reply:
-            logging.warning(f'Did not receive OK when sending SETDEFAULT,CONFIG: {reply}')
+            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETDEFAULT,CONFIG: {reply}')
 
         reply = self.nucleus_driver.commands.set_default_mission()
         if b'OK\r\n' not in reply:
-            logging.warning(f'Did not receive OK when sending SETDEFAULT,MISSION: {reply}')
+            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETDEFAULT,MISSION: {reply}')
 
         reply = self.nucleus_driver.commands.set_default_magcal()
         if b'OK\r\n' not in reply:
-            logging.warning(f'Did not receive OK when sending SETDEFAULT,MAGCAL: {reply}')
+            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETDEFAULT,MAGCAL: {reply}')
 
         reply = self.nucleus_driver.commands.set_ahrs(ds="ON")
         if b'OK\r\n' not in reply:
-            logging.warning(f'Did not receive OK when sending SETAHRS,DS="OFF": {reply}')
+            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETAHRS,DS="OFF": {reply}')
 
         reply = self.nucleus_driver.commands.set_bt(wt="ON", ds="ON")  # TODO: wt="OFF"
         if b'OK\r\n' not in reply:
-            logging.warning(f'Did not receive OK when sending SETBT,WT="OFF",DS="ON": {reply}')
+            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETBT,WT="OFF",DS="ON": {reply}')
 
         reply = self.nucleus_driver.commands.set_alti(ds="ON")  # TODO: OFF
         if b'OK\r\n' not in reply:
-            logging.warning(f'Did not receive OK when sending SETALTI,DS="OFF": {reply}')
+            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETALTI,DS="OFF": {reply}')
 
         reply = self.nucleus_driver.commands.set_cur_prof(ds="OFF")  # TODO: OFF
         if b'OK\r\n' not in reply:
-            logging.warning(f'Did not receive OK when sending SETCURPROF,DS="OFF": {reply}')
+            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETCURPROF,DS="OFF": {reply}')
 
     def wait_for_heartbeat(self):
         """
@@ -424,7 +442,7 @@ class RovLink(Thread):
             response = requests.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT')
 
             if response.status_code != 200:
-                logging.warning(f'HEARTBEAT request did not respond with 200: {response.status_code}')
+                logging.warning(f'{self.timestamp()} HEARTBEAT request did not respond with 200: {response.status_code}')
                 return False
 
             status = False
@@ -432,7 +450,7 @@ class RovLink(Thread):
                 if response.json()["message"]["type"] == "HEARTBEAT":
                     status = True
             except Exception as e:
-                logging.warning(f'Unable to extract data from HEARTBEAT request: {e}')
+                logging.warning(f'{self.timestamp()} Unable to extract data from HEARTBEAT request: {e}')
 
             return status
 
@@ -441,19 +459,19 @@ class RovLink(Thread):
 
         vehicle_path = f"/vehicles/{vehicle}/components/{component}/messages"
 
-        logging.info('waiting for vehicle heartbeat...')
+        logging.info(f'{self.timestamp()} waiting for vehicle heartbeat...')
 
         for _ in range(21):
             if get_heartbeat():
                 break
 
-            logging.info("waiting for heartbeat...")
+            logging.info(f"{self.timestamp()} waiting for heartbeat...")
             time.sleep(1)
         else:
-            logging.warning('Failed to detect heartbeat')
+            logging.warning(f'{self.timestamp()} Failed to detect heartbeat')
             return False
 
-        logging.info('Heartbeat detected')
+        logging.info(f'{self.timestamp()} Heartbeat detected')
         return True
 
     def handle_config_parameters(self):
@@ -472,9 +490,9 @@ class RovLink(Thread):
             response = self.set_parameter(parameter, self.CONFIG_PARAMETERS[parameter]['value'], self.CONFIG_PARAMETERS[parameter]['type'])
 
             if response.status_code == 200:
-                logging.warning(f'{parameter} set to {self.CONFIG_PARAMETERS[parameter]["value"]}')
+                logging.warning(f'{self.timestamp()} {parameter} set to {self.CONFIG_PARAMETERS[parameter]["value"]}')
             else:
-                logging.warning(f'Failed to set {parameter} to {self.CONFIG_PARAMETERS[parameter]["value"]}')
+                logging.warning(f'{self.timestamp()} Failed to set {parameter} to {self.CONFIG_PARAMETERS[parameter]["value"]}')
 
         return parameter_change
 
@@ -485,19 +503,19 @@ class RovLink(Thread):
             response = self.set_parameter(parameter, self.PID_PARAMETERS[parameter]['value'], self.PID_PARAMETERS[parameter]['type'])
 
             if response.status_code == 200:
-                logging.warning(f'{parameter} set to {self.PID_PARAMETERS[parameter]["value"]}')
+                logging.warning(f'{self.timestamp()} {parameter} set to {self.PID_PARAMETERS[parameter]["value"]}')
             else:
-                logging.warning(f'Failed to set {parameter} to {self.PID_PARAMETERS[parameter]["value"]}')
+                logging.warning(f'{self.timestamp()} Failed to set {parameter} to {self.PID_PARAMETERS[parameter]["value"]}')
 
     def start_nucleus(self):
 
         if b'OK\r\n' not in self.nucleus_driver.start_measurement():
-            logging.warning('Failed to start Nucleus')
+            logging.warning(f'{self.timestamp()} Failed to start Nucleus')
 
     def stop_nucleus(self):
 
         if b'OK\r\n' in self.nucleus_driver.stop():
-            logging.warning('Nucleus was already running. Nucleus is now stopped')
+            logging.warning(f'{self.timestamp()} Nucleus was already running. Nucleus is now stopped')
 
     def send_vision_position_delta(self, position_delta, angle_delta, confidence, dt):
 
@@ -519,15 +537,15 @@ class RovLink(Thread):
 
         except IndexError:
 
-            logging.warning('Failed to create VISION_POSITION_DELTA packet')
+            logging.warning(f'{self.timestamp()} Failed to create VISION_POSITION_DELTA packet')
             return
 
         response = requests.post(MAVLINK2REST_URL + "/mavlink", json=vision_position_delta)
 
         if response.status_code == 200:
-            logging.debug(f'VISION_POSITION_DELTA\r\nangle_delta: {angle_delta}\r\nposition_delta: {position_delta}\r\nconfidence: {confidence}\r\ndt: {dt}')
+            logging.debug(f'{self.timestamp()} VISION_POSITION_DELTA\r\nangle_delta: {angle_delta}\r\nposition_delta: {position_delta}\r\nconfidence: {confidence}\r\ndt: {dt}')
         else:
-            logging.warning(f'VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
+            logging.warning(f'{self.timestamp()} VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
 
     def run(self):
 
@@ -555,7 +573,7 @@ class RovLink(Thread):
         time.sleep(1)  # TODO
         self.start_nucleus()
 
-        logging.info("Nucleus driver running")
+        logging.info(f"{self.timestamp()} Nucleus driver running")
 
         while self.thread_running:
 
