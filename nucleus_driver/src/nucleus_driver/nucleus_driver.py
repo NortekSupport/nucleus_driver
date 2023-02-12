@@ -137,6 +137,10 @@ class NucleusDriver:
 
     def start_measurement(self):
 
+        if not self.connection.get_connection_status():
+            self.messages.write_warning('Nucleus not connected')
+            return b''
+
         self.logger.get_cp_nc()
         self.parser.start()
         response = self.commands._start()
@@ -144,6 +148,10 @@ class NucleusDriver:
         return response
 
     def start_fieldcal(self):
+
+        if not self.connection.get_connection_status():
+            self.messages.write_warning('Nucleus not connected')
+            return b''
 
         self.parser.start()
         response = self.commands._fieldcal()
@@ -154,7 +162,13 @@ class NucleusDriver:
 
     def stop(self):
 
-        self.parser.stop()
+        if self.parser.thread_running:
+            self.parser.stop()
+
+        if not self.connection.get_connection_status():
+            self.messages.write_warning('Nucleus not connected')
+            return b''
+
         if self.logging_fieldcal:
             time.sleep(0.5)
         response = self.commands._stop(timeout=3)
