@@ -45,6 +45,8 @@ class NucleusDriver:
 
     def connect(self, connection_type, password=None) -> bool:
 
+        print('CONNECTING')
+
         CONNECTION_TYPES = ['serial', 'tcp']
 
         if connection_type not in CONNECTION_TYPES:

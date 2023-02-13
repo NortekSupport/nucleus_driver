@@ -269,6 +269,8 @@ class Connection:
             self.messages.write_warning('Failed to set current time on Nucleus device')
             return False
 
+        print('GETTING DEVICE INFO')
+
         if get_device_info:
             if not self.set_clockstring():
                 self.messages.write_warning('Failed to set current time on Nucleus device')
@@ -280,6 +282,8 @@ class Connection:
         return self.get_connection_status()
 
     def set_clockstring(self):
+
+        print('SETTING CLOCKSTRING')
 
         self.commands._reset_buffer()
         clockstring = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
