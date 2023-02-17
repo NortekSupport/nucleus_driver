@@ -32,7 +32,7 @@ class Commands:
 
         get_reply = b''
 
-        if self.parser.thread_running is not True:
+        if self.parser.thread_running is not True or self.parser.thread_lock:
             get_reply = self.connection.read(terminator=terminator, timeout=timeout)
         elif self.parser.get_queuing()['ascii'] is True:
             init_time = datetime.now()
@@ -52,6 +52,9 @@ class Commands:
             if b'ERROR' in data:
                 get_error_reply = self.get_error().rstrip(b'OK\r\n')
                 self.messages.write_exception(message='Received ERROR instead of {} after sending {}: {}'.format(terminator, command, get_error_reply))
+
+            elif len(data) > 50:
+                pass  # TODO: Add handlig here for running nucleus?
 
             else:
                 self.messages.write_warning(message='Did not receive {} after sending {}: {}'.format(terminator, command, data))

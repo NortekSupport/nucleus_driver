@@ -145,6 +145,10 @@ class Logger:
 
         return field_names
 
+    def get_logging_status(self):
+
+        return self._logging
+
     def get_cp_nc(self):
 
         reply = self.commands.get_cur_prof(profile_range=True, cs=True, bd=True, ds=True)

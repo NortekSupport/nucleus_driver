@@ -114,6 +114,14 @@ class App(cmd2.Cmd):
         else:
             self.nucleus_driver.messages.write_warning('\r\nFailed to connect to Nucleus device\r\n')
 
+        if self.nucleus_driver.parser.nucleus_running and not self.nucleus_driver.parser.thread_running:
+            self.nucleus_driver.parser.start()
+
+        if self.nucleus_driver.parser.nucleus_running and self.nucleus_driver.parser.thread_running and not self.nucleus_driver.logger.get_logging_status():
+            log_reply = input('Nucleus driver is already running. Start logging? [Y/n] ')
+            if log_reply.upper() in ['Y', 'YES', '']:
+                self.nucleus_driver.start_logging()
+
     disconnect_parser = Cmd2ArgumentParser(description='Disconnect from the nucleus device')
 
     @with_argparser(disconnect_parser)
@@ -142,8 +150,8 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
-        if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Logging thread is already running')
+        if self.nucleus_driver.parser.nucleus_running and self.nucleus_driver.parser.thread_running:
+            self.nucleus_driver.messages.write_warning('Nucleus is already running')
             return
 
         if path is not None:
@@ -165,8 +173,8 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
-        if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Logging thread is already running')
+        if self.nucleus_driver.parser.nucleus_running and self.nucleus_driver.parser.thread_running:
+            self.nucleus_driver.messages.write_warning('Nucleus is already running')
             return
 
         if path is not None:
@@ -200,7 +208,7 @@ class App(cmd2.Cmd):
             return
 
         if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not send command to Nucleus while logging thread is running')
+            self.nucleus_driver.messages.write_message('Can not send command to Nucleus while parser is running')
             return
 
         command = command_args.command
@@ -223,7 +231,7 @@ class App(cmd2.Cmd):
             return
 
         if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not flash Nucleus while logging thread is running')
+            self.nucleus_driver.messages.write_message('Can not flash Nucleus while parser is running')
             return
 
         path = set_flash_path_args.path
@@ -256,7 +264,7 @@ class App(cmd2.Cmd):
             return
 
         if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not download asserts while logging thread is running')
+            self.nucleus_driver.messages.write_message('Can not download asserts while parser is running')
             return
 
         if not self.nucleus_driver.assert_download(path=path):
@@ -273,10 +281,11 @@ class App(cmd2.Cmd):
             return
 
         if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not clear asserts while logging thread is running')
+            self.nucleus_driver.messages.write_message('Can not clear asserts while parser is running')
             return
 
-        if b'OK\r\n' in self.nucleus_driver.clear_assert():
+        response = self.nucleus_driver.clear_assert()
+        if b'OK\r\n' in response:
             self.nucleus_driver.messages.write_message('Successfully cleared asserts')
         else:
             self.nucleus_driver.messages.write_warning('Clear assert did not reply with OK: {}'.format(response))
@@ -299,7 +308,7 @@ class App(cmd2.Cmd):
             return
 
         if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not download syslog while logging thread is running')
+            self.nucleus_driver.messages.write_message('Can not download syslog while parser is running')
             return
 
         if not self.nucleus_driver.syslog_download(path=path):
@@ -316,7 +325,7 @@ class App(cmd2.Cmd):
             return
 
         if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not clear syslog while logging thread is running')
+            self.nucleus_driver.messages.write_message('Can not clear syslog while parser is running')
             return
 
         response = self.nucleus_driver.clear_syslog()
@@ -348,7 +357,7 @@ class App(cmd2.Cmd):
             return
 
         if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not download DVL diagnostics data while logging thread is running')
+            self.nucleus_driver.messages.write_message('Can not download DVL diagnostics data while parser is running')
             return
 
         if fid is not None:
@@ -387,7 +396,7 @@ class App(cmd2.Cmd):
             return
 
         if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not download Nucleus data while logging thread is running')
+            self.nucleus_driver.messages.write_message('Can not download Nucleus data while parser is running')
             return
 
         if fid is not None:
@@ -416,7 +425,7 @@ class App(cmd2.Cmd):
         path = convert_nucleus_data_args.path
 
         if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not convert Nucleus data while logging thread is running')
+            self.nucleus_driver.messages.write_message('Can not convert Nucleus data while parser is running')
             return
 
         status = self.nucleus_driver.convert_nucleus_data(path=path)
@@ -440,7 +449,7 @@ class App(cmd2.Cmd):
             return
 
         if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not get file list while logging thread is running')
+            self.nucleus_driver.messages.write_message('Can not get file list while parser is running')
             return
 
         src = None
@@ -456,11 +465,23 @@ class App(cmd2.Cmd):
         for entry in response:
             self.nucleus_driver.messages.write_message(entry)
 
+    quit_parser = Cmd2ArgumentParser(description='Quit Nucleus driver')
+
+    @with_argparser(quit_parser)
+    def do_quit(self, quit_args):
+
+        if self.nucleus_driver.parser.thread_running:
+            self.nucleus_driver.parser.stop()
+
+        if self.nucleus_driver.connection.get_connection_status():
+            self.nucleus_driver.disconnect()
+
+        return True
+
 
 def nucleus_driver_console():
 
     nucleus_driver = NucleusDriver()
-    nucleus_driver.parser.set_queuing(packet=False, ascii=True, condition=False)
 
     app = App(nucleus_driver=nucleus_driver)
 

@@ -1,4 +1,8 @@
+import logging
 
+logging.basicConfig(level=logging.INFO)
+
+# TODO: Change prints to logging messages
 
 class Messages:
 

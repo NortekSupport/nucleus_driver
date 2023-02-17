@@ -626,6 +626,6 @@ class Download:
 
                 self.parser.add_data(data)
 
-            self.logger.stop()
+        self.logger.stop()
 
         return True

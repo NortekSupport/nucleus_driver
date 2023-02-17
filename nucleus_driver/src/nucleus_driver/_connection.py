@@ -25,6 +25,7 @@ class Connection:
 
         self.messages = kwargs.get('messages')
         self.commands = None
+        self.parser = None
 
         self._connection_type = None
         self._connected = False
@@ -41,6 +42,8 @@ class Connection:
         self.nucleus_id = None
         self.firmware_version = None
         self.get_all = None
+
+        self.nucleus_running = False
 
     def get_connection_type(self) -> str:
 
@@ -265,22 +268,40 @@ class Connection:
         if self.get_connection_type() == 'tcp':
             self._connected = _connect_tcp()
 
-        if self.get_connection_status() and self.commands is not None and get_device_info:
+        if not self.get_connection_status():
+            self.messages.write_warning('Failed to set current time on Nucleus device')
+            return False
+
+        if get_device_info:
             if not self.set_clockstring():
-                self.messages.write_warning('Failed to set current time on Nucleus device')
+                get_device_info = False
+
+        if get_device_info:
             self.get_info()
 
         return self.get_connection_status()
 
     def set_clockstring(self):
 
+        self.commands._reset_buffer()
         clockstring = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        command = 'SETCLOCKSTR,TIME="{}"\r\n'.format(clockstring).encode()
+        self.write(command)
+        reply = self.commands._get_reply(terminator=b'OK\r\n', timeout=1)
 
-        status = False
-        if b'OK\r\n' in self.commands.set_clockstring(clockstring=clockstring):
-            status = True
+        if len(reply) >= 50:
+            self.parser.nucleus_running = True
+            self.messages.write_message('Nucleus is already running')
+            return False
 
-        return status
+        self.commands._check_reply(data=reply, command=command, terminator=b'OK\r\n')
+
+        if b'OK\r\n' in reply:
+            return True
+
+        else:
+            self.messages.write_warning('Failed to set current time on Nucleus device')
+            return False
 
     def get_info(self):
 
