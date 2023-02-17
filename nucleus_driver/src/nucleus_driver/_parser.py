@@ -1,3 +1,4 @@
+import logging
 from queue import Queue, Empty
 from struct import unpack
 from struct import error as struct_error
@@ -34,8 +35,8 @@ class Parser:
         self.connection = kwargs.get('connection')
 
         self.packet_queue = Queue(maxsize=10000)
-        self.ascii_queue = Queue(maxsize=10000)
-        self.condition_queue = Queue(maxsize=10000)
+        self.ascii_queue = Queue(maxsize=100)
+        self.condition_queue = Queue(maxsize=100)
 
         self.reading_packet = False
         self.binary_packet = bytearray()
@@ -47,6 +48,11 @@ class Parser:
 
         self.thread = Thread()
         self.thread_running = False
+        self.thread_lock = False
+        self._thread_locked = False
+
+        self.nucleus_running = False
+        self.packet_timestamp = datetime.now()
 
     def init_packet_queue(self, maxsize=0):
 
@@ -100,6 +106,9 @@ class Parser:
                 self.ascii_queue.get_nowait()
 
     def write_packet(self, packet):
+
+        self.nucleus_running = True
+        self.packet_timestamp = datetime.now()
 
         if self._queuing['packet'] is True:
 
@@ -698,11 +707,60 @@ class Parser:
 
         return True
 
+    def set_thread_lock(self) -> bool:
+
+        if not self.thread_running:
+            logging.debug('thread is not running, skipping thread lock')
+            return True
+
+        locked = False
+
+        self.thread_lock = True
+
+        init_time = datetime.now()
+        while (datetime.now() - init_time).seconds <= 3:
+            if self._thread_locked:
+                locked = True
+                break
+
+        if not locked:
+            self.thread_lock = False
+
+        return locked
+
+    def reset_thread_lock(self) -> bool:
+
+        unlocked = False
+
+        self.thread_lock = False
+
+        if not self.thread_running:
+            logging.debug('thread is not running, thread is unlocked')
+            return True
+
+        init_time = datetime.now()
+        while (datetime.now() - init_time).seconds <= 3:
+            if not self._thread_locked:
+                unlocked = True
+                break
+
+        if not unlocked:
+            self.thread_lock = True
+
+        return unlocked
+
     def run(self):
 
         self.thread_running = True
 
         while self.thread_running:
+
+            if self.thread_lock:
+                self._thread_locked = True
+                time.sleep(0.05)
+                continue
+            else:
+                self._thread_locked = False
 
             if not self.connection.get_connection_status():
                 time.sleep(0.05)
@@ -716,3 +774,6 @@ class Parser:
 
             else:
                 time.sleep(0.01)
+
+            if (datetime.now() - self.packet_timestamp).seconds >= 1:
+                self.nucleus_running = False

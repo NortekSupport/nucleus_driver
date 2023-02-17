@@ -27,7 +27,9 @@ class NucleusDriver:
         self.download = Download(messages=self.messages, connection=self.connection, commands=self.commands, parser=self.parser, logger=self.logger)
 
         self.connection.commands = self.commands
+        self.connection.parser = self.parser
         self.logger.commands = self.commands
+
 
         self.logging_fieldcal = False
 
@@ -45,15 +47,22 @@ class NucleusDriver:
 
     def connect(self, connection_type, password=None) -> bool:
 
-        print('CONNECTING')
-
         CONNECTION_TYPES = ['serial', 'tcp']
 
         if connection_type not in CONNECTION_TYPES:
             self.messages.write_warning('Connection type {} not in {}'.format(connection_type, CONNECTION_TYPES))
             return False
 
-        return self.connection.connect(connection_type=connection_type, password=password)
+        if not self.parser.set_thread_lock():
+            self.messages.write_warning('Failed to set thread lock before Nucleus connection')
+            return False
+
+        connections_status = self.connection.connect(connection_type=connection_type, password=password)
+
+        if not self.parser.reset_thread_lock():
+            self.messages.write_warning('Failed to reset thread lock after establishing Nucleus connection')
+
+        return connections_status
 
     def disconnect(self) -> bool:
 
@@ -65,25 +74,24 @@ class NucleusDriver:
 
     def send_command(self, command: str):
 
+        BLOCKED_COMMANDS = ['START', 'FIELDCAL', 'STARTSPECTRUM', 'STOP', 'UPLOAD', 'FWUPDATE', 'DVLUPDATE']
+
         command = command.rstrip('\n').rstrip('\r')
 
-        if command.upper() == 'START':
-            self.messages.write_message('start command is only supported through logging')
-
-        elif command.upper() == 'FIELDCAL':
-
-            self.messages.write_message('fieldcal command is only supported through logging')
-
-        elif command.upper() == 'STARTSPECTRUM':
-
-            self.messages.write_message('startspectrum command is only supported through logging')
-
-        elif command.upper() == 'STOP':
-
-            self.messages.write_message('stop command is only supported through logging')
+        if command.upper() in BLOCKED_COMMANDS:
+            self.messages.write_message(f'{command} is not supported as a command in this application. Use the applications functionality instead')
 
         else:
-            self.connection.write(command.encode() + b'\r\n')
+
+            command_encoded = command.encode() + b'\r\n'
+
+            self.connection.write(command_encoded)
+
+            message = self.commands._handle_reply(command=command_encoded, terminator=b'OK\r\n', timeout=1)
+
+            self.messages.write_message(message)
+
+            '''
             for i in range(100):
                 command_reply = self.connection.readline()
                 if command_reply == b'':
@@ -94,6 +102,7 @@ class NucleusDriver:
                     except Exception as e:
                         self.messages.write_exception('Could not decode reply: {}'.format(command_reply))
                         self.messages.write_exception('Received error: {}'.format(e))
+            '''
 
     ###########################################
     # Logging
@@ -143,8 +152,14 @@ class NucleusDriver:
             self.messages.write_warning('Nucleus not connected')
             return b''
 
+        if not self.parser.thread_running:
+            self.parser.start()
+
+        if self.parser.nucleus_running and self.parser.thread_running:
+            self.messages.write_warning('Nucleus is already running')
+            return b''
+
         self.logger.get_cp_nc()
-        self.parser.start()
         response = self.commands._start()
 
         return response
@@ -155,7 +170,13 @@ class NucleusDriver:
             self.messages.write_warning('Nucleus not connected')
             return b''
 
-        self.parser.start()
+        if not self.parser.thread_running:
+            self.parser.start()
+
+        if self.parser.nucleus_running and self.parser.thread_running:
+            self.messages.write_warning('Nucleus is already running')
+            return b''
+
         response = self.commands._fieldcal()
 
         self.logging_fieldcal = True
@@ -164,18 +185,19 @@ class NucleusDriver:
 
     def stop(self):
 
-        if self.parser.thread_running:
-            self.parser.stop()
-
         if not self.connection.get_connection_status():
             self.messages.write_warning('Nucleus not connected')
             return b''
+
+        if self.parser.thread_running:
+            self.parser.stop()
 
         if self.logging_fieldcal:
             time.sleep(0.5)
         response = self.commands._stop(timeout=3)
 
         self.logging_fieldcal = False
+        self.parser.nucleus_running = False
 
         return response
 
@@ -191,7 +213,14 @@ class NucleusDriver:
             self.messages.write_warning('Was not able to set flash file: {}'.format(path))
             return False
 
+        if not self.parser.set_thread_lock():
+            self.messages.write_warning('Failed to set thread lock before flashing')
+            return False
+
         result = self.flash.flash_firmware(password=password)
+
+        if not self.parser.reset_thread_lock():
+            self.messages.write_warning('Failed to reset thread lock after flashing')
 
         if result == 0:
             self.messages.write_message('Successfully flashed firmware')
@@ -214,12 +243,19 @@ class NucleusDriver:
 
     def assert_download(self, path: str=None):
 
+        if not self.parser.set_thread_lock():
+            self.messages.write_warning('Failed to set thread lock before assert download')
+            return False
+
         self.asserts.read_assert()
 
         status = False
         if len(self.asserts.assert_encrypted) > 1:
             self.asserts.write_encrypted_assert_to_file(path=path)
             status = True
+
+        if not self.parser.reset_thread_lock():
+            self.messages.write_warning('Failed to reset thread lock after assert download')
 
         return status
 
@@ -237,12 +273,19 @@ class NucleusDriver:
 
     def syslog_download(self, path: str=None):
 
+        if not self.parser.set_thread_lock():
+            self.messages.write_warning('Failed to set thread lock before syslog download')
+            return False
+
         self.syslog.read_syslog()
 
         status = False
         if len(self.syslog.syslog_encrypted) > 1:
             self.syslog.write_encrypted_syslog_to_file(path=path)
             status = True
+
+        if not self.parser.reset_thread_lock():
+            self.messages.write_warning('Failed to reset thread lock after syslog download')
 
         return status
 
@@ -256,11 +299,29 @@ class NucleusDriver:
 
     def download_dvl_data(self, fid=None, sa=None, length=None, path=None):
 
-        return self.download.download_dvl_data(fid=fid, sa=sa, length=length, path=path)
+        if not self.parser.set_thread_lock():
+            self.messages.write_warning('Failed to set thread lock before dvl data download')
+            return False
+
+        status =  self.download.download_dvl_data(fid=fid, sa=sa, length=length, path=path)
+
+        if not self.parser.reset_thread_lock():
+            self.messages.write_warning('Failed to reset thread lock after dvl data download')
+
+        return status
 
     def download_nucleus_data(self, fid=None, sa=None, length=None, path=None):
 
-        return self.download.download_nucleus_data(fid=fid, sa=sa, length=length, path=path)
+        if not self.parser.set_thread_lock():
+            self.messages.write_warning('Failed to set thread lock before nucleus data download')
+            return False
+
+        status = self.download.download_nucleus_data(fid=fid, sa=sa, length=length, path=path)
+
+        if not self.parser.reset_thread_lock():
+            self.messages.write_warning('Failed to reset thread lock after nucleus data download')
+
+        return status
 
     def convert_nucleus_data(self, path):
 
@@ -268,4 +329,14 @@ class NucleusDriver:
 
     def list_files(self, src=None):
 
-        return self.commands.list_files(src=src)
+        if not self.parser.set_thread_lock():
+            self.messages.write_warning('Failed to set thread lock before list files')
+            return False
+
+        list_files = self.commands.list_files(src=src)
+
+        if not self.parser.reset_thread_lock():
+            self.messages.write_warning('Failed to reset thread lock after list files')
+
+        return list_files
+

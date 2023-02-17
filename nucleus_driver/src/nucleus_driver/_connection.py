@@ -25,6 +25,7 @@ class Connection:
 
         self.messages = kwargs.get('messages')
         self.commands = None
+        self.parser = None
 
         self._connection_type = None
         self._connected = False
@@ -41,6 +42,8 @@ class Connection:
         self.nucleus_id = None
         self.firmware_version = None
         self.get_all = None
+
+        self.nucleus_running = False
 
     def get_connection_type(self) -> str:
 
@@ -269,11 +272,8 @@ class Connection:
             self.messages.write_warning('Failed to set current time on Nucleus device')
             return False
 
-        print('GETTING DEVICE INFO')
-
         if get_device_info:
             if not self.set_clockstring():
-                self.messages.write_warning('Failed to set current time on Nucleus device')
                 get_device_info = False
 
         if get_device_info:
@@ -283,8 +283,6 @@ class Connection:
 
     def set_clockstring(self):
 
-        print('SETTING CLOCKSTRING')
-
         self.commands._reset_buffer()
         clockstring = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         command = 'SETCLOCKSTR,TIME="{}"\r\n'.format(clockstring).encode()
@@ -292,7 +290,8 @@ class Connection:
         reply = self.commands._get_reply(terminator=b'OK\r\n', timeout=1)
 
         if len(reply) >= 50:
-            self.messages.write_warning('Nucleus is already running')
+            self.parser.nucleus_running = True
+            self.messages.write_message('Nucleus is already running')
             return False
 
         self.commands._check_reply(data=reply, command=command, terminator=b'OK\r\n')
@@ -301,6 +300,7 @@ class Connection:
             return True
 
         else:
+            self.messages.write_warning('Failed to set current time on Nucleus device')
             return False
 
     def get_info(self):
