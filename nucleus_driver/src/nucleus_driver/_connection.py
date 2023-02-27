@@ -203,7 +203,7 @@ class Connection:
                     return True
 
                 if b'Please enter password:\r\n' not in login:
-                    self.messages.write_warning(message='Did not receive login promp when connecting to TCP')
+                    self.messages.write_warning(message=f'Did not receive login prompt when connecting to TCP. Received: {login}')
                     return False
 
                 if password is not None:
@@ -214,7 +214,7 @@ class Connection:
                 reply = self.readline()
 
                 if b'Welcome to Nortek' not in reply:
-                    self.messages.write_warning(message=f'Did not receive welcome message after login attempt: {reply}')
+                    self.messages.write_warning(message=f'Did not receive welcome message after login attempt. Received: {reply}')
                     return False
 
                 return True

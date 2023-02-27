@@ -85,24 +85,13 @@ class NucleusDriver:
 
             command_encoded = command.encode() + b'\r\n'
 
+            self.commands._reset_buffer()
+
             self.connection.write(command_encoded)
 
             message = self.commands._handle_reply(command=command_encoded, terminator=b'OK\r\n', timeout=1)
 
             self.messages.write_message(message)
-
-            '''
-            for i in range(100):
-                command_reply = self.connection.readline()
-                if command_reply == b'':
-                    break
-                if command_reply:
-                    try:
-                        self.messages.write_message(command_reply.decode())
-                    except Exception as e:
-                        self.messages.write_exception('Could not decode reply: {}'.format(command_reply))
-                        self.messages.write_exception('Received error: {}'.format(e))
-            '''
 
     ###########################################
     # Logging
