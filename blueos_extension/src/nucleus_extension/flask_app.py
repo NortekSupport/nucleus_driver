@@ -1,5 +1,5 @@
 import time
-from flask import Flask, json, request, jsonify
+from flask import Flask, json, request, jsonify, render_template
 from flask_restful import Api, reqparse
 from threading import Thread
 import requests
@@ -668,10 +668,19 @@ if __name__ == "flask_app":
     nucleus_driver = NucleusDriver()
 
     rov_link = RovLink(driver=nucleus_driver)
-    rov_link.start()
+    #rov_link.start()
 
     app = Flask(__name__)
     api = Api(app)
+    
+    @app.route("/")
+    def index():
+        print('INDEX EXECUTED')
+        return render_template('index.html')
+    
+    @app.route("/create")
+    def create():
+        return render_template('create.html')
 
     @app.route("/nucleus_driver/start", methods=['GET'])
     def nucleus_driver_start():
