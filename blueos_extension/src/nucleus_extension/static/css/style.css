@@ -1,6 +1,60 @@
-h1 {
-    border: 2px #eee solid;
-    color: brown;
-    text-align: center;
-    padding: 10px;
+
+
+ul.mavlink_parameters {
+    margin: 0 auto;
+    display: block;
+    list-style-type: none;
+}
+
+ul.mavlink_parameters > li {
+    column-count: 2
+}
+
+ul.mavlink_parameters > li > label {
+    flex: 1 0 220px;
+    color: green;
+}
+
+ul.mavlink_parameters > li > label + input {
+    flex: 1 0 220px;
+    color: rebeccapurple;
+    align-items: flex-outer;
+}
+
+
+
+.flex-outer li, .flex-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    color: blue
+}
+.flex-outer > li > label, .flex-outer li p {
+    flex: 1 0 120px;
+    max-width: 220px;
+}
+.flex-outer > li > label + *, .flex-inner {
+    flex: 1 0 220px;
+}
+
+
+
+/* This is for the top banner*/
+ul.top_banner {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    list-style-type: none;
+}
+
+/* This is for the top banner*/
+li.top_banner > * {
+    padding: 1em;
+}
+
+/* This is for the top banner*/
+li.active > a { 
+    color: #5e5e5e;
+    border-bottom:
+    2px solid #4a4a4a;
 }

@@ -154,10 +154,10 @@ class NucleusDriver:
 
     def stop(self):
 
-        self.parser.stop()
+        response = self.commands._stop(timeout=3)
         if self.logging_fieldcal:
             time.sleep(0.5)
-        response = self.commands._stop(timeout=3)
+        self.parser.stop()
 
         self.logging_fieldcal = False
 
