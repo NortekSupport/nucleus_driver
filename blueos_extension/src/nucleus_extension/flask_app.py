@@ -31,10 +31,18 @@ if __name__ == "flask_app":
     app = Flask(__name__)
     api = Api(app)
     
+    '''
     @app.route("/")
     def index():
         print('INDEX EXECUTED')
         return render_template('index.html')
+    '''
+
+    @app.route("/", defaults={"js": "home"})
+    @app.route("/<any(home, pid_parameters, controller_parameters):js>")
+    def index(js):
+        print(f'js: {js}')
+        return render_template(f"{js}.html", js=js)
     
     @app.route("/create")
     def create():
@@ -85,6 +93,30 @@ if __name__ == "flask_app":
         '''
         print(f'writing parameters... value for controller: {controller}')
         return jsonify(result='control parameters written')
+
+    @app.route("/toggle_driver", methods=["POST"])
+    def toggle_driver():
+
+        enable = request.form.get("toggle_driver", None, type=str)
+
+        if enable == 'enable':
+            rov_link.set_enable_nucleus_input(enable=True)
+        else:
+            rov_link.set_enable_nucleus_input(enable=False)
+
+        enabled = rov_link.get_enable_nucleus_input()
+
+        print(f'enable driver: {enabled}')
+        return jsonify(result=enabled)
+
+    @app.route("/get_status", methods=['GET'])
+    def get_status():
+        
+        status = rov_link.status
+
+        print('message triggered from RovLink')
+        print(status)
+        return jsonify(status)
 
     @app.route("/nucleus_driver/start", methods=['GET'])
     def nucleus_driver_start():

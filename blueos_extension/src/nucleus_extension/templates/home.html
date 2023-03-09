@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block heading %}
+<h1>Home</h1>
+{% endblock %}
+
+{% block grid_left %} 
+
+<!--
+<span>Cable guy: <span id="cable_guy">Default</span></span>
+<br>
+<span>Nucleus: <span id="nucleus"></span></span>
+<br>
+<span>Heart beat: <span id="heart_beat"></span></span>
+<br>
+<span>ROV config: <span id="controller_parameters"></span></span>
+<br>
+-->
+
+<fieldset id="status_table">
+  <p>Status</p>
+  <table>
+    <tr>
+      <td><span>Cable guy:</span></td>
+      <td><span id="cable_guy">Default</span></td>
+    </tr>
+    <tr>
+      <td><span>Nucleus:</span></td>
+      <td><span id="nucleus">Default</span></td>
+    </tr>
+    <tr>
+      <td><span>Heart beat:</span></td>
+      <td><span id="heart_beat">Default</span></td>
+    </tr>
+    <tr>
+      <td><span>ROV config:</span></td>
+      <td><span id="controller_parameters">Default</span></td>
+    </tr>
+
+    
+  </table>
+</fieldset>
+
+<label for="toggle_driver_label">Enable driver </label> 
+<label class="switch" id="toggle_driver_label">
+  <!-- <label for="toggle_driver">Enable driver</label> -->
+  <input type="checkbox", id="toggle_driver", name="toggle_driver", value="enable">
+  <span class="slider round"></span>
+</label>
+
+{% endblock %}
+
+{% block grid_right %} 
+<h2>heading</h2>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
+{% endblock %}
+
+{% block script %}
+<script>
+  function enableDriver(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      url: {{ url_for('toggle_driver') | tojson }},
+      data: $(this).serialize()
+    }).done(enableDriverShow);
+  }
+
+  function enableDriverShow(data) {
+    $('#toggle_driver').prop("checked", data.result)
+  }
+
+  $('#toggle_driver').change(enableDriver);
+</script>
+
+{% endblock %}

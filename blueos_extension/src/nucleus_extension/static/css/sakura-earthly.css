@@ -4,8 +4,9 @@
  * Project: https://github.com/oxalorg/sakura
  */
 /* Body */
+/*
 html {
-    font-size: 62.5%;
+    font-size: 50%;
     font-family: serif; }
   
   body {
@@ -23,6 +24,9 @@ html {
   @media (max-width: 382px) {
     body {
       font-size: 1.35rem; } }
+*/
+
+/*
   h1, h2, h3, h4, h5, h6 {
     line-height: 1.1;
     font-family: Verdana, Geneva, sans-serif;
@@ -35,7 +39,7 @@ html {
     -moz-hyphens: auto;
     -webkit-hyphens: auto;
     hyphens: auto; }
-  
+
   h1 {
     font-size: 2.35em; }
   
@@ -53,7 +57,9 @@ html {
   
   h6 {
     font-size: 1em; }
-  
+*/ 
+
+/*
   small, sub, sup {
     font-size: 75%; }
   
@@ -66,23 +72,31 @@ html {
     a:hover {
       color: #5e5e5e;
       border-bottom: 2px solid #4a4a4a; }
-  
+  */
+
+  /*
   ul {
     padding-left: 1.4em; }
   
   li {
     margin-bottom: 0.4em; }
-  
+  */
+
+  /*
   blockquote {
     font-style: italic;
     margin-left: 1.5em;
     padding-left: 1em;
     border-left: 3px solid #338618; }
-  
+  */
+
+  /*
   img {
     max-width: 100%; }
-  
+  */
+
   /* Pre and Code */
+  /*
   pre {
     background-color: #C7E3BE;
     display: block;
@@ -99,8 +113,9 @@ html {
     padding: 0;
     background-color: transparent;
     white-space: pre; }
-  
+  */
   /* Tables */
+  /*
   table {
     text-align: justify;
     width: 100%;
@@ -109,13 +124,16 @@ html {
   td, th {
     padding: 0.5em;
     border-bottom: 1px solid #C7E3BE; }
-  
+  */
   /* Buttons, forms and input */
+  /*
   input, textarea {
     border: 1px solid #4a4a4a; }
     input:focus, textarea:focus {
       border: 1px solid #338618; }
-  
+  */
+
+  /*
   textarea {
     width: 100%; }
   
@@ -143,7 +161,6 @@ html {
   textarea, select, input[type] {
     color: #4a4a4a;
     padding: 6px 10px;
-    /* The 6px vertically centers text on FF, ignored by Webkit */
     margin-bottom: 10px;
     background-color: #C7E3BE;
     border: 1px solid #C7E3BE;
@@ -153,8 +170,15 @@ html {
     textarea:focus, select:focus, input[type]:focus {
       border: 1px solid #338618;
       outline: 0; }
-  
+  */
+
+  /*
   label, legend, fieldset {
     display: block;
     margin-bottom: .5rem;
     font-weight: 600; }
+  */
+  
+  
+  
+  

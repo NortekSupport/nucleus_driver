@@ -1,28 +1,256 @@
+html {
+  font-size: 100%;
+  font-family: Arial, Helvetica, sans-serif; }
 
+body {
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 120em;
+  margin: 0;  /* auto */
+  color: #000000;
+  background-color: #fbf9f7;
+  padding: 0px;  /* 13px */
+}  
 
-ul.mavlink_parameters {
-    margin: 0 auto;
-    display: block;
-    list-style-type: none;
+header {
+  font-size: 1.32rem;
+  font-weight: 500;
+  background-color: #ffffff;
+  padding: 20px 0px;
+  text-align: center;
+  /* box-shadow: 0 0 3px #000000; */  /* Nortek website does not use shadow */
+  overflow-x: hidden
 }
 
-ul.mavlink_parameters > li {
-    column-count: 2
-}
 
-ul.mavlink_parameters > li > label {
-    flex: 1 0 220px;
-    color: green;
-}
-
-ul.mavlink_parameters > li > label + input {
-    flex: 1 0 220px;
-    color: rebeccapurple;
-    align-items: flex-outer;
+header ul {
+  padding-top: 20px;
 }
 
 
+header li {
+  display: inline;
+  padding-left: 8px;
+}
 
+header li a {
+  color: #002d73;
+  text-decoration: none;
+  padding: 5px;
+  transition: .3s ease;
+}
+
+header li a:hover {
+  color: #2374cc;
+
+}
+
+header ul #contact a
+{
+  color: #fff;
+  background-color: #2374cc;
+  border-radius: 30px;
+  float: right;
+  position: relative;
+  top: -15px;
+  transition: .3s ease;
+}
+
+header ul #contact a:hover
+{
+  background-color: #002d73;
+}
+
+header li img {
+  width: 107px;  /* true width of nortek_logo_small.png */
+  float: left;
+  margin-top: -23px;
+}
+
+.active {
+  color: #2374cc;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 500;
+  color: #002d73;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  -ms-word-break: break-all;
+  word-break: break-word;
+  -ms-hyphens: auto;
+  -moz-hyphens: auto;
+  -webkit-hyphens: auto;
+  hyphens: auto; }
+
+h1 {
+  font-size: 2.35em;
+  font-weight: 700;
+  text-align: center;
+}
+
+h2 {
+  line-height: 0.5;
+  font-size: 2em; 
+}
+
+h3 {
+  font-size: 1.75em; }
+
+h4 {
+  font-size: 1.5em; }
+
+h5 {
+  font-size: 1.25em; }
+
+h6 {
+  font-size: 1em; }
+
+hr {
+  border-color: #002d73; }
+
+p {
+  font-size: 1.4rem;
+}
+
+
+/* Layout */
+.grid_parent {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+}
+
+.grid_left {
+  display: inline-block;
+  /*background-color: red; */
+  align-items: top;
+  text-align:center;
+}
+
+.grid_right {
+  display: inline-block;
+  /* background-color: green; */
+  align-items: top;
+}
+
+/* Buttons, forms and input */
+#parameters input[type] {
+  color: #002d73;
+  padding: 2px 5px;
+  margin-bottom: 5px;
+  background-color: #ffffff;
+  border: 1.5px solid #002d73;
+  border-radius: 2px;
+  box-shadow: none;
+  box-sizing: border-box; }
+#parameters textarea:focus, #parameters select:focus, #parameters input[type]:focus {
+  border: 1.5px solid #2374cc;
+  outline: 0; }
+
+#parameters input[type="submit"] {
+  display: inline-block;
+  padding: 5px 10px;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  background-color: #ffffff;
+  color: #002d73;
+  border-radius: 3px;
+  border: 1.5px solid #002d73;
+  cursor: pointer;
+  box-sizing: border-box; }
+#parameters input[type="submit"][disabled] {
+  cursor: default;
+  opacity: .5; }
+#parameters input[type="submit"]:hover {
+  background-color: #002d73;
+  border-color: #002d73;
+  color: #ffffff;
+  outline: 0; }
+
+/* Parameter block */
+/*
+fieldset {
+  width: 100px;
+}
+
+label, legend, fieldset {
+  margin-bottom: .5rem;
+  font-weight: 600;
+}
+*/
+
+
+#parameters, #status_table {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #002d73;
+  font-weight: 300;
+  font-size: 1rem;
+}
+
+#parameters label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+#parameters p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+fieldset {
+  display: inline-block;
+  background-color: #ffffff;
+  border-radius: 5px;
+  border-color: #899ab9;
+}
+
+#parameters td, #parameters th {
+  padding: 0px 2px;
+}
+
+#status_table td {
+  text-align: right;
+}
+
+#status_table td + td {
+  text-align: left;
+  color: green;
+}
+
+
+#status_table td, #status_table th {
+  padding: 0px 2px;
+}
+
+#parameters table + input[type="submit"] {
+  margin-left: auto;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+#parameters th {
+  color: #899ab9;
+}
+
+#parameters td + td {
+  padding-left: 10px;
+}
+
+#parameters td > input[type] {
+  width: 80px;
+}
+/* doesnt work */
+
+
+
+
+
+/*
 .flex-outer li, .flex-inner {
     display: flex;
     flex-wrap: wrap;
@@ -37,9 +265,9 @@ ul.mavlink_parameters > li > label + input {
     flex: 1 0 220px;
 }
 
+*/
 
-
-/* This is for the top banner*/
+/*
 ul.top_banner {
     margin: 0;
     padding: 0;
@@ -47,14 +275,77 @@ ul.top_banner {
     list-style-type: none;
 }
 
-/* This is for the top banner*/
 li.top_banner > * {
     padding: 1em;
 }
 
-/* This is for the top banner*/
 li.active > a { 
     color: #5e5e5e;
-    border-bottom:
-    2px solid #4a4a4a;
+    border-bottom: 2px solid #4a4a4a;
 }
+*/
+
+/* Slider checkbox start*/
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+  
+  /* Hide default HTML checkbox */
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  /* The slider */
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  
+  input:checked + .slider {
+    background-color: #2196F3;
+  }
+  
+  input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+  }
+  
+  input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+  }
+  
+  /* Rounded sliders */
+  .slider.round {
+    border-radius: 34px;
+  }
+  
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+/* Slider checkbox end */

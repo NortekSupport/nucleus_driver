@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block heading %}
+<h1>PID parameters</h1>
+{% endblock %}
+
+{% block grid_left %} 
+
+<form id="write_pid_parameters">
+  <fieldset id="parameters">
+    <p>PID parameters</p>
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td><label for="PSC_POSXY_P">PSC_POSXY_P </label></td>
+        <td><input type="text" id="PSC_POSXY_P" name="PSC_POSXY_P"></td>
+      </tr>
+      <tr>
+        <td><label for="PSC_POSZ_P">PSC_POSZ_P </label></td>
+        <td><input type="text" id="PSC_POSZ_P" name="PSC_POSZ_P"></td>
+      </tr>
+      <tr>
+        <td><label for="PSC_VELXY_P">PSC_VELXY_P </label></td>
+        <td><input type="text" id="PSC_VELXY_P" name="PSC_VELXY_P"></td>
+      </tr>
+      <tr>
+        <td><label for="PSC_VELXY_I">PSC_VELXY_I </label> </td>
+        <td><input type="text" id="PSC_VELXY_I" name="PSC_VELXY_I"></td>
+      </tr>
+      <tr>
+        <td><label for="PSC_VELXY_D">PSC_VELXY_D </label></td>
+        <td><input type="text" id="PSC_VELXY_D" name="PSC_VELXY_D"></td>
+      </tr>
+      <tr>
+        <td><label for="PSC_VELZ_P">PSC_VELZ_P </label></td>
+        <td><input type="text" id="PSC_VELZ_P" name="PSC_VELZ_P"></td>
+      </tr>
+    </table>
+    <input type="submit" value="Write PID parameters">
+    <span>= <span id="result_pid"></span></span>
+  </fieldset>
+</form>
+
+{% endblock %}
+
+{% block grid_right %} 
+<h2>PID parametirization</h2>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
+{% endblock %}
+
+
+
+{% block script %}
+<script>
+  function addPidParameters(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      url: {{ url_for('write_pid_parameters')|tojson }},
+      data: $(this).serialize()
+    }).done(addPidShow);
+  }
+
+  function addPidShow(data) {
+    $('#result_pid').text(data.result);
+  }
+
+  $('#write_pid_parameters').on('submit', addPidParameters);
+</script>
+
+{% endblock %}

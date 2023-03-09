@@ -7,121 +7,102 @@
 {% endblock %}
 
 {% block content %} 
-<!--
+
+<h1>Nucleus driver</h1>
+
+<span>Status = <span id="status"></span></span>
+
+<label for="toggle_driver_label">Enable driver </label> 
+<label class="switch" id="toggle_driver_label">
+  <!-- <label for="toggle_driver">Enable driver</label> -->
+  <input type="checkbox", id="toggle_driver", name="toggle_driver", value="enable">
+  <span class="slider round"></span>
+</label>
+
 <form id="write_pid_parameters">
-    <label for="y">y </label> 
-    <input type="text" id="y" name="y">
-    <label for="z">z </label> 
-    <input type="text" id="z" name="z">
-    <label>x <input name="x"></label>
-    <label>d <input name="a"></label>
-    <label>b <input name="b"></label>
+  <fieldset id="parameters">
+    <legend>Controller parameters</legend>
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td><label for="PSC_POSXY_P">PSC_POSXY_P </label></td>
+        <td><input type="text" id="PSC_POSXY_P" name="PSC_POSXY_P"></td>
+      </tr>
+      <tr>
+        <td><label for="PSC_POSZ_P">PSC_POSZ_P </label></td>
+        <td><input type="text" id="PSC_POSZ_P" name="PSC_POSZ_P"></td>
+      </tr>
+      <tr>
+        <td><label for="PSC_VELXY_P">PSC_VELXY_P </label></td>
+        <td><input type="text" id="PSC_VELXY_P" name="PSC_VELXY_P"></td>
+      </tr>
+      <tr>
+        <td><label for="PSC_VELXY_I">PSC_VELXY_I </label> </td>
+        <td><input type="text" id="PSC_VELXY_I" name="PSC_VELXY_I"></td>
+      </tr>
+      <tr>
+        <td><label for="PSC_VELXY_D">PSC_VELXY_D </label></td>
+        <td><input type="text" id="PSC_VELXY_D" name="PSC_VELXY_D"></td>
+      </tr>
+      <tr>
+        <td><label for="PSC_VELZ_P">PSC_VELZ_P </label></td>
+        <td><input type="text" id="PSC_VELZ_P" name="PSC_VELZ_P"></td>
+      </tr>
+    </table>
     <input type="submit" value="Write PID parameters">
-</form>
-<span>= <span id="result"></span></span>
--->
-
-<!--
-<style>
-  ul { display: block}
-  .flex-outer li,
-  .flex-inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .flex-outer > li > label,
-  .flex-outer li p {
-    flex: 1 0 120px;
-    max-width: 220px;
-  }
-  .flex-outer > li > label + *,
-  .flex-inner {
-    flex: 1 0 220px;
-  }
-</style>
--->
-
-<form id="write_pid_parameters">
-  <fieldset>
-    <legend>PID parameters</legend>
-    <ul class="mavlink_parameters">
-      <li>
-        <label for="PSC_POSXY_P">PSC_POSXY_P </label> 
-        <input type="text" id="PSC_POSXY_P" name="PSC_POSXY_P">
-      </li>
-      <li>
-        <label for="PSC_POSZ_P">PSC_POSZ_P </label> 
-        <input type="text" id="PSC_POSZ_P" name="PSC_POSZ_P">
-      </li>
-      <li>
-        <label for="PSC_VELXY_P">PSC_VELXY_P </label> 
-        <input type="text" id="PSC_VELXY_P" name="PSC_VELXY_P">
-      </li>
-      <li>
-        <label for="PSC_VELXY_I">PSC_VELXY_I </label> 
-        <input type="text" id="PSC_VELXY_I" name="PSC_VELXY_I">
-      </li>
-      <li>
-        <label for="PSC_VELXY_D">PSC_VELXY_D </label> 
-        <input type="text" id="PSC_VELXY_D" name="PSC_VELXY_D">
-      </li>
-      <li>
-        <label for="PSC_VELZ_P">PSC_VELZ_P </label> 
-        <input type="text" id="PSC_VELZ_P" name="PSC_VELZ_P">
-      </li>
-      <li>
-        <input type="submit" value="Write PID parameters">
-      </li>
-    </ul>
     <span>= <span id="result_pid"></span></span>
   </fieldset>
 </form>
 
 <form id="write_controller_parameters">
-  <fieldset>
-    <legend>PID parameters</legend>
-    <ul class="mavlink_parameters">
-      <li>
-        <label for="AHRS_EKF_TYPE">AHRS_EKF_TYPE </label> 
-        <input type="text" id="AHRS_EKF_TYPE" name="AHRS_EKF_TYPE">
-      </li>
-      <li>
-        <label for="EK2_ENABLE">EK2_ENABLE </label> 
-        <input type="text" id="EK2_ENABLE" name="EK2_ENABLE">
-      </li>
-      <li>
-        <label for="EK3_ENABLE">EK3_ENABLE </label> 
-        <input type="text" id="EK3_ENABLE" name="EK3_ENABLE">
-      </li>
-      <li>
-        <label for="VISO_TYPE">VISO_TYPE </label> 
-        <input type="text" id="VISO_TYPE" name="VISO_TYPE">
-      </li>
-      <li>
-        <label for="GPS_TYPE">GPS_TYPE </label> 
-        <input type="text" id="GPS_TYPE" name="GPS_TYPE">
-      </li>
-      <li>
-        <label for="EK3_SRC1_POSXY">EK3_SRC1_POSXY </label> 
-        <input type="text" id="EK3_SRC1_POSXY" name="EK3_SRC1_POSXY">
-      </li>
-      <li>
-        <label for="EK3_SRC1_VELXY">EK3_SRC1_VELXY </label> 
-        <input type="text" id="EK3_SRC1_VELXY" name="EK3_SRC1_VELXY">
-      </li>
-      <li>
-        <label for="EK3_SRC1_POSZ">EK3_SRC1_POSZ </label> 
-        <input type="text" id="EK3_SRC1_POSZ" name="EK3_SRC1_POSZ">
-      </li>
-      <li>
-        <label for="ESERIAL0_PROTOCOL">SERIAL0_PROTOCOL </label> 
-        <input type="text" id="SERIAL0_PROTOCOL" name="SERIAL0_PROTOCOL">
-      </li>
-      <li>
-        <input type="submit" value="Write PID parameters">
-      </li>
-    </ul>
+  <fieldset id="parameters">
+    <legend>Controller parameters</legend>
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td><label for="AHRS_EKF_TYPE">AHRS_EKF_TYPE </label></td>
+        <td><input type="text" id="AHRS_EKF_TYPE" name="AHRS_EKF_TYPE"></td>
+      </tr>
+      <tr>
+        <td><label for="EK2_ENABLE">EK2_ENABLE </label></td>
+        <td><input type="text" id="EK2_ENABLE" name="EK2_ENABLE"></td>
+      </tr>
+      <tr>
+        <td><label for="EK3_ENABLE">EK3_ENABLE </label></td>
+        <td><input type="text" id="EK3_ENABLE" name="EK3_ENABLE"></td>
+      </tr>
+      <tr>
+        <td><label for="VISO_TYPE">VISO_TYPE </label></td>
+        <td><input type="text" id="VISO_TYPE" name="VISO_TYPE"></td>
+      </tr>
+      <tr>
+        <td><label for="GPS_TYPE">GPS_TYPE </label></td>
+        <td><input type="text" id="GPS_TYPE" name="GPS_TYPE"></td>
+      </tr>
+      <tr>
+        <td><label for="EK3_SRC1_POSXY">EK3_SRC1_POSXY </label></td>
+        <td><input type="text" id="EK3_SRC1_POSXY" name="EK3_SRC1_POSXY"></td>
+      </tr>
+      <tr>
+        <td><label for="EK3_SRC1_VELXY">EK3_SRC1_VELXY </label></td>
+        <td><input type="text" id="EK3_SRC1_VELXY" name="EK3_SRC1_VELXY"></td>
+      </tr>
+      <tr>
+        <td><label for="EK3_SRC1_POSZ">EK3_SRC1_POSZ </label></td>
+        <td><input type="text" id="EK3_SRC1_POSZ" name="EK3_SRC1_POSZ"></td>
+      </tr>
+      <tr>
+        <td><label for="ESERIAL0_PROTOCOL">SERIAL0_PROTOCOL </label></td>
+        <td><input type="text" id="SERIAL0_PROTOCOL" name="SERIAL0_PROTOCOL"></td>
+      </tr>
+    </table>
+    <input type="submit" value="Write controller parameters">
     <span>= <span id="result_controller"></span></span>
   </fieldset>
 </form>
@@ -161,5 +142,48 @@
   }
 
   $('#write_controller_parameters').on('submit', addControllerParameters);
+</script>
+
+<script>
+  function enableDriver(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      url: {{ url_for('toggle_driver') | tojson }},
+      data: $(this).serialize()
+    }).done(enableDriverShow);
+  }
+
+  function enableDriverShow(data) {
+    $('#toggle_driver').prop("checked", data.result)
+  }
+
+  $('#toggle_driver').change(enableDriver);
+</script>
+
+<script>
+
+  function getStatus() {
+    $.ajax({
+      method: 'GET',
+      url: {{ url_for('get_status') | tojson }},
+      data: $(this).serialize()
+    }).done(updateStatus);
+  } 
+  /*
+  $(function() {
+    setInterval(function() {
+      $.ajax({
+        url: {{ url_for('get_status') }}
+      }).done(updateStatus);
+        }, 10000);
+    });
+  */
+
+  function updateStatus(data) {
+    $('#status').text(data.status);
+  }
+
+  $(function() {setInterval(getStatus, 1000)})
 </script>
 {% endblock %}

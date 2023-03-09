@@ -1,38 +1,50 @@
-<!doctype html>
-<title>JavaScript Example</title>
-<!-- <link rel="stylesheet" href="https://unpkg.com/sakura.css@1.0.0/css/normalize.css"> -->
-<!-- <link rel="stylesheet" href="https://unpkg.com/sakura.css@1.0.0/css/sakura-earthly.css"> -->
-<link rel="stylesheet" href="../static/css/normalize.css">
-<link rel="stylesheet" href="../static/css/sakura-earthly.css">
-<link rel="stylesheet" href="../static/css/style.css">
-<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<!DOCTYPE html>
+<html lang-"en">
+<head>
+  <title>Nucleus driver</title>
+  <link rel="stylesheet" href="../static/css/normalize.css">
+  <!-- <link rel="stylesheet" href="../static/css/sakura-earthly.css"> -->
+  <link rel="stylesheet" href="../static/css/style.css">
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+</head>
+<body>
 
-<!--
-<style>
-  
-  
-  
-  label > input { width: 3em; }
-  form > * { padding-right: 1em; }
-  #result { font-weight: bold; }
-</style>
--->
+  <header>
+    <ul>
+      <li><img src="../static/images/nortek_logo_small.png" alt="nortek_logo"></li>
+      <li><a href="{{ url_for('index', js='home') }}" class="{% if js == 'home' %}active{% endif %}">Home</a></li>
+      <li><a href="{{ url_for('index', js='pid_parameters') }}" class="{% if js == 'pid_parameters' %}active{% endif %}">PID parameters</a></li>
+      <li><a href="{{ url_for('index', js='controller_parameters') }}" class="{% if js == 'controller_parameters' %}active{% endif %}">Controller parameters</a></li>
+      <!-- <li id="contact"><a href="#">Contact us</a></li> -->
+    </ul>
+  </header>
 
-<!-- li > * { padding: 1em; } -->
-<!-- ul { margin: 0; padding: 0; display: flex; list-style-type: none; }-->
-<!-- form { display: flex; } THIS WAS INSIDE <style> above -->
 
-<ul class="top_banner">
-  <li><span>Type:</span>
-  <li class="{% if js == 'plain' %}active{% endif %}">
-    <a href="{{ url_for('index', js='plain') }}">Plain</a>
-  <li class="{% if js == 'fetch' %}active{% endif %}">
-    <a href="{{ url_for('index', js='fetch') }}">Fetch</a>
-  <li class="{% if js == 'jquery' %}active{% endif %}">
-    <a href="{{ url_for('index', js='jquery') }}">jQuery</a>
-</ul>
-<hr>
-<p>{% block intro %}{% endblock %}</p>
-<hr>
-{% block content %}{% endblock %}
-{% block script %}{% endblock %}
+  {% block heading %}{% endblock %}
+  <div class="grid_parent">
+    <div class="grid_left">{% block grid_left %}{% endblock %}</div>
+    <div class="grid_right">{% block grid_right %}{% endblock %}</div>
+  </div>
+  <!-- {% block content %}{% endblock %} -->
+  {% block script %}{% endblock %}
+
+  <script>
+    function getStatus() {
+      $.ajax({
+        method: 'GET',
+        url: {{ url_for('get_status') | tojson }},
+        data: $(this).serialize()
+      }).done(updateStatus);
+    }
+  
+    function updateStatus(data) {
+      $('#cable_guy').text(data.cable_guy);
+      $('#nucleus').text(data.nucleus);
+      $('#heart_beat').text(data.heart_beat);
+      $('#controller_parameters').text(data.controller_parameters);
+    }
+  
+    $(function() {setInterval(getStatus, 1000)})
+  </script>
+</body>
+</html>

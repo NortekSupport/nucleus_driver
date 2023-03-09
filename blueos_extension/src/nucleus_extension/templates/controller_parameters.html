@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block heading %}
+<h1>Controller parameters</h1>
+{% endblock %}
+
+{% block grid_left %} 
+
+<form id="write_controller_parameters">
+  <fieldset id="parameters">
+    <p>Controller parameters</p>
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td><label for="AHRS_EKF_TYPE">AHRS_EKF_TYPE </label></td>
+        <td><input type="text" id="AHRS_EKF_TYPE" name="AHRS_EKF_TYPE"></td>
+      </tr>
+      <tr>
+        <td><label for="EK2_ENABLE">EK2_ENABLE </label></td>
+        <td><input type="text" id="EK2_ENABLE" name="EK2_ENABLE"></td>
+      </tr>
+      <tr>
+        <td><label for="EK3_ENABLE">EK3_ENABLE </label></td>
+        <td><input type="text" id="EK3_ENABLE" name="EK3_ENABLE"></td>
+      </tr>
+      <tr>
+        <td><label for="VISO_TYPE">VISO_TYPE </label></td>
+        <td><input type="text" id="VISO_TYPE" name="VISO_TYPE"></td>
+      </tr>
+      <tr>
+        <td><label for="GPS_TYPE">GPS_TYPE </label></td>
+        <td><input type="text" id="GPS_TYPE" name="GPS_TYPE"></td>
+      </tr>
+      <tr>
+        <td><label for="EK3_SRC1_POSXY">EK3_SRC1_POSXY </label></td>
+        <td><input type="text" id="EK3_SRC1_POSXY" name="EK3_SRC1_POSXY"></td>
+      </tr>
+      <tr>
+        <td><label for="EK3_SRC1_VELXY">EK3_SRC1_VELXY </label></td>
+        <td><input type="text" id="EK3_SRC1_VELXY" name="EK3_SRC1_VELXY"></td>
+      </tr>
+      <tr>
+        <td><label for="EK3_SRC1_POSZ">EK3_SRC1_POSZ </label></td>
+        <td><input type="text" id="EK3_SRC1_POSZ" name="EK3_SRC1_POSZ"></td>
+      </tr>
+      <tr>
+        <td><label for="ESERIAL0_PROTOCOL">SERIAL0_PROTOCOL </label></td>
+        <td><input type="text" id="SERIAL0_PROTOCOL" name="SERIAL0_PROTOCOL"></td>
+      </tr>
+    </table>
+    <input type="submit" value="Write controller parameters">
+    <span>= <span id="result_controller"></span></span>
+  </fieldset>
+</form>
+
+{% endblock %}
+
+{% block grid_right %} 
+<h2>Controller parameters</h2>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
+{% endblock %}
+
+{% block script %}
+
+<script>
+  function addControllerParameters(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      url: {{ url_for('write_controller_parameters')|tojson }},
+      data: $(this).serialize()
+    }).done(addControllerShow);
+  }
+
+  function addControllerShow(data) {
+    $('#result_controller').text(data.result);
+  }
+
+  $('#write_controller_parameters').on('submit', addControllerParameters);
+</script>
+
+{% endblock %}
