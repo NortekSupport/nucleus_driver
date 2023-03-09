@@ -63,6 +63,15 @@ class RovLink(Thread):
             'controller_parameters': 'Not ready'
         }
 
+        self._cable_guy = False
+        self._nucleus_available = False
+        self._nucleus_connected = False
+        self._dvl_enabled = False
+        self._heartbeat = False
+        self._config = False
+
+        self._nucleus_running = False
+
         self.config_parameters = {
             'AHRS_EKF_TYPE': None,
             'EK2_ENABLE': None,
@@ -345,10 +354,12 @@ class RovLink(Thread):
 
         return parameter
 
+    '''Legacy
     def load_settings(self):
 
         self.hostname = HOSTNAME
-
+    '''
+    
     def wait_for_cableguy(self):
         '''
         def get_cableguy_status():
@@ -392,13 +403,18 @@ class RovLink(Thread):
         response = session.get('http://127.0.0.1/cable-guy/v1.0/ethernet')
 
         if response.status_code == 200 and response.json()[0]['info']['connected'] is True:
-            logging.info(f'{self.timestamp()} Cable-guy online')
+            logging.info(f'{self.timestamp()} Cable guy online')
             self.status['cable_guy'] = 'Online'
-            return True
+
+            self._cable_guy = True
+
         else:
             logging.warning(f'{self.timestamp()} Failed to discover!')
             self.status['cable_guy'] = 'Failed'
-            return False
+
+            self._cable_guy = False
+
+        return self._cable_guy
 
     def discover_nucleus(self):
 
@@ -414,21 +430,31 @@ class RovLink(Thread):
         else:
             logging.warning(f'{self.timestamp()} Failed to discover Nucleus on the network')
             self.status['nucleus'] = 'Failed to discover!'
-            return False
+            
+            self._nucleus_available = False
+
+            return self._nucleus_available
 
         logging.info(f'{self.timestamp()} Discovered Nucleus on network')
         self.status['nucleus'] = 'Online'
-        return True
+
+        self._nucleus_available = True
+
+        return self._nucleus_available
 
     def connect_nucleus(self):
 
         self.nucleus_driver.set_tcp_configuration(host=self.hostname)
+        
         self.status['nucleus'] = 'Connecting...'
 
         if not self.nucleus_driver.connect(connection_type='tcp'):
             logging.warning('Failed to connect to Nucleus')
             self.status['nucleus'] = 'Connecting Failed!'
-            return False
+
+            self._nucleus_connected = False
+
+            return self._nucleus_connected
 
         self.nucleus_id = self.nucleus_driver.connection.nucleus_id
         self.nucleus_firmware = self.nucleus_driver.connection.firmware_version
@@ -439,7 +465,9 @@ class RovLink(Thread):
 
         self.status['nucleus'] = 'Connected'
 
-        return True
+        self._nucleus_connected = True
+
+        return self._nucleus_connected
 
     def setup_nucleus(self):
 
@@ -465,6 +493,11 @@ class RovLink(Thread):
         reply = self.nucleus_driver.commands.set_bt(wt="ON", ds="ON")  # TODO: wt="OFF"
         if b'OK\r\n' not in reply:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETBT,WT="OFF",DS="ON": {reply}')
+
+            self._dvl_enabled = False
+
+        else:
+            self._dvl_enabled = True
 
         reply = self.nucleus_driver.commands.set_alti(ds="ON")  # TODO: OFF
         if b'OK\r\n' not in reply:
@@ -517,11 +550,17 @@ class RovLink(Thread):
         else:
             logging.warning(f'{self.timestamp()} Failed to detect heartbeat')
             self.status['heart_beat'] = 'Failed to detect!'
-            return False
+
+            self._heartbeat = False
+
+            return self._heartbeat
 
         logging.info(f'{self.timestamp()} Heartbeat detected')
         self.status['heart_beat'] = 'Detected'
-        return True
+
+        self._heartbeat = True
+
+        return self._heartbeat
     
     ''' Legacy
     def handle_config_parameters(self):
@@ -549,7 +588,7 @@ class RovLink(Thread):
 
     def read_config_parameters(self):
 
-        correct_value = True
+        correct_values = True
         
         self.status['controller_parameters'] = 'Reading parameters...'
 
@@ -560,18 +599,19 @@ class RovLink(Thread):
             if response.status_code == 200:
                 self.config_parameters[parameter] = response.json()['message']['param_value']
 
-            if response.status_code == 200 and self.CONFIG_PARAMETERS[parameter]['value'] - 0.1 <= response.json()['message']['param_value'] <= self.CONFIG_PARAMETERS[parameter]['value'] + 0.1:
-                continue
+            if not response.status_code == 200 or self.CONFIG_PARAMETERS[parameter]['value'] - 0.1 <= response.json()['message']['param_value'] <= self.CONFIG_PARAMETERS[parameter]['value'] + 0.1:
+                correct_values = False
 
-            correct_value = False
-
-        if correct_value:
+        if correct_values:
              self.status['controller_parameters'] = 'Ready'
         else:
              self.status['controller_parameters'] = 'Incorrect'
 
-        return correct_value
+        self._config = correct_values
 
+        return correct_values
+
+    ''' Legacy
     def set_pid_parameters(self):
 
         for parameter in self.PID_PARAMETERS.keys():
@@ -582,16 +622,21 @@ class RovLink(Thread):
                 logging.warning(f'{self.timestamp()} {parameter} set to {self.PID_PARAMETERS[parameter]["value"]}')
             else:
                 logging.warning(f'{self.timestamp()} Failed to set {parameter} to {self.PID_PARAMETERS[parameter]["value"]}')
+    '''
 
     def start_nucleus(self):
 
         if b'OK\r\n' not in self.nucleus_driver.start_measurement():
             logging.warning(f'{self.timestamp()} Failed to start Nucleus')
+        
+        else:
+            self._nucleus_running = True
 
     def stop_nucleus(self):
 
         if b'OK\r\n' in self.nucleus_driver.stop():
             logging.warning(f'{self.timestamp()} Nucleus was already running. Nucleus is now stopped')
+            self._nucleus_running = False
 
     def send_vision_position_delta(self, position_delta, angle_delta, confidence, dt):
 
@@ -629,39 +674,69 @@ class RovLink(Thread):
 
         self.load_settings()
 
-        if not self.wait_for_cableguy():
+        self.wait_for_cableguy()
+
+        if self._cable_guy:
+            self.discover_nucleus()
+        
+        if self._nucleus_available:
+            self.connect_nucleus()
+
+        if self._nucleus_connected:
+            self.stop_nucleus()
+            self.setup_nucleus()
+
+        if self._cable_guy:
+            self.wait_for_heartbeat()
+
+        if self._heartbeat:
             return
 
-        if not self.discover_nucleus():
-            return
+        if self._nucleus_connected:
+            self.set_pid_parameters()
 
-        if not self.connect_nucleus():
-            return
+        time.sleep(1)
 
-        self.stop_nucleus()
-        self.setup_nucleus()
-
-        if not self.wait_for_heartbeat():
-            return
-
-        ''' legacy
-        if self.handle_config_parameters():
-            logging.warning('Parameters had to be set to enable Nucleus integration into ROV. Power cycle the ROV for parameters to take effect!')
-            return
-        '''
-
-        if self.read_config_parameters():
-            logging.warning('Controller parameters are incorrect. Set the correct ones and restart ROV!')
-            return
-
-        self.set_pid_parameters()
-
-        time.sleep(1)  # TODO
         self.start_nucleus()
 
         logging.info(f"{self.timestamp()} Nucleus driver running")
 
         while self.thread_running:
+
+            if self._cable_guy and self._nucleus_available and self._nucleus_connected and self._dvl_enabled and self._heartbeat and self._config:
+
+                if not self._cable_guy:
+                    logging.warning(f"{self.timestamp()} Cable guy not available")
+
+                if not self._nucleus_available:
+                    logging.warning(f"{self.timestamp()} Nucleus is not available on the network")
+
+                if not self._nucleus_connected:
+                    logging.warning(f"{self.timestamp()} Nucleus is not connected")
+
+                if not self._dvl_enabled:
+                    logging.warning(f"{self.timestamp()} DVL is not enabled on Nucleus")
+
+                if not self._heartbeat:
+                    logging.warning(f"{self.timestamp()} Can't detect heartbeat")
+
+                if not self._config:
+                    logging.warning(f"{self.timestamp()} ROV has incorrect configuration for velocity data input")
+
+                time.sleep(1)
+
+                continue
+            
+            if not self._nucleus_running:
+                qsize = self.nucleus_driver._parser.packet_queue.qsize
+
+                if qsize == 0:
+                    self.start_nucleus()
+
+                else:
+                    time.sleep(1)
+                    if qsize != self.nucleus_driver._parser.packet_queue.qsize:
+                        self.start_nucleus()
 
             packet = self.nucleus_driver.read_packet()
 

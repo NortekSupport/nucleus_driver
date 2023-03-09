@@ -170,18 +170,6 @@ p {
   color: #ffffff;
   outline: 0; }
 
-/* Parameter block */
-/*
-fieldset {
-  width: 100px;
-}
-
-label, legend, fieldset {
-  margin-bottom: .5rem;
-  font-weight: 600;
-}
-*/
-
 
 #parameters, #status_table {
   font-family: Arial, Helvetica, sans-serif;
@@ -207,6 +195,11 @@ fieldset {
   background-color: #ffffff;
   border-radius: 5px;
   border-color: #899ab9;
+  margin-bottom: 2rem;
+}
+
+fieldset#status_table, fieldset#enable_driver {
+  width: 15rem;
 }
 
 #parameters td, #parameters th {
@@ -244,53 +237,15 @@ fieldset {
 #parameters td > input[type] {
   width: 80px;
 }
-/* doesnt work */
 
 
-
-
-
-/*
-.flex-outer li, .flex-inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    color: blue
-}
-.flex-outer > li > label, .flex-outer li p {
-    flex: 1 0 120px;
-    max-width: 220px;
-}
-.flex-outer > li > label + *, .flex-inner {
-    flex: 1 0 220px;
-}
-
-*/
-
-/*
-ul.top_banner {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    list-style-type: none;
-}
-
-li.top_banner > * {
-    padding: 1em;
-}
-
-li.active > a { 
-    color: #5e5e5e;
-    border-bottom: 2px solid #4a4a4a;
-}
-*/
 
 /* Slider checkbox start*/
 .switch {
     position: relative;
     display: inline-block;
-    width: 60px;
-    height: 34px;
+    width: 56px;
+    height: 30px;
   }
   
   /* Hide default HTML checkbox */
@@ -316,8 +271,8 @@ li.active > a {
   .slider:before {
     position: absolute;
     content: "";
-    height: 26px;
-    width: 26px;
+    height: 22px;
+    width: 22px;
     left: 4px;
     bottom: 4px;
     background-color: white;
@@ -326,11 +281,11 @@ li.active > a {
   }
   
   input:checked + .slider {
-    background-color: #2196F3;
+    background-color: #002d73;
   }
   
   input:focus + .slider {
-    box-shadow: 0 0 1px #2196F3;
+    box-shadow: 0 0 1px #002d73;
   }
   
   input:checked + .slider:before {
@@ -341,11 +296,11 @@ li.active > a {
   
   /* Rounded sliders */
   .slider.round {
-    border-radius: 34px;
+    border-radius: 4px;
   }
   
   .slider.round:before {
-    border-radius: 50%;
+    border-radius: 10%;
   }
 
 /* Slider checkbox end */

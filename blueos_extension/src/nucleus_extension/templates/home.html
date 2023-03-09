@@ -17,6 +17,7 @@
 <br>
 -->
 
+<div>
 <fieldset id="status_table">
   <p>Status</p>
   <table>
@@ -40,13 +41,21 @@
     
   </table>
 </fieldset>
+</div>
 
-<label for="toggle_driver_label">Enable driver </label> 
-<label class="switch" id="toggle_driver_label">
-  <!-- <label for="toggle_driver">Enable driver</label> -->
-  <input type="checkbox", id="toggle_driver", name="toggle_driver", value="enable">
-  <span class="slider round"></span>
-</label>
+<div>
+  <fieldset id="status_table">
+    <p>Enable driver</p>
+    <tr>
+      <!-- <label for="toggle_driver_label">Enable driver </label> -->
+      <label class="switch" id="toggle_driver_label">
+        <!-- <label for="toggle_driver">Enable driver</label> -->
+        <input type="checkbox", id="toggle_driver", name="toggle_driver", value="enable">
+        <span class="slider round"></span>
+      </label>
+    </tr>
+  </fieldset>
+</div>
 
 {% endblock %}
 
