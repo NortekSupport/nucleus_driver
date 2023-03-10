@@ -601,6 +601,7 @@ class RovLink(Thread):
                 self.config_parameters[parameter] = response.json()['message']['param_value']
 
             if not response.status_code == 200 or self.CONFIG_PARAMETERS[parameter]['value'] - 0.1 <= response.json()['message']['param_value'] <= self.CONFIG_PARAMETERS[parameter]['value'] + 0.1:
+                logging.warning(f'[{self.timestamp()}] Incorrect value for parameter {parameter}. Expected value: {self.CONFIG_PARAMETERS[parameter]["value"]}.\tReceived value: {response.json()["message"]["param_value"]}.')
                 correct_values = False
 
         if correct_values:
@@ -787,7 +788,7 @@ class RovLink(Thread):
 
                 self.timestamp_previous = timestamp
 
-                if self.enable_nucleus_input:
+                if self._enable_nucleus_input:
                     self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=int(confidence), dt=int(dt * 1e6))
 
             if packet['id'] == 0xd2:
