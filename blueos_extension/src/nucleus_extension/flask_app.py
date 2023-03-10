@@ -102,12 +102,15 @@ if __name__ == "flask_app":
         
         correct_values = rov_link.read_config_parameters()
 
+
         if correct_values:
             rov_link.status['controller_parameters'] = 'Restart ROV'
+            status = 'Correct parameters set.\r\nRestart ROV'
         else:
             rov_link.status['controller_parameters'] = 'Incorrect'
+            status = 'Incorrect parameters set.\r\nRestart ROV'
 
-        return jsonify(result='Parameters set. Restart ROV')
+        return jsonify(result=status)
 
     @app.route("/toggle_driver", methods=["POST"])
     def toggle_driver():
