@@ -42,6 +42,7 @@ class RovLink(Thread):
         'SERIAL0_PROTOCOL': 2
     }
 
+    ''' Legacy
     PID_PARAMETERS = {
         'PSC_POSXY_P': {'value': 2, 'type': "MAV_PARAM_TYPE_REAL32"},
         'PSC_POSZ_P': {'value': 1.0, 'type': "MAV_PARAM_TYPE_REAL32"},
@@ -50,6 +51,7 @@ class RovLink(Thread):
         'PSC_VELXY_D': {'value': 0.8, 'type': "MAV_PARAM_TYPE_REAL32"},
         'PSC_VELZ_P': {'value': 5.0, 'type': "MAV_PARAM_TYPE_REAL32"},
     }
+    '''
 
     def __init__(self, driver):
 
@@ -375,36 +377,7 @@ class RovLink(Thread):
         return parameter
     
     def wait_for_cableguy(self):
-        '''
-        def get_cableguy_status():
-
-            session = requests.Session()
-            retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
-            adapter = HTTPAdapter(max_retries=retry)
-            session.mount('http://', adapter)
-
-            response = session.get('http://127.0.0.1/cable-guy/v1.0/ethernet')
-
-            if response.status_code == 200 and response.json()[0]['info']['connected'] is True:
-                return True
-            else:
-                return False
-
-        logging.info(f'{self.timestamp()} Checking Cable-guy...')
-
-        for _ in range(21):
-            if get_cableguy_status():
-                break
-
-            logging.info(f"{self.timestamp()} waiting for cable-guy to come online...")
-            time.sleep(1)
-        else:
-            logging.warning(f'{self.timestamp()} Failed to find cable-guy')
-            return False
-
-        logging.info(f'{self.timestamp()} Cable-guy online')
-        '''
-
+        
         logging.info(f'{self.timestamp()} waiting for cable-guy to come online...')
 
         self.status['cable_guy'] = 'Discovering...'
@@ -530,25 +503,6 @@ class RovLink(Thread):
         Waits for a valid heartbeat to Mavlink2Rest
         """
 
-        '''
-        def get_heartbeat():
-
-            response = requests.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT')
-
-            if response.status_code != 200:
-                logging.warning(f'{self.timestamp()} HEARTBEAT request did not respond with 200: {response.status_code}')
-                return False
-
-            status = False
-            try:
-                if response.json()["message"]["type"] == "HEARTBEAT":
-                    status = True
-            except Exception as e:
-                logging.warning(f'{self.timestamp()} Unable to extract data from HEARTBEAT request: {e}')
-                logging.warning(f'{response}')
-
-            return status
-        '''
         vehicle = 1
         component = 1
 
@@ -580,32 +534,6 @@ class RovLink(Thread):
 
         return self._heartbeat
 
-
-
-
-        '''
-        for _ in range(21):
-            if get_heartbeat():
-                break
-
-            logging.info(f"{self.timestamp()} waiting for heartbeat...")
-            self.status['heartbeat'] = 'Waiting...'
-            time.sleep(1)
-        else:
-            logging.warning(f'{self.timestamp()} Failed to detect heartbeat')
-            self.status['heartbeat'] = 'Failed to detect!'
-
-            self._heartbeat = False
-
-            return self._heartbeat
-
-        logging.info(f'{self.timestamp()} Heartbeat detected')
-        self.status['heartbeat'] = 'OK'
-
-        self._heartbeat = True
-
-        return self._heartbeat
-        '''
     ''' Legacy
     def handle_config_parameters(self):
 

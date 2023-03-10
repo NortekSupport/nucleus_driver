@@ -55,7 +55,7 @@ if __name__ == "flask_app":
                 continue
 
 
-            response = set_parameter(parameter_id=parameter, parameter_value=psc[parameter], parameter_type="MAV_PARAM_TYPE_REAL32")
+            response = rov_link.set_parameter(parameter_id=parameter, parameter_value=psc[parameter], parameter_type="MAV_PARAM_TYPE_REAL32")
 
             if response.status_code != 200:
                 logging.warning(f'Failed to set parameter value for {parameter}')
@@ -83,7 +83,7 @@ if __name__ == "flask_app":
                 logging.warning(f'SKIPPING {parameter} since it is NONE')
                 continue
 
-            response = set_parameter(parameter_id=parameter, parameter_value=controller[parameter], parameter_type="MAV_PARAM_TYPE_REAL32")
+            response = rov_link.set_parameter(parameter_id=parameter, parameter_value=controller[parameter], parameter_type="MAV_PARAM_TYPE_REAL32")
 
             if response.status_code != 200:
                 logging.warning(f'Failed to set parameter value for {parameter}')
@@ -334,6 +334,8 @@ if __name__ == "flask_app":
 
         return response
     '''
+
+    ''' Legacy
     def set_parameter(parameter_id, parameter_value, parameter_type):
 
         def get_param_value_timestamp():
@@ -469,7 +471,8 @@ if __name__ == "flask_app":
         parameter = check_parameter(parameter.json())
 
         return parameter
-
+    '''
+    
     ''' Legacy
     def get_parameter(parameter_id):
 
