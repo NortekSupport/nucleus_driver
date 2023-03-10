@@ -88,14 +88,21 @@ if __name__ == "flask_app":
 
             if controller[parameter] is None:
                 logging.warning(f'SKIPPING {parameter} since it is NONE')
+                continue
 
             response = set_parameter(parameter_id=parameter, parameter_value=controller[parameter], parameter_type="MAV_PARAM_TYPE_REAL32")
 
             if response.status_code != 200:
                 logging.warning(f'Failed to set parameter value for {parameter}')
         
-        print(f'writing parameters... value for controller: {controller}')
-        return jsonify(result='control parameters written')
+        correct_values = rov_link.read_config_parameters()
+
+        if correct_values:
+            rov_link.status['controller_parameters'] = 'Restart ROV'
+        else:
+            rov_link.status['controller_parameters'] = 'Incorrect'
+
+        return jsonify(result='Parameters set. Restart ROV')
 
     @app.route("/toggle_driver", methods=["POST"])
     def toggle_driver():

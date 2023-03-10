@@ -591,8 +591,6 @@ class RovLink(Thread):
 
         correct_values = True
         
-        self.status['controller_parameters'] = 'Reading parameters...'
-
         for parameter in self.CONFIG_PARAMETERS.keys():
 
             response = self.get_parameter(parameter)
@@ -603,6 +601,14 @@ class RovLink(Thread):
             if not response.status_code == 200 or not self.CONFIG_PARAMETERS[parameter]['value'] - 0.1 <= response.json()['message']['param_value'] <= self.CONFIG_PARAMETERS[parameter]['value'] + 0.1:
                 logging.warning(f'[{self.timestamp()}] Incorrect value for parameter {parameter}. Expected value: {self.CONFIG_PARAMETERS[parameter]["value"]}.\tReceived value: {response.json()["message"]["param_value"]}.')
                 correct_values = False
+
+        return correct_values
+
+    def read_config_parameters_startup(self):
+        
+        self.status['controller_parameters'] = 'Reading parameters...'
+
+        correct_values = self.read_config_parameters()
 
         if correct_values:
              self.status['controller_parameters'] = 'OK'
@@ -688,7 +694,7 @@ class RovLink(Thread):
             self.wait_for_heartbeat()
 
         if self._heartbeat:
-            self.read_config_parameters()
+            self.read_config_parameters_startup()
 
         time.sleep(1)
 
