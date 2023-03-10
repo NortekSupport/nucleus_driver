@@ -69,7 +69,6 @@ if __name__ == "flask_app":
         print(f'writing parameters... value for PSC: {psc}')
         return jsonify(result='PID parameters written')
 
-    
     @app.route("/write_controller_parameters", methods=["POST"])
     def write_controller_parameters():
         controller = dict()
@@ -84,13 +83,13 @@ if __name__ == "flask_app":
         controller.update({'SERIAL0_PROTOCOL': request.form.get("SERIAL0_PROTOCOL", None, type=float)})
         
         # TODO: Uncomment to actually send values to mavlink
-        '''
+        
         for parameter in controller.keys():
             response = set_parameter(parameter_id=parameter, parameter_value=controller[parameter], parameter_type="MAV_PARAM_TYPE_REAL32")
 
             if response.status_code != 200:
                 logging.warning(f'Failed to set parameter value for {parameter}')
-        '''
+        
         print(f'writing parameters... value for controller: {controller}')
         return jsonify(result='control parameters written')
 
