@@ -800,4 +800,5 @@ class RovLink(Thread):
                 orientation.append(self.d2r(packet['ahrsData.heading']))
 
                 self.orientation_current = orientation
-    
+
+        self.stop_nucleus()
