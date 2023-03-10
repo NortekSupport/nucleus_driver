@@ -20,7 +20,6 @@ HOSTNAME = '192.168.2.201'
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"  # TODO: Fix
 
 
-
 if __name__ == "flask_app":
 
     nucleus_driver = NucleusDriver()
@@ -334,7 +333,7 @@ if __name__ == "flask_app":
         response.status_code = status
 
         return response
-
+    '''
     def set_parameter(parameter_id, parameter_value, parameter_type):
 
         def get_param_value_timestamp():
@@ -470,7 +469,6 @@ if __name__ == "flask_app":
         parameter = check_parameter(parameter.json())
 
         return parameter
-    '''
 
     ''' Legacy
     def get_parameter(parameter_id):
