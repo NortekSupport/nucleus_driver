@@ -52,23 +52,38 @@
       </tr>
     </table>
     <input type="submit" value="Write controller parameters">
-    <span>= <span id="result_controller"></span></span>
+    <div><span id="result_controller">---</span></div>
   </fieldset>
 </form>
 
 {% endblock %}
 
 {% block grid_right %} 
-<p>This implementation relies on sending velocity data from the Nucleus into the BlueROV.</p>
 
-<p>In order for the ROV to accept the velocity data, certain parameters in the ROV has to be changed.</p>
+<p> The Nucleus extension relies on sending velocity data into the BlueROV in order for the BlueROV to able to use its "Position Hold" feature.</p>
 
-<p>The following parameters and their required values are as follows
+<p>In order for the BlueROV to retrieve this velocity data, certain paramaters in the BlueROV controller has to be changed.</p>
+
+<p>These parameters and their required values are as follows:
 
   <ul>
     <li>AHRS_EKF_TYPE = 3</li>
+    <li>EK2_ENABLE = 0</li>
+    <li>EK3_ENABLE = 1</li>
+    <li>VISO_TYPE = 1</li>
+    <li>GPS_TYPE = 0</li>
+    <li>EK3_SRC1_POSXY = 6</li>
+    <li>EK3_SRC1_VELXY = 6</li>
+    <li>EK3_SRC1_POSZ = 1</li>
+    <li>SERIAL0_PROTOCOL = 2</li>
   </ul>
 </p>
+
+<p><b>N.B.</b> These changes may affect the behaviour of the BlueROV!</p>
+
+<p><b>N.B.</b> Neither this extension nor the BlueROV will remember the default values of these parameters.</p>
+  
+<p>It is recommended that users write down the original values before making changes to these parameters, in case they wish to chenge them back later</p>
 {% endblock %}
 
 {% block script %}

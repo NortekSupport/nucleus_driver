@@ -57,10 +57,12 @@ class RovLink(Thread):
         self.init_time = datetime.now()
 
         self.status = {
-            'cable_guy': 'Not ready',
-            'nucleus': 'Not ready',
-            'heart_beat': 'Not ready',
-            'controller_parameters': 'Not ready'
+            'cable_guy': 'Not OK',
+            'nucleus_available': 'Not OK',
+            'nucleus_connected': 'Not OK',
+            'dvl_enabled': 'Not OK',
+            'heartbeat': 'Not OK',
+            'controller_parameters': 'Not OK'
         }
 
         self._cable_guy = False
@@ -419,7 +421,7 @@ class RovLink(Thread):
     def discover_nucleus(self):
 
         logging.info(f'{self.timestamp()} Discovering Nucleus...')
-        self.status['nucleus'] = 'Discovering...'
+        self.status['nucleus_available'] = 'Discovering...'
 
         for _ in range(21):
             try:
@@ -429,14 +431,14 @@ class RovLink(Thread):
                 continue
         else:
             logging.warning(f'{self.timestamp()} Failed to discover Nucleus on the network')
-            self.status['nucleus'] = 'Failed to discover!'
+            self.status['nucleus_available'] = 'Failed to discover!'
             
             self._nucleus_available = False
 
             return self._nucleus_available
 
         logging.info(f'{self.timestamp()} Discovered Nucleus on network')
-        self.status['nucleus'] = 'Online'
+        self.status['nucleus_available'] = 'OK'
 
         self._nucleus_available = True
 
@@ -446,11 +448,11 @@ class RovLink(Thread):
 
         self.nucleus_driver.set_tcp_configuration(host=self.hostname)
         
-        self.status['nucleus'] = 'Connecting...'
+        self.status['nucleus_connected'] = 'Connecting...'
 
         if not self.nucleus_driver.connect(connection_type='tcp'):
             logging.warning('Failed to connect to Nucleus')
-            self.status['nucleus'] = 'Connecting Failed!'
+            self.status['nucleus_connected'] = 'Connecting Failed!'
 
             self._nucleus_connected = False
 
@@ -463,7 +465,7 @@ class RovLink(Thread):
         logging.info(f'{self.timestamp()} Nucleus ID:        {self.nucleus_id}')
         logging.info(f'{self.timestamp()} Nucleus firmware:  {self.nucleus_firmware}')
 
-        self.status['nucleus'] = 'Connected'
+        self.status['nucleus_connected'] = 'OK'
 
         self._nucleus_connected = True
 
@@ -472,7 +474,7 @@ class RovLink(Thread):
     def setup_nucleus(self):
 
         logging.info(f'{self.timestamp()} setting up nucleus')
-        self.setup['nucleus'] = 'Setting up...'
+        
 
         reply = self.nucleus_driver.commands.set_default_config()
         if b'OK\r\n' not in reply:
@@ -490,13 +492,16 @@ class RovLink(Thread):
         if b'OK\r\n' not in reply:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETAHRS,DS="OFF": {reply}')
 
+        self.setup['dvl_enabled'] = 'enabling...'
         reply = self.nucleus_driver.commands.set_bt(wt="ON", ds="ON")  # TODO: wt="OFF"
         if b'OK\r\n' not in reply:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETBT,WT="OFF",DS="ON": {reply}')
 
+            self.status['dvl_enabled'] = 'Failed to enable'
             self._dvl_enabled = False
 
         else:
+            self.status['dvl_enabled'] = 'OK'
             self._dvl_enabled = True
 
         reply = self.nucleus_driver.commands.set_alti(ds="ON")  # TODO: OFF
@@ -507,7 +512,6 @@ class RovLink(Thread):
         if b'OK\r\n' not in reply:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETCURPROF,DS="OFF": {reply}')
 
-        self.status['nucleus'] = 'Ready'
 
     def wait_for_heartbeat(self):
         """
@@ -538,25 +542,25 @@ class RovLink(Thread):
         vehicle_path = f"/vehicles/{vehicle}/components/{component}/messages"
 
         logging.info(f'{self.timestamp()} waiting for vehicle heartbeat...')
-        self.status['heart_beat'] = 'Discovering...'
+        self.status['heartbeat'] = 'Discovering...'
 
         for _ in range(21):
             if get_heartbeat():
                 break
 
             logging.info(f"{self.timestamp()} waiting for heartbeat...")
-            self.status['heart_beat'] = 'Waiting...'
+            self.status['heartbeat'] = 'Waiting...'
             time.sleep(1)
         else:
             logging.warning(f'{self.timestamp()} Failed to detect heartbeat')
-            self.status['heart_beat'] = 'Failed to detect!'
+            self.status['heartbeat'] = 'Failed to detect!'
 
             self._heartbeat = False
 
             return self._heartbeat
 
         logging.info(f'{self.timestamp()} Heartbeat detected')
-        self.status['heart_beat'] = 'Detected'
+        self.status['heartbeat'] = 'OK'
 
         self._heartbeat = True
 
@@ -603,7 +607,7 @@ class RovLink(Thread):
                 correct_values = False
 
         if correct_values:
-             self.status['controller_parameters'] = 'Ready'
+             self.status['controller_parameters'] = 'OK'
         else:
              self.status['controller_parameters'] = 'Incorrect'
 

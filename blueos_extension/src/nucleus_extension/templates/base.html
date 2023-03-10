@@ -39,8 +39,10 @@
   
     function updateStatus(data) {
       $('#cable_guy').text(data.cable_guy);
-      $('#nucleus').text(data.nucleus);
-      $('#heart_beat').text(data.heart_beat);
+      $('#nucleus_available').text(data.nucleus_available);
+      $('#nucleus_connected').text(data.nucleus_connected);
+      $('#dvl_enabled').text(data.dvl_enabled);
+      $('#heartbeat').text(data.heartbeat);
       $('#controller_parameters').text(data.controller_parameters);
     }
   
