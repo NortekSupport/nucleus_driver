@@ -52,7 +52,6 @@ class RovLink(Thread):
 
         self.status = {
             'cable_guy': '---',
-            'nucleus_available': '---',
             'nucleus_connected': '---',
             'dvl_enabled': '---',
             'heartbeat': '---',
@@ -376,6 +375,7 @@ class RovLink(Thread):
 
         return self._cable_guy
 
+    ''' Legacy
     def discover_nucleus(self):
 
         logging.info(f'{self.timestamp()} Discovering Nucleus...')
@@ -401,7 +401,8 @@ class RovLink(Thread):
             self._nucleus_available = False
 
         return self._nucleus_available
-
+    '''
+    
     def connect_nucleus(self):
 
         self.nucleus_driver.set_tcp_configuration(host=self.hostname)
@@ -593,9 +594,6 @@ class RovLink(Thread):
         self.wait_for_cableguy()
 
         if self._cable_guy:
-            self.discover_nucleus()
-        
-        if self._nucleus_available:
             self.connect_nucleus()
 
         if self._nucleus_connected:
