@@ -59,15 +59,20 @@ if __name__ == "flask_app":
         psc.update({'PSC_VELZ_P': request.form.get("PSC_VELZ_P", None, type=float)})
         
         # TODO: Uncomment to actually send values to mavlink
-        '''
+        
         for parameter in psc.keys():
+
+            if psc[parameter] is None:
+                logging.warning(f'SKIPPING {parameter} since it is NONE')
+                continue
+
+
             response = set_parameter(parameter_id=parameter, parameter_value=psc[parameter], parameter_type="MAV_PARAM_TYPE_REAL32")
 
             if response.status_code != 200:
                 logging.warning(f'Failed to set parameter value for {parameter}')
-        '''
-        print(f'writing parameters... value for PSC: {psc}')
-        return jsonify(result='PID parameters written')
+        
+        return jsonify(result='Parameters set')
 
     @app.route("/write_controller_parameters", methods=["POST"])
     def write_controller_parameters():
