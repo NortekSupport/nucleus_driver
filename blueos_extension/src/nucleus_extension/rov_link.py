@@ -59,7 +59,6 @@ class RovLink(Thread):
         }
 
         self._cable_guy = False
-        self._nucleus_available = False
         self._nucleus_connected = False
         self._dvl_enabled = False
         self._heartbeat = False
@@ -614,13 +613,10 @@ class RovLink(Thread):
 
         while self.thread_running:
 
-            if not self._cable_guy or not self._nucleus_available or not self._nucleus_connected or not self._dvl_enabled or not self._heartbeat or not self._config:
+            if not self._cable_guy or not self._nucleus_connected or not self._dvl_enabled or not self._heartbeat or not self._config:
 
                 if not self._cable_guy:
                     logging.warning(f"{self.timestamp()} Cable guy not available")
-
-                if not self._nucleus_available:
-                    logging.warning(f"{self.timestamp()} Nucleus is not available on the network")
 
                 if not self._nucleus_connected:
                     logging.warning(f"{self.timestamp()} Nucleus is not connected")
