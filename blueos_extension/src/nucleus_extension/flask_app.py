@@ -85,6 +85,10 @@ if __name__ == "flask_app":
         # TODO: Uncomment to actually send values to mavlink
         
         for parameter in controller.keys():
+
+            if controller[parameter] is None:
+                logging.warning(f'SKIPPING {parameter} since it is NONE')
+
             response = set_parameter(parameter_id=parameter, parameter_value=controller[parameter], parameter_type="MAV_PARAM_TYPE_REAL32")
 
             if response.status_code != 200:
