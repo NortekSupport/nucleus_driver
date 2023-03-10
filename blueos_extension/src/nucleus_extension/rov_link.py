@@ -15,6 +15,7 @@ class RovLink(Thread):
 
     TIMEOUT = 1
 
+    ''' Legacy
     CONFIG_PARAMETERS = {
         'AHRS_EKF_TYPE': {'value': 3, 'type': "MAV_PARAM_TYPE_UINT8"},
         'EK2_ENABLE': {'value': 0, 'type': "MAV_PARAM_TYPE_UINT8"},
@@ -26,6 +27,19 @@ class RovLink(Thread):
         'EK3_SRC1_VELXY': {'value': 6, 'type': "MAV_PARAM_TYPE_UINT8"},
         'EK3_SRC1_POSZ': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
         'SERIAL0_PROTOCOL': {'value': 2, 'type': "MAV_PARAM_TYPE_INT8"}
+    }
+    '''
+
+    EXPECTED_CONFIG_PARAMETERS = {
+        'AHRS_EKF_TYPE': 3,
+        'EK2_ENABLE': 0,
+        'EK3_ENABLE': 1,
+        'VISO_TYPE': 1,
+        'GPS_TYPE': 0,
+        'EK3_SRC1_POSXY': 6,
+        'EK3_SRC1_VELXY': 6,
+        'EK3_SRC1_POSZ': 1,
+        'SERIAL0_PROTOCOL': 2
     }
 
     PID_PARAMETERS = {
@@ -591,15 +605,22 @@ class RovLink(Thread):
 
         correct_values = True
         
-        for parameter in self.CONFIG_PARAMETERS.keys():
+        for parameter in self.EXPECTED_CONFIG_PARAMETERS.keys():
 
             response = self.get_parameter(parameter)
+            status_code = response.status_code
 
-            if response.status_code == 200:
-                self.config_parameters[parameter] = response.json()['message']['param_value']
+            if status_code != 200:
+                logging.warning(f'[{self.timestamp()}] get_parameter did not respond with status code 200. Actual status code: {status_code}')
+                correct_values = False
+                continue
 
-            if not response.status_code == 200 or not self.CONFIG_PARAMETERS[parameter]['value'] - 0.1 <= response.json()['message']['param_value'] <= self.CONFIG_PARAMETERS[parameter]['value'] + 0.1:
-                logging.warning(f'[{self.timestamp()}] Incorrect value for parameter {parameter}. Expected value: {self.CONFIG_PARAMETERS[parameter]["value"]}.\tReceived value: {response.json()["message"]["param_value"]}.')
+            param_value = response.json()['message']['param_value']
+
+            self.config_parameters[parameter] = param_value
+
+            if not self.EXPECTED_CONFIG_PARAMETERS[parameter] - 0.1 <= param_value <= self.EXPECTED_CONFIG_PARAMETERS[parameter] + 0.1:
+                logging.warning(f'[{self.timestamp()}] Incorrect value for parameter {parameter}. Expected value: {self.EXPECTED_CONFIG_PARAMETERS[parameter]}.\tReceived value: {response.json()["message"]["param_value"]}.')
                 correct_values = False
 
         return correct_values
@@ -696,7 +717,7 @@ class RovLink(Thread):
         if self._heartbeat:
             self.read_config_parameters_startup()
 
-        time.sleep(1)
+        time.sleep(self.TIMEOUT)
 
         self.start_nucleus()
 

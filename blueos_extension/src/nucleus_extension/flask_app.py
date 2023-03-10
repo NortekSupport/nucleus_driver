@@ -30,23 +30,12 @@ if __name__ == "flask_app":
 
     app = Flask(__name__)
     api = Api(app)
-    
-    '''
-    @app.route("/")
-    def index():
-        print('INDEX EXECUTED')
-        return render_template('index.html')
-    '''
 
     @app.route("/", defaults={"js": "home"})
     @app.route("/<any(home, pid_parameters, controller_parameters):js>")
     def index(js):
         print(f'js: {js}')
         return render_template(f"{js}.html", js=js)
-    
-    @app.route("/create")
-    def create():
-        return render_template('create.html')
     
     @app.route("/write_pid_parameters", methods=["POST"])
     def write_pid_parameters():
@@ -105,10 +94,10 @@ if __name__ == "flask_app":
 
         if correct_values:
             rov_link.status['controller_parameters'] = 'Restart ROV'
-            status = 'Correct parameters set.\r\nRestart ROV'
+            status = 'Correct parameters set. Restart ROV'
         else:
             rov_link.status['controller_parameters'] = 'Incorrect'
-            status = 'Incorrect parameters set.\r\nRestart ROV'
+            status = 'Incorrect parameters set. Restart ROV'
 
         return jsonify(result=status)
 
@@ -198,6 +187,7 @@ if __name__ == "flask_app":
 
         return jsonify({'packets': packet_list})
 
+    ''' Legacy
     @app.route("/nucleus_driver/get_all", methods=['GET'])
     def nucleus_driver_get_all():
 
@@ -229,7 +219,9 @@ if __name__ == "flask_app":
             reply_list.append('index error')
 
         return jsonify({'get_all': reply_list})
+    '''
 
+    ''' Legacy
     @app.route('/mavlink/get_parameter', methods=['GET'])
     def mavlink_get_parameter():
 
@@ -244,7 +236,9 @@ if __name__ == "flask_app":
         parameter_id = parameter_id.upper()
 
         return get_parameter(parameter_id)
+    '''
 
+    ''' Legacy
     @app.route('/mavlink/set_parameter', methods=['GET'])
     def mavlink_set_parameter():
 
@@ -288,7 +282,9 @@ if __name__ == "flask_app":
             return response
 
         return set_parameter(parameter_id, parameter_value, parameter_type)
+    '''
 
+    ''' Legacy
     @app.route('/mavlink/set_default_parameters', methods=['GET'])
     def mavlink_set_default_parameters():
         AHRS_EKF_TYPE = 3.0
@@ -310,7 +306,9 @@ if __name__ == "flask_app":
         PSC_VELZ_P = 8
 
         return
+    '''
 
+    ''' Legacy
     @app.route('/mavlink/enable_input')
     def mavlink_enable_nucleus_input():
 
@@ -472,7 +470,9 @@ if __name__ == "flask_app":
         parameter = check_parameter(parameter.json())
 
         return parameter
+    '''
 
+    ''' Legacy
     def get_parameter(parameter_id):
 
         def get_param_value_timestamp():
@@ -592,3 +592,4 @@ if __name__ == "flask_app":
         parameter = check_parameter(parameter.json())
 
         return parameter
+    '''
