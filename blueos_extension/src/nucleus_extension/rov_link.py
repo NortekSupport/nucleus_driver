@@ -600,7 +600,7 @@ class RovLink(Thread):
             if response.status_code == 200:
                 self.config_parameters[parameter] = response.json()['message']['param_value']
 
-            if not response.status_code == 200 or self.CONFIG_PARAMETERS[parameter]['value'] - 0.1 <= response.json()['message']['param_value'] <= self.CONFIG_PARAMETERS[parameter]['value'] + 0.1:
+            if not response.status_code == 200 or not self.CONFIG_PARAMETERS[parameter]['value'] - 0.1 <= response.json()['message']['param_value'] <= self.CONFIG_PARAMETERS[parameter]['value'] + 0.1:
                 logging.warning(f'[{self.timestamp()}] Incorrect value for parameter {parameter}. Expected value: {self.CONFIG_PARAMETERS[parameter]["value"]}.\tReceived value: {response.json()["message"]["param_value"]}.')
                 correct_values = False
 
@@ -698,7 +698,7 @@ class RovLink(Thread):
 
         while self.thread_running:
 
-            if self._cable_guy and self._nucleus_available and self._nucleus_connected and self._dvl_enabled and self._heartbeat and self._config:
+            if not self._cable_guy or not self._nucleus_available or not self._nucleus_connected or not self._dvl_enabled or not self._heartbeat or not self._config:
 
                 if not self._cable_guy:
                     logging.warning(f"{self.timestamp()} Cable guy not available")
