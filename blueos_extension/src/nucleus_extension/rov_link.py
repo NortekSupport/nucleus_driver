@@ -441,7 +441,8 @@ class RovLink(Thread):
                 break
             except socket.gaierror:
                 continue
-  
+        
+        else:
             logging.warning(f'{self.timestamp()} Failed to discover Nucleus on the network')
             self.status['nucleus_available'] = 'Failed to discover!'
             
@@ -529,6 +530,7 @@ class RovLink(Thread):
         Waits for a valid heartbeat to Mavlink2Rest
         """
 
+        '''
         def get_heartbeat():
 
             response = requests.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT')
@@ -546,15 +548,42 @@ class RovLink(Thread):
                 logging.warning(f'{response}')
 
             return status
-
+        '''
         vehicle = 1
         component = 1
 
         vehicle_path = f"/vehicles/{vehicle}/components/{component}/messages"
 
         logging.info(f'{self.timestamp()} waiting for vehicle heartbeat...')
-        self.status['heartbeat'] = 'Discovering...'
 
+        self.status['heartbeat'] = 'Waiting for heartbeat...'
+
+        session = requests.Session()
+        retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+
+        response = session.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT')
+
+
+        if response.status_code == 200 and response.json()["message"]["type"] == "HEARTBEAT":
+            logging.info(f'{self.timestamp()} Heartbeat detected')
+            self.status['heartbeat'] = 'OK'
+
+            self._heartbeat = True
+
+        else:
+            logging.warning(f'{self.timestamp()} Failed to ddetect heartbeat')
+            self.status['heartbeat'] = 'Failed'
+
+            self._heartbeat = False
+
+        return self._heartbeat
+
+
+
+
+        '''
         for _ in range(21):
             if get_heartbeat():
                 break
@@ -576,7 +605,7 @@ class RovLink(Thread):
         self._heartbeat = True
 
         return self._heartbeat
-    
+        '''
     ''' Legacy
     def handle_config_parameters(self):
 
