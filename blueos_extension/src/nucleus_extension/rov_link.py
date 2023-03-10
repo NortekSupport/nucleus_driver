@@ -7,7 +7,7 @@ from datetime import datetime
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
-HOSTNAME = '192.168.2.202'  # TODO: Set this externally?
+HOSTNAME = '192.168.1.202'  # TODO: Set this externally?
 
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
 
