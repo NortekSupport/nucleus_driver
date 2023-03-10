@@ -359,12 +359,6 @@ class RovLink(Thread):
         parameter = check_parameter(parameter)
 
         return parameter
-
-    '''Legacy
-    def load_settings(self):
-
-        self.hostname = HOSTNAME
-    '''
     
     def wait_for_cableguy(self):
         '''
@@ -410,7 +404,7 @@ class RovLink(Thread):
 
         if response.status_code == 200 and response.json()[0]['info']['connected'] is True:
             logging.info(f'{self.timestamp()} Cable guy online')
-            self.status['cable_guy'] = 'Online'
+            self.status['cable_guy'] = 'OK'
 
             self._cable_guy = True
 
@@ -496,7 +490,7 @@ class RovLink(Thread):
         if b'OK\r\n' not in reply:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETAHRS,DS="OFF": {reply}')
 
-        self.setup['dvl_enabled'] = 'enabling...'
+        self.status['dvl_enabled'] = 'enabling...'
         reply = self.nucleus_driver.commands.set_bt(wt="ON", ds="ON")  # TODO: wt="OFF"
         if b'OK\r\n' not in reply:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETBT,WT="OFF",DS="ON": {reply}')
