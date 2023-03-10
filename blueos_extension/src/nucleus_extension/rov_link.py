@@ -15,21 +15,6 @@ class RovLink(Thread):
 
     TIMEOUT = 1
 
-    ''' Legacy
-    CONFIG_PARAMETERS = {
-        'AHRS_EKF_TYPE': {'value': 3, 'type': "MAV_PARAM_TYPE_UINT8"},
-        'EK2_ENABLE': {'value': 0, 'type': "MAV_PARAM_TYPE_UINT8"},
-        'EK3_ENABLE': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
-        'VISO_TYPE': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
-        #'EK3_GPS_TYPE': {'value': 3, 'type': "MAV_PARAM_TYPE_UINT8"},
-        'GPS_TYPE': {'value': 0, 'type': "MAV_PARAM_TYPE_INT8"},
-        'EK3_SRC1_POSXY': {'value': 6, 'type': "MAV_PARAM_TYPE_UINT8"},
-        'EK3_SRC1_VELXY': {'value': 6, 'type': "MAV_PARAM_TYPE_UINT8"},
-        'EK3_SRC1_POSZ': {'value': 1, 'type': "MAV_PARAM_TYPE_UINT8"},
-        'SERIAL0_PROTOCOL': {'value': 2, 'type': "MAV_PARAM_TYPE_INT8"}
-    }
-    '''
-
     EXPECTED_CONFIG_PARAMETERS = {
         'AHRS_EKF_TYPE': 3,
         'EK2_ENABLE': 0,
@@ -41,17 +26,6 @@ class RovLink(Thread):
         'EK3_SRC1_POSZ': 1,
         'SERIAL0_PROTOCOL': 2
     }
-
-    ''' Legacy
-    PID_PARAMETERS = {
-        'PSC_POSXY_P': {'value': 2, 'type': "MAV_PARAM_TYPE_REAL32"},
-        'PSC_POSZ_P': {'value': 1.0, 'type': "MAV_PARAM_TYPE_REAL32"},
-        'PSC_VELXY_P': {'value': 5.0, 'type': "MAV_PARAM_TYPE_REAL32"},
-        'PSC_VELXY_I': {'value': 0.5, 'type': "MAV_PARAM_TYPE_REAL32"},
-        'PSC_VELXY_D': {'value': 0.8, 'type': "MAV_PARAM_TYPE_REAL32"},
-        'PSC_VELZ_P': {'value': 5.0, 'type': "MAV_PARAM_TYPE_REAL32"},
-    }
-    '''
 
     def __init__(self, driver):
 
@@ -77,12 +51,12 @@ class RovLink(Thread):
         self.init_time = datetime.now()
 
         self.status = {
-            'cable_guy': 'Not OK',
-            'nucleus_available': 'Not OK',
-            'nucleus_connected': 'Not OK',
-            'dvl_enabled': 'Not OK',
-            'heartbeat': 'Not OK',
-            'controller_parameters': 'Not OK'
+            'cable_guy': '---',
+            'nucleus_available': '---',
+            'nucleus_connected': '---',
+            'dvl_enabled': '---',
+            'heartbeat': '---',
+            'controller_parameters': '---'
         }
 
         self._cable_guy = False
@@ -99,7 +73,6 @@ class RovLink(Thread):
             'EK2_ENABLE': None,
             'EK3_ENABLE': None,
             'VISO_TYPE': None,
-            #'EK3_GPS_TYPE': {'value': 3, 'type': "MAV_PARAM_TYPE_UINT8"},
             'GPS_TYPE': None,
             'EK3_SRC1_POSXY': None,
             'EK3_SRC1_VELXY': None,
@@ -519,7 +492,6 @@ class RovLink(Thread):
 
         response = session.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT')
 
-
         if response.status_code == 200 and response.json()["message"]["type"] == "HEARTBEAT":
             logging.info(f'{self.timestamp()} Heartbeat detected')
             self.status['heartbeat'] = 'OK'
@@ -533,30 +505,6 @@ class RovLink(Thread):
             self._heartbeat = False
 
         return self._heartbeat
-
-    ''' Legacy
-    def handle_config_parameters(self):
-
-        parameter_change = False
-
-        for parameter in self.CONFIG_PARAMETERS.keys():
-
-            response = self.get_parameter(parameter)
-
-            if response.status_code == 200 and self.CONFIG_PARAMETERS[parameter]['value'] - 0.1 <= response.json()['message']['param_value'] <= self.CONFIG_PARAMETERS[parameter]['value'] + 0.1:
-                continue
-
-            parameter_change = True
-
-            response = self.set_parameter(parameter, self.CONFIG_PARAMETERS[parameter]['value'], self.CONFIG_PARAMETERS[parameter]['type'])
-
-            if response.status_code == 200:
-                logging.warning(f'{self.timestamp()} {parameter} set to {self.CONFIG_PARAMETERS[parameter]["value"]}')
-            else:
-                logging.warning(f'{self.timestamp()} Failed to set {parameter} to {self.CONFIG_PARAMETERS[parameter]["value"]}')
-
-        return parameter_change
-    '''
 
     def read_config_parameters(self):
 
@@ -596,19 +544,6 @@ class RovLink(Thread):
         self._config = correct_values
 
         return correct_values
-
-    ''' Legacy
-    def set_pid_parameters(self):
-
-        for parameter in self.PID_PARAMETERS.keys():
-
-            response = self.set_parameter(parameter, self.PID_PARAMETERS[parameter]['value'], self.PID_PARAMETERS[parameter]['type'])
-
-            if response.status_code == 200:
-                logging.warning(f'{self.timestamp()} {parameter} set to {self.PID_PARAMETERS[parameter]["value"]}')
-            else:
-                logging.warning(f'{self.timestamp()} Failed to set {parameter} to {self.PID_PARAMETERS[parameter]["value"]}')
-    '''
 
     def start_nucleus(self):
 
