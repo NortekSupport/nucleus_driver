@@ -7,6 +7,10 @@ from datetime import datetime
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
+HOSTNAME = '192.168.2.201'  # TODO: Set this externally?
+
+MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
+
 class RovLink(Thread):
 
     TIMEOUT = 1
@@ -46,7 +50,7 @@ class RovLink(Thread):
         self.orientation_current = None
         self.orientation_previous = None
 
-        self.hostname = None
+        self.hostname = HOSTNAME
         self.nucleus_id = None
         self.nucleus_firmware = None
 
@@ -672,8 +676,6 @@ class RovLink(Thread):
             logging.warning(f'{self.timestamp()} VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
     
     def run(self):
-
-        self.load_settings()
 
         self.wait_for_cableguy()
 
