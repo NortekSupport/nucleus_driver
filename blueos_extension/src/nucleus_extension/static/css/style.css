@@ -199,7 +199,7 @@ fieldset {
 }
 
 fieldset#status_table, fieldset#enable_driver {
-  width: 15rem;
+  width: 20rem;
 }
 
 #parameters td, #parameters th {

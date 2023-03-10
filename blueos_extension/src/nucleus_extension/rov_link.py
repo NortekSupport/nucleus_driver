@@ -383,7 +383,7 @@ class RovLink(Thread):
 
         for _ in range(21):
             try:
-                socket.getaddrinfo(self.hostname, 9000)  # 5 sec timeout
+                socket.getaddrinfo(self.hostname, 5000)  # 5 sec timeout
                 break
             except socket.gaierror:
                 continue
