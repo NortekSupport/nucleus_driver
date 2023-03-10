@@ -429,7 +429,7 @@ class RovLink(Thread):
                 break
             except socket.gaierror:
                 continue
-        else:
+  
             logging.warning(f'{self.timestamp()} Failed to discover Nucleus on the network')
             self.status['nucleus_available'] = 'Failed to discover!'
             
@@ -511,7 +511,6 @@ class RovLink(Thread):
         reply = self.nucleus_driver.commands.set_cur_prof(ds="OFF")  # TODO: OFF
         if b'OK\r\n' not in reply:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETCURPROF,DS="OFF": {reply}')
-
 
     def wait_for_heartbeat(self):
         """
@@ -671,8 +670,6 @@ class RovLink(Thread):
             logging.debug(f'{self.timestamp()} VISION_POSITION_DELTA\r\nangle_delta: {angle_delta}\r\nposition_delta: {position_delta}\r\nconfidence: {confidence}\r\ndt: {dt}')
         else:
             logging.warning(f'{self.timestamp()} VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
-    
-    
     
     def run(self):
 
