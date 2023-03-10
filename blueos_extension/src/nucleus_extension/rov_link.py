@@ -680,17 +680,14 @@ class RovLink(Thread):
             self.connect_nucleus()
 
         if self._nucleus_connected:
-            self.stop_nucleus()
+            self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
             self.setup_nucleus()
 
         if self._cable_guy:
             self.wait_for_heartbeat()
 
         if self._heartbeat:
-            return
-
-        if self._nucleus_connected:
-            self.set_pid_parameters()
+            self.read_config_parameters()
 
         time.sleep(1)
 
