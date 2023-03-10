@@ -78,13 +78,16 @@
       method: 'POST',
       url: {{ url_for('toggle_driver') | tojson }},
       data: $(this).serialize()
+    }).done();
+  }
+  /*
     }).done(enableDriverShow);
   }
 
   function enableDriverShow(data) {
     $('#toggle_driver').prop("checked", data.result)
   }
-
+  */
   $('#toggle_driver').change(enableDriver);
 </script>
 

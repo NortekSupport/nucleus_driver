@@ -44,6 +44,7 @@
       $('#dvl_enabled').text(data.dvl_enabled);
       $('#heartbeat').text(data.heartbeat);
       $('#controller_parameters').text(data.controller_parameters);
+      $('#toggle_driver').prop("checked", data.enable_nucleus_input);
     }
   
     $(function() {setInterval(getStatus, 1000)})

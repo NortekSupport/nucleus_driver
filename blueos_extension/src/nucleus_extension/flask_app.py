@@ -113,6 +113,7 @@ if __name__ == "flask_app":
     def get_status():
         
         status = rov_link.status
+        status.update({'enable_nucleus_input': rov_link._enable_nucleus_input})
 
         print('message triggered from RovLink')
         print(status)

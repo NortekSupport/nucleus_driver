@@ -610,7 +610,6 @@ class RovLink(Thread):
              self.status['controller_parameters'] = 'Incorrect'
 
         self._config = correct_values
-        self._config = False
 
         return correct_values
 
