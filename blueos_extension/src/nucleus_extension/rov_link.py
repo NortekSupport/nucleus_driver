@@ -384,7 +384,13 @@ class RovLink(Thread):
         for _ in range(21):
             try:
                 socket.getaddrinfo(self.hostname, 5000)  # 5 sec timeout
+
+                logging.info(f'{self.timestamp()} Discovered Nucleus on network')
+                self.status['nucleus_available'] = 'OK'
+                self._nucleus_available = True
+
                 break
+
             except socket.gaierror:
                 continue
         
@@ -393,13 +399,6 @@ class RovLink(Thread):
             self.status['nucleus_available'] = 'Failed to discover!'
             
             self._nucleus_available = False
-
-            return self._nucleus_available
-
-        logging.info(f'{self.timestamp()} Discovered Nucleus on network')
-        self.status['nucleus_available'] = 'OK'
-
-        self._nucleus_available = True
 
         return self._nucleus_available
 
