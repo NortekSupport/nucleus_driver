@@ -107,9 +107,6 @@ class Parser:
 
     def write_packet(self, packet):
 
-        self.nucleus_running = True
-        self.packet_timestamp = datetime.now()
-
         if self._queuing['packet'] is True:
 
             if self.packet_queue.full():
@@ -773,6 +770,8 @@ class Parser:
 
             if data:
 
+                self.nucleus_running = True
+                self.packet_timestamp = datetime.now()
                 self.add_data(data=data)
 
             else:

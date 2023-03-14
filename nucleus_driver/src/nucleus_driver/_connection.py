@@ -43,8 +43,6 @@ class Connection:
         self.firmware_version = None
         self.get_all = None
 
-        self.nucleus_running = False
-
     def get_connection_type(self) -> str:
 
         return self._connection_type
@@ -284,9 +282,11 @@ class Connection:
     def set_clockstring(self):
 
         self.commands._reset_buffer()
+
         clockstring = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         command = 'SETCLOCKSTR,TIME="{}"\r\n'.format(clockstring).encode()
         self.write(command)
+
         reply = self.commands._get_reply(terminator=b'OK\r\n', timeout=1)
 
         if len(reply) >= 50:
