@@ -113,9 +113,12 @@ hr {
   border-color: #002d73; }
 
 p {
-  font-size: 1.4rem;
+  font-size: 1.0rem;
 }
 
+#common_list {
+  font-size: 1.0rem;
+}
 
 /* Layout */
 .grid_parent {

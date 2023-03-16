@@ -63,7 +63,13 @@
 
 {% block grid_right %}
 
-<p>Welcome to the Nucleus extension for the BlueROV. This extension feeds the velocity data from the Nucleus into the BlueROV, allowing the ROV to use its "position hold" feature.</p>
+<p>Welcome to the Nucleus extension for the BlueROV.</p>
+  
+<p>This extension feeds velocity data from the Nucleus into the BlueROV, allowing the ROV to use its "position hold" feature.</p>
+
+<p>This page serves to provide you, the user, with an overview of the condition of the extension, as well as providing you with tools required to optimize your experience</p>
+
+<p>A description of the contents of this page is given in the following paragraphs. To edit relevant parameters use the navigation panel at the top of the page</p>
 
 <h2>Status</h2>
 <p>The status table displays the current status of all the checks that are required for this extension to work</p>
@@ -71,8 +77,8 @@
 <p>All the checks must say "OK" in order for the Nucleus to provivde velocity data to the ROV.</p>
 
 <p>These parameters and their required values are as follows:
-<ul>
-  <li><p><b>Cable guy: </b>This handles the internal networking within the ROV. If this fiels is not OK, power cycle the ROV</p></li>
+<ul id="default_list">
+  <li><b>Cable guy: </b>This handles the internal networking within the ROV. If this fiels is not OK, power cycle the ROV</li>
   <li><b>Nucleus connected: </b>If this is not OK something went wrong when trying to establish contact with the Nucleus. Verfiy that the static IP of the Nucleus is set to 192.168.2.201</li>
   <li><b>DVL enabled: </b>The DVl must be enabled in order for the Nucleus to obtain velocity data. If this field is not OK the extension was not able to configure the Nucleus to enable the DVL. Power cycle the ROV</li>
   <li><b>Heartbeat: </b>The heartbeat is a sanity check to verify that the ROV is operational. If this is not OK, power cycle the ROV</li>
