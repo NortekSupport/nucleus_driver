@@ -61,9 +61,21 @@
 
 {% endblock %}
 
-{% block grid_right %} 
-<h2>heading</h2>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
+{% block grid_right %}
+
+<h2>Status</h2>
+<p>The status table displays the current status of all the checks that are required for this extension to work</p>
+
+<p>All the checks must say "OK" in order for the Nucleus to privde velocity data to the ROV.</p>
+
+<li><b>Cable guy: </b>This handles the internal networking within the ROV. If this fiels is not OK, power cycle the ROV</li>
+<li><b>Nucleus connected: </b>If this is not OK something went wrong when trying to establish contact with the Nucleus. Verfiy that the static IP of the Nucleus is set to 192.168.2.201</li>
+
+
+<h2>Enable Driver</h2>
+
+<p>Toggling the enable driver switch decides whether the velocity data is fed to the ROV. If disabled the Nucleus is still running and collecting data, bet the velocity data are not sent to the ROV's control system</p>
+
 {% endblock %}
 
 {% block script %}
