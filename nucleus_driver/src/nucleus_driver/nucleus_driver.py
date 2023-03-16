@@ -151,8 +151,7 @@ class NucleusDriver:
         self.logger.get_cp_nc()
         response = self.commands._start()
 
-        if b'OK\r\n' in response[0]:
-            self.parser.nucleus_running = True
+        self.parser.nucleus_running = True
 
         return response
 
@@ -171,8 +170,7 @@ class NucleusDriver:
 
         response = self.commands._fieldcal()
 
-        if b'OK\r\n' in response[0]:
-            self.parser.nucleus_running = True
+        self.parser.nucleus_running = True
 
         self.logging_fieldcal = True
 
@@ -191,8 +189,7 @@ class NucleusDriver:
             time.sleep(0.5)
         response = self.commands._stop(timeout=3)
 
-        if b'OK\r\n' in response[0]:
-            self.parser.nucleus_running = False
+        self.parser.nucleus_running = False
 
         self.logging_fieldcal = False
 
