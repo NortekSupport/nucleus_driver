@@ -6,7 +6,7 @@ body {
   font-size: 1rem;
   line-height: 1.5;
   max-width: 80em; /* 120em */
-  margin: 0;  /* auto */
+  margin: auto;  /* auto - 0 */
   color: #000000;
   background-color: #fbf9f7;
   padding: 0px;  /* 13px */
