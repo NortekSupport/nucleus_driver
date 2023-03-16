@@ -114,6 +114,7 @@ class App(cmd2.Cmd):
         else:
             self.nucleus_driver.messages.write_warning('\r\nFailed to connect to Nucleus device\r\n')
 
+        '''
         if self.nucleus_driver.parser.nucleus_running and not self.nucleus_driver.parser.thread_running:
             self.nucleus_driver.parser.start()
 
@@ -121,7 +122,7 @@ class App(cmd2.Cmd):
             log_reply = input('Nucleus driver is already running. Start logging? [Y/n] ')
             if log_reply.upper() in ['Y', 'YES', '']:
                 self.nucleus_driver.start_logging()
-
+        '''
     disconnect_parser = Cmd2ArgumentParser(description='Disconnect from the nucleus device')
 
     @with_argparser(disconnect_parser)
@@ -150,9 +151,11 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
+        '''
         if self.nucleus_driver.parser.nucleus_running and self.nucleus_driver.parser.thread_running:
             self.nucleus_driver.messages.write_warning('Nucleus is already running')
             return
+        '''
 
         if path is not None:
             self.nucleus_driver.set_log_path(path=path)
@@ -173,10 +176,11 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
+        '''
         if self.nucleus_driver.parser.nucleus_running and self.nucleus_driver.parser.thread_running:
             self.nucleus_driver.messages.write_warning('Nucleus is already running')
             return
-
+        '''
         if path is not None:
             self.nucleus_driver.set_log_path(path=path)
 

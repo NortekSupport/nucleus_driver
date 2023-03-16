@@ -144,14 +144,8 @@ class NucleusDriver:
         if not self.parser.thread_running:
             self.parser.start()
 
-        if self.parser.nucleus_running and self.parser.thread_running:
-            self.messages.write_warning('Nucleus is already running')
-            return b''
-
         self.logger.get_cp_nc()
         response = self.commands._start()
-
-        self.parser.nucleus_running = True
 
         return response
 
@@ -164,13 +158,7 @@ class NucleusDriver:
         if not self.parser.thread_running:
             self.parser.start()
 
-        if self.parser.nucleus_running and self.parser.thread_running:
-            self.messages.write_warning('Nucleus is already running')
-            return b''
-
         response = self.commands._fieldcal()
-
-        self.parser.nucleus_running = True
 
         self.logging_fieldcal = True
 
@@ -182,14 +170,13 @@ class NucleusDriver:
             self.messages.write_warning('Nucleus not connected')
             return b''
 
-        if self.parser.thread_running:
-            self.parser.stop()
+        response = self.commands._stop(timeout=3)
 
         if self.logging_fieldcal:
             time.sleep(0.5)
-        response = self.commands._stop(timeout=3)
 
-        self.parser.nucleus_running = False
+        if self.parser.thread_running:
+            self.parser.stop()
 
         self.logging_fieldcal = False
 

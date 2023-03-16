@@ -770,12 +770,7 @@ class Parser:
 
             if data:
 
-                self.nucleus_running = True
-                self.packet_timestamp = datetime.now()
                 self.add_data(data=data)
 
             else:
                 time.sleep(0.01)
-
-            if (datetime.now() - self.packet_timestamp).seconds >= 1:
-                self.nucleus_running = False

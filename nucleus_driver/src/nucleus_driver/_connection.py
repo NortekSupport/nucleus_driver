@@ -290,7 +290,6 @@ class Connection:
         reply = self.commands._get_reply(terminator=b'OK\r\n', timeout=1)
 
         if len(reply) >= 50:
-            self.parser.nucleus_running = True
             self.messages.write_message('Nucleus is already running')
             return False
 
