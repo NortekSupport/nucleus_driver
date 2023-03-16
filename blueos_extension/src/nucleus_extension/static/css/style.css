@@ -5,7 +5,7 @@ html {
 body {
   font-size: 1rem;
   line-height: 1.5;
-  max-width: 60em; /* 120em */
+  max-width: 30em; /* 120em */
   margin: 0;  /* auto */
   color: #000000;
   background-color: #fbf9f7;
