@@ -176,7 +176,7 @@ p {
   outline: 0; }
 
 
-#parameters, #status_table {
+#parameters, #status_table, #packet_table, #enable_driver {
   font-family: Arial, Helvetica, sans-serif;
   color: #002d73;
   font-weight: 300;
@@ -203,25 +203,29 @@ fieldset {
   margin-bottom: 2rem;
 }
 
-fieldset#status_table, fieldset#enable_driver {
+fieldset#status_table {
   width: 18rem;
+}
+
+fieldset#packet_table, fieldset#enable_driver {
+  width: 10rem;
 }
 
 #parameters td, #parameters th {
   padding: 0px 2px;
 }
 
-#status_table td {
+#status_table td, #packet_table td {
   text-align: right;
 }
 
-#status_table td + td {
+#status_table td + td, #packet_table td + td {
   text-align: left;
   color: black;  /* green */
 }
 
 
-#status_table td, #status_table th {
+#status_table td, #status_table th, #packet_table td, #packet_table th {
   padding: 0px 2px;
 }
 
@@ -242,8 +246,6 @@ fieldset#status_table, fieldset#enable_driver {
 #parameters td > input[type] {
   width: 80px;
 }
-
-
 
 /* Slider checkbox start*/
 .switch {
