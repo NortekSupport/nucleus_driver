@@ -395,34 +395,6 @@ class RovLink(Thread):
 
         return self._cable_guy
 
-    ''' Legacy
-    def discover_nucleus(self):
-
-        logging.info(f'{self.timestamp()} Discovering Nucleus...')
-        self.status['nucleus_available'] = 'Discovering...'
-
-        for _ in range(21):
-            try:
-                socket.getaddrinfo(self.hostname, 5000)  # 5 sec timeout
-
-                logging.info(f'{self.timestamp()} Discovered Nucleus on network')
-                self.status['nucleus_available'] = 'OK'
-                self._nucleus_available = True
-
-                break
-
-            except socket.gaierror:
-                continue
-        
-        else:
-            logging.warning(f'{self.timestamp()} Failed to discover Nucleus on the network')
-            self.status['nucleus_available'] = 'Failed to discover!'
-            
-            self._nucleus_available = False
-
-        return self._nucleus_available
-    '''
-    
     def connect_nucleus(self):
         
         self.status['nucleus_connected'] = 'Connecting...'
@@ -695,10 +667,6 @@ class RovLink(Thread):
 
             self.write_packet(packet=packet)
 
-            #if not self._enable_nucleus_input:
-            #    time.sleep(0.005)
-            #    continue
-
             if packet['id'] == 0xb4:
 
                 fom_x = packet['fomX']
@@ -747,7 +715,7 @@ class RovLink(Thread):
                 else:
                     self.vision_position_delta_packet_counter['packets_skipped'] += 1
 
-            if packet['id'] == 0xd2:
+            elif packet['id'] == 0xd2:
 
                 orientation = list()
                 orientation.append(self.d2r(packet['ahrsData.roll']))
@@ -755,5 +723,9 @@ class RovLink(Thread):
                 orientation.append(self.d2r(packet['ahrsData.heading']))
 
                 self.orientation_current = orientation
+
+            elif not self._enable_nucleus_input:
+                time.sleep(0.005)
+                continue
 
         self.stop_nucleus()
