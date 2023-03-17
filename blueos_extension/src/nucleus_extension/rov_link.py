@@ -27,6 +27,15 @@ class RovLink(Thread):
         'SERIAL0_PROTOCOL': 2
     }
 
+    PID_PARAMETERS = [
+        'PSC_POSXY_P',
+        'PSC_POSZ_P',
+        'PSC_VELXY_P',
+        'PSC_VELXY_I',
+        'PSC_VELXY_D',
+        'PSC_VELZ_P'
+    ]
+
     def __init__(self, driver):
 
         Thread.__init__(self)
@@ -514,6 +523,26 @@ class RovLink(Thread):
 
         return self._heartbeat
 
+    def read_pid_parameters(self):
+        
+        status = True 
+
+        for parameter in self.PID_PARAMETERS:
+
+            response = self.get_parameter(parameter)
+            status_code = response.status_code
+
+            if status_code != 200:
+                logging.warning(f'[{self.timestamp()}] get_parameter did not respond with status code 200. Actual status code: {status_code}')
+                status = False
+                continue
+
+            param_value = response.json()['message']['param_value']
+
+            self.pid_parameters[parameter] = param_value
+
+        return status
+    
     def read_config_parameters(self):
 
         correct_values = True
@@ -613,6 +642,7 @@ class RovLink(Thread):
 
         if self._heartbeat:
             self.read_config_parameters_startup()
+            self.read_pid_parameters()
 
         time.sleep(self.TIMEOUT)
 

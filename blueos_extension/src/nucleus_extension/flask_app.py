@@ -50,6 +50,8 @@ if __name__ == "flask_app":
             if response.status_code != 200:
                 logging.warning(f'Failed to set parameter value for {parameter}')
         
+        rov_link.read_pid_parameters()
+
         return jsonify(result='Parameters set')
 
     @app.route("/write_controller_parameters", methods=["POST"])
