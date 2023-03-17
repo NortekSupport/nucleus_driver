@@ -3,7 +3,6 @@ import logging
 from threading import Thread
 from queue import Queue
 #import socket
-from math import round
 from datetime import datetime
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -540,7 +539,7 @@ class RovLink(Thread):
 
             param_value = response.json()['message']['param_value']
 
-            self.pid_parameters[parameter] = round(param_value, 3)
+            self.pid_parameters[parameter] = round(float(param_value, 3))
 
         return status
     
