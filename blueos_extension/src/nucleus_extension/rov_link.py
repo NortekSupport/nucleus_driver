@@ -695,9 +695,9 @@ class RovLink(Thread):
 
             self.write_packet(packet=packet)
 
-            if not self._enable_nucleus_input:
-                time.sleep(0.005)
-                continue
+            #if not self._enable_nucleus_input:
+            #    time.sleep(0.005)
+            #    continue
 
             if packet['id'] == 0xb4:
 
