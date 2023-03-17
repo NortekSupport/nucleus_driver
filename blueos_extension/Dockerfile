@@ -53,4 +53,4 @@ LABEL support ''
 
 ENV FLASK_APP=src/nucleus_extension/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
 #CMD ["flask", "run", "--host=0.0.0.0", "--port=80", "--no-reload"]  # TODO: __port should be 80 when integrating into blueos
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000", "--no-reload"]
+CMD ["flask", "run", "--nucleus_ip=192.168.2.201", "--host=0.0.0.0", "--port=5000", "--no-reload"]
