@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_restful import Api
 import logging
 from rov_link import RovLink
+import os
 
 from nucleus_driver import NucleusDriver
 
@@ -9,6 +10,12 @@ logging.basicConfig(level=logging.DEBUG)
 
 #HOSTNAME = 'NORTEK-300046.local'
 HOSTNAME = '192.168.2.201'
+
+
+nucleus_ip = os.environ["NUCLEUS_IP"]
+
+print(f"PASSED NUCLEUS IP: {nucleus_ip}")
+
 
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"  # TODO: Fix
 
@@ -27,14 +34,14 @@ if __name__ == "flask_app":
     rov_link = RovLink(driver=nucleus_driver)
     rov_link.start()
 
-    #app = Flask(__name__)
+    app = Flask(__name__)
 
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
-    parser.add_argument('-nucleus_ip')
-    args = parser.parse_args()
-    nucleus_ip = args.nucleus_ip
-    app = init_app(nucleus_ip)
+    #from argparse import ArgumentParser
+    #parser = ArgumentParser()
+    #parser.add_argument('--nucleus_ip')
+    #args = parser.parse_args()
+    #nucleus_ip = args.nucleus_ip
+    #app = init_app(nucleus_ip)
 
     api = Api(app)
 
