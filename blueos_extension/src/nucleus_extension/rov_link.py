@@ -51,7 +51,7 @@ class RovLink(Thread):
         self.init_time = datetime.now()
 
         self.status = {
-            'cable_guy': 'Discovering...',
+            'cable_guy': '---',
             'nucleus_connected': '---',
             'dvl_enabled': '---',
             'heartbeat': '---',
