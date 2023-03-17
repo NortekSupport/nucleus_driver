@@ -6,17 +6,6 @@
 
 {% block grid_left %} 
 
-<!--
-<span>Cable guy: <span id="cable_guy">Default</span></span>
-<br>
-<span>Nucleus: <span id="nucleus"></span></span>
-<br>
-<span>Heart beat: <span id="heart_beat"></span></span>
-<br>
-<span>ROV config: <span id="controller_parameters"></span></span>
-<br>
--->
-
 <div>
 <fieldset id="status_table">
   <p>Status</p>
@@ -49,9 +38,7 @@
   <fieldset id="enable_driver">
     <p>Enable driver</p>
     <tr>
-      <!-- <label for="toggle_driver_label">Enable driver </label> -->
       <label class="switch" id="toggle_driver_label">
-        <!-- <label for="toggle_driver">Enable driver</label> -->
         <input type="checkbox", id="toggle_driver", name="toggle_driver", value="enable">
         <span class="slider round"></span>
       </label>
@@ -113,6 +100,16 @@
 <h2>Enable Driver</h2>
 
 <p>Toggling the enable driver switch decides whether the velocity data is fed to the ROV. If disabled the Nucleus is still running and collecting data, but the velocity data are not sent to the ROV's control system.</p>
+
+<h2>Packet counter</h2>
+
+<p>The packet counter dispalys how many VISUAL_POSITION_DELTA packets that has been handled in the driver. The different counters means the following:
+  <ul id="default_list">
+    <li><b>Sent: </b>Number of packet succesfully sent to the ROV</li>
+    <li><b>Failed: </b>Number of packet the failed being sent to the ROV</li> 
+    <li><b>Skipped: </b>Number of packet not sent to the ROV due to driver not being enabled</li> 
+  </ul>
+</p>
 
 {% endblock %}
 
