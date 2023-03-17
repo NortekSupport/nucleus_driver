@@ -17,7 +17,7 @@ if __name__ == "flask_app":
     nucleus_driver = NucleusDriver()
 
     rov_link = RovLink(driver=nucleus_driver)
-    rov_link.start()
+    #rov_link.start()
 
     app = Flask(__name__)
     api = Api(app)
@@ -108,6 +108,8 @@ if __name__ == "flask_app":
         
         status = rov_link.status
         status.update({'enable_nucleus_input': rov_link._enable_nucleus_input})
+        status.update(rov_link.config_parameters)
+        status.update(rov_link.pid_parameters)
 
         print('message triggered from RovLink')
         print(status)

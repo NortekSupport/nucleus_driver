@@ -67,32 +67,32 @@
   
 <p>This extension feeds velocity data from the Nucleus into the BlueROV, allowing the ROV to use its "position hold" feature.</p>
 
-<p>This page serves to provide you, the user, with an overview of the condition of the extension, as well as providing you with tools required to optimize your experience</p>
+<p>This page serves to provide you, the user, with an overview of the condition of the extension, as well as providing you with the tools required to optimize your experience.</p>
 
-<p>A description of the contents of this page is given in the following paragraphs. To edit relevant parameters use the navigation panel at the top of the page</p>
+<p>In order for the extension to to be able to feed velocity data to the ROV, certain controller parameters has to be configured. Navigate to "Controller parameters" to perform these configurations.</p>
+
+<p>In order for the ROV to perform well in "position hold", the PID parameters in the ROV should be configured. Navigate to "PID parameters" to perform these configurations.</p>
+
+<p>A description of the contents of this page is given in the following paragraphs.</p>
 
 <h2>Status</h2>
-<p>The status table displays the current status of all the checks that are required for this extension to work</p>
+<p>The status table displays the current status of all the checks that are required for this extension to work.</p>
 
 <p>All the checks must say "OK" in order for the Nucleus to provivde velocity data to the ROV.</p>
 
-<p>These parameters and their required values are as follows:
+<p>If a check says "Failed", do the following to resolve the problem:
 <ul id="default_list">
-  <li><b>Cable guy: </b>This handles the internal networking within the ROV. If this fiels is not OK, power cycle the ROV</li>
-  <li><b>Nucleus connected: </b>If this is not OK something went wrong when trying to establish contact with the Nucleus. Verfiy that the static IP of the Nucleus is set to 192.168.2.201</li>
-  <li><b>DVL enabled: </b>The DVl must be enabled in order for the Nucleus to obtain velocity data. If this field is not OK the extension was not able to configure the Nucleus to enable the DVL. Power cycle the ROV</li>
-  <li><b>Heartbeat: </b>The heartbeat is a sanity check to verify that the ROV is operational. If this is not OK, power cycle the ROV</li>
-  <li><b>Controller parameters: </b>This check if the correct controller parameters are set in the ROV</li>
-  <ul>
-    <li><b>Incorrect: </b> Navigate to the "Controller parameters" page and set the parameters according the the specified values</li>
-    <li><b>Restart: </b>Restart the ROV for the configured controller parameters to take effect</li>
-  </ul>
+  <li><b>Cable guy: </b>Power cycle the ROV</li>
+  <li><b>Nucleus connected: </b>Ensure that the static IP of the Nucleus is 192.168.2.201</li> 
+  <li><b>DVL enabled: </b>Power cycle the ROV</li>
+  <li><b>Heartbeat: </b>Power cycle the ROV</li>
+  <li><b>Controller parameters: </b>Set the correct controller parameters, then power cycle the ROV</li>
 </ul>
 </p>
 
 <h2>Enable Driver</h2>
 
-<p>Toggling the enable driver switch decides whether the velocity data is fed to the ROV. If disabled the Nucleus is still running and collecting data, bet the velocity data are not sent to the ROV's control system</p>
+<p>Toggling the enable driver switch decides whether the velocity data is fed to the ROV. If disabled the Nucleus is still running and collecting data, but the velocity data are not sent to the ROV's control system.</p>
 
 {% endblock %}
 

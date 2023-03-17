@@ -12,42 +12,52 @@
     <table>
       <tr>
         <th>Parameter</th>
-        <th>Value</th>
+        <th>Current</th>
+        <th>New value</th>
       </tr>
       <tr>
         <td><label for="AHRS_EKF_TYPE">AHRS_EKF_TYPE </label></td>
+        <td><span id="AHRS_EKF_TYPE_current">---</span></td>
         <td><input type="text" id="AHRS_EKF_TYPE" name="AHRS_EKF_TYPE"></td>
       </tr>
       <tr>
         <td><label for="EK2_ENABLE">EK2_ENABLE </label></td>
+        <td><span id="EK2_ENABLE_current">---</span></td>
         <td><input type="text" id="EK2_ENABLE" name="EK2_ENABLE"></td>
       </tr>
       <tr>
         <td><label for="EK3_ENABLE">EK3_ENABLE </label></td>
+        <td><span id="EK3_ENABLE_current">---</span></td>
         <td><input type="text" id="EK3_ENABLE" name="EK3_ENABLE"></td>
       </tr>
       <tr>
         <td><label for="VISO_TYPE">VISO_TYPE </label></td>
+        <td><span id="VISO_TYPE_current">---</span></td>
         <td><input type="text" id="VISO_TYPE" name="VISO_TYPE"></td>
       </tr>
       <tr>
         <td><label for="GPS_TYPE">GPS_TYPE </label></td>
+        <td><span id="GPS_TYPE_current">---</span></td>
         <td><input type="text" id="GPS_TYPE" name="GPS_TYPE"></td>
       </tr>
       <tr>
         <td><label for="EK3_SRC1_POSXY">EK3_SRC1_POSXY </label></td>
+        <td><span id="EK3_SRC1_POSXY_current">---</span></td>
         <td><input type="text" id="EK3_SRC1_POSXY" name="EK3_SRC1_POSXY"></td>
       </tr>
       <tr>
         <td><label for="EK3_SRC1_VELXY">EK3_SRC1_VELXY </label></td>
+        <td><span id="EK3_SRC1_VELXY_current">---</span></td>
         <td><input type="text" id="EK3_SRC1_VELXY" name="EK3_SRC1_VELXY"></td>
       </tr>
       <tr>
         <td><label for="EK3_SRC1_POSZ">EK3_SRC1_POSZ </label></td>
+        <td><span id="EK3_SRC1_POSZ_current">---</span></td>
         <td><input type="text" id="EK3_SRC1_POSZ" name="EK3_SRC1_POSZ"></td>
       </tr>
       <tr>
-        <td><label for="ESERIAL0_PROTOCOL">SERIAL0_PROTOCOL </label></td>
+        <td><label for="SERIAL0_PROTOCOL">SERIAL0_PROTOCOL </label></td>
+        <td><span id="SERIAL0_PROTOCOL_current">---</span></td>
         <td><input type="text" id="SERIAL0_PROTOCOL" name="SERIAL0_PROTOCOL"></td>
       </tr>
     </table>
@@ -66,7 +76,7 @@
 
 <p>These parameters and their required values are as follows:
 
-  <ul>
+  <ul id="default_list">
     <li>AHRS_EKF_TYPE = 3</li>
     <li>EK2_ENABLE = 0</li>
     <li>EK3_ENABLE = 1</li>
@@ -81,9 +91,8 @@
 
 <p><b>N.B.</b> These changes may affect the behaviour of the BlueROV!</p>
 
-<p><b>N.B.</b> Neither this extension nor the BlueROV will remember the default values of these parameters.</p>
+<p><b>N.B.</b> Neither this extension nor the BlueROV will remember the default values of these parameters. It is therefore the users responsibility to remember the default values in case they want to revert any configuration done to these parameters.</p>
   
-<p>It is recommended that users write down the original values before making changes to these parameters, in case they wish to chenge them back later</p>
 {% endblock %}
 
 {% block script %}

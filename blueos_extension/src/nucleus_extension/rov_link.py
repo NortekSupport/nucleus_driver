@@ -51,7 +51,7 @@ class RovLink(Thread):
         self.init_time = datetime.now()
 
         self.status = {
-            'cable_guy': '---',
+            'cable_guy': 'Discovering...',
             'nucleus_connected': '---',
             'dvl_enabled': '---',
             'heartbeat': '---',
@@ -67,15 +67,24 @@ class RovLink(Thread):
         self._nucleus_running = False
 
         self.config_parameters = {
-            'AHRS_EKF_TYPE': None,
-            'EK2_ENABLE': None,
-            'EK3_ENABLE': None,
-            'VISO_TYPE': None,
-            'GPS_TYPE': None,
-            'EK3_SRC1_POSXY': None,
-            'EK3_SRC1_VELXY': None,
-            'EK3_SRC1_POSZ': None,
-            'SERIAL0_PROTOCOL': None
+            'AHRS_EKF_TYPE': '---',
+            'EK2_ENABLE': '---',
+            'EK3_ENABLE': '---',
+            'VISO_TYPE': '---',
+            'GPS_TYPE': '---',
+            'EK3_SRC1_POSXY': '---',
+            'EK3_SRC1_VELXY': '---',
+            'EK3_SRC1_POSZ': '---',
+            'SERIAL0_PROTOCOL': '---'
+        }
+
+        self.pid_parameters = {
+            'PSC_POSXY_P': '---',
+            'PSC_POSZ_P': '---',
+            'PSC_VELXY_P': '---',
+            'PSC_VELXY_I': '---',
+            'PSC_VELXY_D': '---',
+            'PSC_VELZ_P': '---'
         }
 
     def d2r(self, deg):
@@ -410,7 +419,7 @@ class RovLink(Thread):
 
         if not self.nucleus_driver.connect(connection_type='tcp'):
             logging.warning('Failed to connect to Nucleus')
-            self.status['nucleus_connected'] = 'Connecting Failed!'
+            self.status['nucleus_connected'] = 'Failed'
 
             self._nucleus_connected = False
 
@@ -455,7 +464,7 @@ class RovLink(Thread):
         if b'OK\r\n' not in reply:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETBT,WT="OFF",DS="ON": {reply}')
 
-            self.status['dvl_enabled'] = 'Failed to enable'
+            self.status['dvl_enabled'] = 'Failed'
             self._dvl_enabled = False
 
         else:
@@ -482,7 +491,7 @@ class RovLink(Thread):
 
         logging.info(f'{self.timestamp()} waiting for vehicle heartbeat...')
 
-        self.status['heartbeat'] = 'Waiting for heartbeat...'
+        self.status['heartbeat'] = 'Listening...'
 
         session = requests.Session()
         retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
@@ -531,14 +540,14 @@ class RovLink(Thread):
 
     def read_config_parameters_startup(self):
         
-        self.status['controller_parameters'] = 'Reading parameters...'
+        self.status['controller_parameters'] = 'Reading...'
 
         correct_values = self.read_config_parameters()
 
         if correct_values:
              self.status['controller_parameters'] = 'OK'
         else:
-             self.status['controller_parameters'] = 'Incorrect'
+             self.status['controller_parameters'] = 'Failed'
 
         self._config = correct_values
 

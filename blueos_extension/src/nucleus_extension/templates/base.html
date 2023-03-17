@@ -43,7 +43,25 @@
       $('#dvl_enabled').text(data.dvl_enabled);
       $('#heartbeat').text(data.heartbeat);
       $('#controller_parameters').text(data.controller_parameters);
+
       $('#toggle_driver').prop("checked", data.enable_nucleus_input);
+
+      $('#AHRS_EKF_TYPE_current').text(data.AHRS_EKF_TYPE);
+      $('#EK2_ENABLE_current').text(data.EK2_ENABLE);
+      $('#EK3_ENABLE_current').text(data.EK3_ENABLE);
+      $('#VISO_TYPE_current').text(data.VISO_TYPE);
+      $('#GPS_TYPE_current').text(data.GPS_TYPE);
+      $('#EK3_SRC1_POSXY_current').text(data.EK3_SRC1_POSXY);
+      $('#EK3_SRC1_VELXY_current').text(data.EK3_SRC1_VELXY);
+      $('#EK3_SRC1_POSZ_current').text(data.EK3_SRC1_POSZ);
+      $('#SERIAL0_PROTOCOL_current').text(data.SERIAL0_PROTOCOL);
+      
+      $('#PSC_POSXY_P_current').text(data.PSC_POSXY_P);
+      $('#PSC_POSZ_P_current').text(data.PSC_POSZ_P);
+      $('#PSC_VELXY_P_current').text(data.PSC_VELXY_P);
+      $('#PSC_VELXY_I_current').text(data.PSC_VELXY_I);
+      $('#PSC_VELXY_D_current').text(data.PSC_VELXY_D);
+      $('#PSC_VELZ_P_current').text(data.PSC_VELZ_P);
     }
   
     $(function() {setInterval(getStatus, 1000)})

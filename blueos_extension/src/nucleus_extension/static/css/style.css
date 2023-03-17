@@ -123,20 +123,21 @@ p {
 /* Layout */
 .grid_parent {
   display: grid;
-  grid-template-columns: 2fr 3fr;
+  grid-template-columns: 1fr 2fr;
+  margin-left: 2rem;
+  margin-right: 2rem;
 }
 
 .grid_left {
   display: inline-block;
-  /*background-color: red; */
   align-items: top;
   text-align:center;
 }
 
 .grid_right {
   display: inline-block;
-  /* background-color: green; */
   align-items: top;
+  margin-left: 1rem;
 }
 
 /* Buttons, forms and input */
@@ -203,7 +204,7 @@ fieldset {
 }
 
 fieldset#status_table, fieldset#enable_driver {
-  width: 20rem;
+  width: 18rem;
 }
 
 #parameters td, #parameters th {
@@ -216,7 +217,7 @@ fieldset#status_table, fieldset#enable_driver {
 
 #status_table td + td {
   text-align: left;
-  color: green;
+  color: black;  /* green */
 }
 
 

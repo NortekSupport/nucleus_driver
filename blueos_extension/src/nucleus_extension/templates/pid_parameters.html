@@ -12,30 +12,37 @@
     <table>
       <tr>
         <th>Parameter</th>
-        <th>Value</th>
+        <th>Current</th>
+        <th>New value</th>
       </tr>
       <tr>
         <td><label for="PSC_POSXY_P">PSC_POSXY_P </label></td>
+        <td><span id="PSC_POSXY_P_current">---</span></td>
         <td><input type="text" id="PSC_POSXY_P" name="PSC_POSXY_P"></td>
       </tr>
       <tr>
         <td><label for="PSC_POSZ_P">PSC_POSZ_P </label></td>
+        <td><span id="PSC_POSZ_P_current">---</span></td>
         <td><input type="text" id="PSC_POSZ_P" name="PSC_POSZ_P"></td>
       </tr>
       <tr>
         <td><label for="PSC_VELXY_P">PSC_VELXY_P </label></td>
+        <td><span id="PSC_VELXY_P_current">---</span></td>
         <td><input type="text" id="PSC_VELXY_P" name="PSC_VELXY_P"></td>
       </tr>
       <tr>
         <td><label for="PSC_VELXY_I">PSC_VELXY_I </label> </td>
+        <td><span id="PSC_VELXY_I_current">---</span></td>
         <td><input type="text" id="PSC_VELXY_I" name="PSC_VELXY_I"></td>
       </tr>
       <tr>
         <td><label for="PSC_VELXY_D">PSC_VELXY_D </label></td>
+        <td><span id="PSC_VELXY_D_current">---</span></td>
         <td><input type="text" id="PSC_VELXY_D" name="PSC_VELXY_D"></td>
       </tr>
       <tr>
         <td><label for="PSC_VELZ_P">PSC_VELZ_P </label></td>
+        <td><span id="PSC_VELZ_P_current">---</span></td>
         <td><input type="text" id="PSC_VELZ_P" name="PSC_VELZ_P"></td>
       </tr>
     </table>
@@ -47,12 +54,13 @@
 {% endblock %}
 
 {% block grid_right %} 
-<h2>PID parametirization</h2>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
+<p>To optimize the performance of the "position hold" algorithm it is necessary to adjust certain PID parameters in the PID controller.</p>
 
-<p>These parameters and their required values are as follows:
+<p>The optimal values varies from vehicle to vehicle as it depends on the physical properties of the ROV. It is therefore the users task to find the best parameters.</p>
 
-  <ul>
+<p>Suggested values for a standard BlueROV, with only the Nucleus being the third party addition to the vehicle, are:
+
+  <ul id="default_list">
     <li>PSC_POSXY_P = 2.0</li>
     <li>PSC_POSZ_P = 1.0</li>
     <li>PSC_VELXY_P = 5.0</li>
@@ -61,6 +69,10 @@
     <li>PSC_VELZ_P = 5.0</li>
   </ul>
 </p>
+
+<p><b>N.B.</b> Any changes to the PID parameters <b>will</b> affect the behaviour of the BlueROV!</p>
+
+<p><b>N.B.</b> Neither this extension nor the BlueROV will remember the default values of these parameters. It is therefore the users responsibility to remember the default values in case they want to revert any configuration done to these parameters.</p>
 
 {% endblock %}
 
