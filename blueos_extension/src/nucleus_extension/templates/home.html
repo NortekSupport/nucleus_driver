@@ -59,6 +59,26 @@
   </fieldset>
 </div>
 
+<div>
+  <fieldset id="status_table">
+    <p>Packet counter</p>
+    <table>
+      <tr>
+        <td><span>Sent: </span></td>
+        <td><span id="packets_sent">---</span></td>
+      </tr>
+      <tr>
+        <td><span>Failed: </span></td>
+        <td><span id="packets_failed">---</span></td>
+      </tr>
+      <tr>
+        <td><span>Skipped: </span></td>
+        <td><span id="packets_skipped">---</span></td>
+      </tr>
+    </table>
+  </fieldset>
+  </div>
+
 {% endblock %}
 
 {% block grid_right %}

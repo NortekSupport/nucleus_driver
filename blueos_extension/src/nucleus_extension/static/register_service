@@ -1,7 +1,7 @@
 {
     "name":"Nucleus",
-    "description":"An extension that utilizes AHRS and DVL data from a Nucleus device to send VISION_POSITION_DELTA packages to Mavlink, allowing for the 'position hold' functionality in QGroundControl",
-    "icon":"docs/nortek",
+    "description":"An extension that utilizes velocity data from a Nucleus device to send VISION_POSITION_DELTA packages to the BlueROV through Mavlink, allowing for the 'position hold' functionality in QGroundControl",
+    "icon":"images/nortek_logo_small.png",
     "company":"Nortek",
     "version":"1.0.0",
     "webpage":"https://github.com/nortekgroup/nucleus_driver/blueos_extension",

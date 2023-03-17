@@ -113,6 +113,7 @@ if __name__ == "flask_app":
         status.update({'enable_nucleus_input': rov_link._enable_nucleus_input})
         status.update(rov_link.config_parameters)
         status.update(rov_link.pid_parameters)
+        status.update(rov_link.vision_position_delta_packet_counter)
 
         print('message triggered from RovLink')
         print(status)

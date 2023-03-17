@@ -92,6 +92,12 @@ class RovLink(Thread):
             'PSC_VELXY_D': '---',
             'PSC_VELZ_P': '---'
         }
+        
+        self.vision_position_delta_packet_counter = {
+            'packets_sent': 0,
+            'packets_failed': 0,
+            'packets_skipped': 0,
+        }
 
     def d2r(self, deg):
 
@@ -617,8 +623,10 @@ class RovLink(Thread):
         response = requests.post(MAVLINK2REST_URL + "/mavlink", json=vision_position_delta)
 
         if response.status_code == 200:
+            self.vision_position_delta_packet_counter['packets_sent'] += 1
             logging.debug(f'{self.timestamp()} VISION_POSITION_DELTA\r\nangle_delta: {angle_delta}\r\nposition_delta: {position_delta}\r\nconfidence: {confidence}\r\ndt: {dt}')
         else:
+            self.vision_position_delta_packet_counter['packets_failed'] += 1
             logging.warning(f'{self.timestamp()} VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
     
     def run(self):
@@ -736,6 +744,8 @@ class RovLink(Thread):
 
                 if self._enable_nucleus_input:
                     self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=int(confidence), dt=int(dt * 1e6))
+                else:
+                    self.vision_position_delta_packet_counter['packets_skipped'] += 1
 
             if packet['id'] == 0xd2:
 
