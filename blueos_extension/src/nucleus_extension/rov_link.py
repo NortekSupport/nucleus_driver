@@ -7,8 +7,6 @@ from datetime import datetime
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
-HOSTNAME = '192.168.2.201'  # TODO: Set this externally?
-
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
 
 class RovLink(Thread):
@@ -49,7 +47,6 @@ class RovLink(Thread):
         self.orientation_current = None
         self.orientation_previous = None
 
-        self.hostname = HOSTNAME
         self.nucleus_id = None
         self.nucleus_firmware = None
 
@@ -421,8 +418,6 @@ class RovLink(Thread):
     '''
     
     def connect_nucleus(self):
-
-        self.nucleus_driver.set_tcp_configuration(host=self.hostname)
         
         self.status['nucleus_connected'] = 'Connecting...'
 

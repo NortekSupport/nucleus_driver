@@ -8,44 +8,20 @@ from nucleus_driver import NucleusDriver
 
 logging.basicConfig(level=logging.DEBUG)
 
-#HOSTNAME = 'NORTEK-300046.local'
-HOSTNAME = '192.168.2.201'
-
-
-nucleus_ip = os.environ["NUCLEUS_IP"]
-
-print(f"PASSED NUCLEUS IP: {nucleus_ip}")
-
+NUCLEUS_IP = os.environ["NUCLEUS_IP"]
 
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"  # TODO: Fix
-
-def init_app(nucleus_ip=None):
-    app = Flask(__name__)
-    app.config["nucleus_ip"] = nucleus_ip
-
-    print(f'PASSED ARGUMENT: {app.config["nucleus_ip"]}')
-
-    return app
 
 if __name__ == "flask_app":
 
     nucleus_driver = NucleusDriver()
+    nucleus_driver.set_tcp_configuration(host=NUCLEUS_IP)
 
     rov_link = RovLink(driver=nucleus_driver)
     rov_link.start()
 
     app = Flask(__name__)
-
-    #from argparse import ArgumentParser
-    #parser = ArgumentParser()
-    #parser.add_argument('--nucleus_ip')
-    #args = parser.parse_args()
-    #nucleus_ip = args.nucleus_ip
-    #app = init_app(nucleus_ip)
-
     api = Api(app)
-
-    
 
     @app.route("/", defaults={"js": "home"})
     @app.route("/<any(home, pid_parameters, controller_parameters):js>")
