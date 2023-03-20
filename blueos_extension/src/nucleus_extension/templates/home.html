@@ -132,18 +132,7 @@
 {% endblock %}
 
 {% block script %}
-<script>
-  function enableDriver(ev) {
-    ev.preventDefault();
-    $.ajax({
-      method: 'POST',
-      url: {{ url_for('toggle_driver') | tojson }},
-      data: $(this).serialize()
-    }).done();
-  }
 
-  $('#toggle_driver').change(enableDriver);
-</script>
 
 
 <script>
