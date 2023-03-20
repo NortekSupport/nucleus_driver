@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
 from flask_restful import Api
 import logging
 from rov_link import RovLink
@@ -151,7 +151,8 @@ if __name__ == "flask_app":
 
         logging.info(f"downloading from path: {path}")
 
-        return send_from_directory(path, "nucleus_log.csv", as_attachment=True)
+        #return send_from_directory(path, "nucleus_log.csv", as_attachment=True)
+        return send_file(f"{path}/nucleus_log.csv", as_attachment=True)
 
 
     ''' Future support
