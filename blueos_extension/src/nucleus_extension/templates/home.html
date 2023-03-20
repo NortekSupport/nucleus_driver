@@ -142,7 +142,6 @@
     ev.preventDefault();
     $.ajax({
       method: 'POST',
-      /* url: {{ url_for('toggle_driver') | tojson }}, */
       url: "../toggle_driver",
       data: $(this).serialize()
     }).done();
@@ -150,5 +149,6 @@
 
   $('#toggle_driver').change(enableDriver);
 </script>
+
 
 {% endblock %}
