@@ -123,6 +123,8 @@ if __name__ == "flask_app":
     @app.route("/handle_logging", methods=['POST'])
     def handle_logging():
         
+        print('\r\n\r\n\r\n HANDLE LOGGING FUNCTION TRIGGERED')
+
         logging = request.form.get("logging", None, type=str)
 
         if logging == 'start':

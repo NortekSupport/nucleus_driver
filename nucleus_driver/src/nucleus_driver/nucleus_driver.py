@@ -103,7 +103,7 @@ class NucleusDriver:
 
     def start_logging(self):
 
-        self.logger.start()
+        return self.logger.start()
 
     def stop_logging(self):
 
