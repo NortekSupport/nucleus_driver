@@ -139,7 +139,7 @@
     $.ajax({
       method: 'POST',
       /* url: {{ url_for('toggle_driver') | tojson }}, */
-      url: "/toggle_driver",
+      url: "../toggle_driver",
       data: $(this).serialize()
     }).done();
   }
@@ -153,7 +153,7 @@
     $.ajax({
       method: 'POST',
       /* url: {{ url_for('handle_logging') | tojson }}, */
-      url: "/handle_logging",
+      url: "../handle_logging",
       data: $(this).serialize()
     }).done();
   }
