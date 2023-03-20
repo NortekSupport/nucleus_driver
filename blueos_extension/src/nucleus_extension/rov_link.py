@@ -165,16 +165,21 @@ class RovLink(Thread):
             status = {'logging': False,
                       'path': self._log_path}
 
+        return status
 
     def stop_logging(self):
 
         self.nucleus_driver.logger.stop()
 
         if self.nucleus_driver.logger._logging:
-            status = {'logging': True}
+            status = {'logging': True,
+                      'path': self._log_path}
         else:
-            status = {'logging': False}
+            status = {'logging': False,
+                      'path': self._log_path}
 
+        return status
+    
     def set_parameter(self, parameter_id, parameter_value, parameter_type):
 
         def get_param_value_timestamp():
