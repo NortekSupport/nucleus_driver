@@ -104,7 +104,7 @@
     ev.preventDefault();
     $.ajax({
       method: 'POST',
-      url: {{ url_for('write_controller_parameters')|tojson }},
+      url: {{ url_for('write_controller_parameters') | tojson }},
       data: $(this).serialize()
     }).done(addControllerShow);
   }

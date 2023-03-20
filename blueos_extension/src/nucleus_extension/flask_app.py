@@ -10,8 +10,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 NUCLEUS_IP = os.environ["NUCLEUS_IP"]
 
-MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"  # TODO: Fix
-
 if __name__ == "flask_app":
 
     nucleus_driver = NucleusDriver()
@@ -27,7 +25,7 @@ if __name__ == "flask_app":
     @app.route("/", defaults={"js": "home"})
     @app.route("/<any(home, pid_parameters, controller_parameters):js>")
     def index(js):
-        print(f'js: {js}')
+        
         return render_template(f"{js}.html", js=js)
     
     @app.route("/write_pid_parameters", methods=["POST"])
@@ -104,7 +102,6 @@ if __name__ == "flask_app":
 
         enabled = rov_link.get_enable_nucleus_input()
 
-        print(f'enable driver: {enabled}')
         return jsonify(result=enabled)
     
     @app.route("/get_status", methods=['GET'])

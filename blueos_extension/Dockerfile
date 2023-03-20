@@ -49,8 +49,7 @@ LABEL company '{\
     }'
 LABEL readme 'https://github.com/nortekgroup/nucleus_driver/blueos_extension/README.md'
 LABEL website 'https://github.com/nortekgroup/nucleus_driver/blueos_extension'
-LABEL support ''
+LABEL support 'https://support.nortekgroup.com/'
 
 ENV FLASK_APP=src/nucleus_extension/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
-#CMD ["flask", "run", "--host=0.0.0.0", "--port=80", "--no-reload"]  # TODO: __port should be 80 when integrating into blueos
 CMD ["flask", "run", "--host=0.0.0.0", "--port=5000", "--no-reload"]

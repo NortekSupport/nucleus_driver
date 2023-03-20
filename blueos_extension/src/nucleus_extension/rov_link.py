@@ -179,6 +179,7 @@ class RovLink(Thread):
         return status
     
     """
+    
     def set_parameter(self, parameter_id, parameter_value, parameter_type):
 
         def get_param_value_timestamp():

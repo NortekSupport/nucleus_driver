@@ -76,15 +76,13 @@
 
 {% endblock %}
 
-
-
 {% block script %}
 <script>
   function addPidParameters(ev) {
     ev.preventDefault();
     $.ajax({
       method: 'POST',
-      url: {{ url_for('write_pid_parameters')|tojson }},
+      url: {{ url_for('write_pid_parameters') | tojson }},
       data: $(this).serialize()
     }).done(addPidShow);
   }
