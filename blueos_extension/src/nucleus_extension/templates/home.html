@@ -72,7 +72,7 @@
     <table>
       <tr>
         <label class="switch" id="log_switch_label">
-          <input type="checkbox", id="log_switch", name="logging", value="start">
+          <input type="checkbox", id="handle_logging", name="handle_logging", value="start">
           <span class="slider round"></span>
         </label>
       </tr>
@@ -133,7 +133,18 @@
 
 {% block script %}
 
+<script>
+  function enableDriver(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      url: {{ url_for('toggle_driver') | tojson }},
+      data: $(this).serialize()
+    }).done();
+  }
 
+  $('#toggle_driver').change(enableDriver);
+</script>
 
 <script>
   function enableLogging(ev) {
@@ -145,7 +156,7 @@
     }).done();
   }
 
-  $('#log_switch').change(enableLogging);
+  $('#handle_logging').change(enableLogging);
 </script>
 
 
