@@ -149,6 +149,8 @@ if __name__ == "flask_app":
             logging.warning('Could not find path to download file')
             return jsonify({'status': None})
 
+        logging.info(f"downloading from path: {path}")
+
         return send_from_directory(path, "nucleus_log.csv", as_attachment=True)
 
 
