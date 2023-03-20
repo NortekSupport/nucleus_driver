@@ -106,20 +106,6 @@ if __name__ == "flask_app":
         print(f'enable driver: {enabled}')
         return jsonify(result=enabled)
 
-    @app.route("/get_status", methods=['GET'])
-    def get_status():
-        
-        status = rov_link.status
-        status.update({'enable_nucleus_input': rov_link._enable_nucleus_input})
-        status.update({'logging': nucleus_driver.logger._logging})
-        status.update(rov_link.config_parameters)
-        status.update(rov_link.pid_parameters)
-        status.update(rov_link.vision_position_delta_packet_counter)
-
-        print('message triggered from RovLink')
-        print(status)
-        return jsonify(status)
-
     @app.route("/handle_logging", methods=['POST'])
     def handle_logging():
         
@@ -132,6 +118,20 @@ if __name__ == "flask_app":
         else:
             status = rov_link.stop_logging()
 
+        return jsonify(status)
+
+    @app.route("/get_status", methods=['GET'])
+    def get_status():
+        
+        status = rov_link.status
+        status.update({'enable_nucleus_input': rov_link._enable_nucleus_input})
+        status.update({'logging': nucleus_driver.logger._logging})
+        status.update(rov_link.config_parameters)
+        status.update(rov_link.pid_parameters)
+        status.update(rov_link.vision_position_delta_packet_counter)
+
+        print('message triggered from RovLink')
+        print(status)
         return jsonify(status)
 
     @app.route("/download_log_file", methods=['GET'])
