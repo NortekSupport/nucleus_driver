@@ -137,19 +137,6 @@
 {% block script %}
 
 
-<script>
-  function enableLogging(ev) {
-    ev.preventDefault();
-    $.ajax({
-      method: 'POST',
-      /* url: {{ url_for('handle_logging') | tojson }}, */
-      url: "../handle_logging",
-      data: $(this).serialize()
-    }).done();
-  }
-
-  $('#handle_logging').change(enableLogging);
-</script>
 
 
 <script>
@@ -166,6 +153,20 @@
   $('#toggle_driver').change(enableDriver);
 </script>
 
+
+<script>
+  function enableLogging(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      /* url: {{ url_for('handle_logging') | tojson }}, */
+      url: "../handle_logging",
+      data: $(this).serialize()
+    }).done();
+  }
+
+  $('#handle_logging').change(enableLogging);
+</script>
 
 
 
