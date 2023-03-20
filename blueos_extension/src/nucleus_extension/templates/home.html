@@ -174,7 +174,7 @@
   function downloadLogFile(ev) {
     ev.preventDefault();
     $.ajax({
-      method: 'POST',
+      method: 'GET',
       /* url: {{ url_for('download_log_file')|tojson }},*/
       url: "../download_log_file",
       data: $(this).serialize()
