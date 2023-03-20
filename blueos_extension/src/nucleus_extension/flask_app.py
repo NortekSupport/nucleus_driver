@@ -96,6 +96,8 @@ if __name__ == "flask_app":
 
         enable = request.form.get("toggle_driver", None, type=str)
 
+        print(f'TYPE VALUE {enable}')
+
         if enable == 'enable':
             rov_link.set_enable_nucleus_input(enable=True)
         else:
