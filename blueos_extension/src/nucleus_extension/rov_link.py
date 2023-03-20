@@ -159,9 +159,11 @@ class RovLink(Thread):
         logging.info(f'Started logging to file {self._log_path}')
 
         if self.nucleus_driver.logger._logging:
-            status = {'logging': True}
+            status = {'logging': True,
+                      'path': self._log_path}
         else:
-            status = {'logging': False}
+            status = {'logging': False,
+                      'path': self._log_path}
 
 
     def stop_logging(self):

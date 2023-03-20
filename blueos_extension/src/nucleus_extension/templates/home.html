@@ -158,7 +158,11 @@
       /* url: {{ url_for('handle_logging') | tojson }}, */
       url: "../handle_logging",
       data: $(this).serialize()
-    }).done();
+    }).done(updateLoggingStatus);
+  }
+
+  function addPidShow(data) {
+    $('#result_download').text(data.path);
   }
 
   $('#handle_logging').change(enableLogging);
