@@ -35,6 +35,24 @@
 </div>
 
 <div>
+  <fieldset id="parameters">
+    <p>Logging</p>
+    <table>
+      <tr>
+        <label class="switch" id="log_switch_label">
+          <input type="checkbox", id="handle_logging", name="handle_logging", value="start">
+          <span class="slider round"></span>
+        </label>
+      </tr>
+      
+    </table>
+      
+    <input type="submit" value="Download">
+    <div><span id="result_download">---</span></div>
+  </fieldset>
+</div>
+
+<div>
   <fieldset id="enable_driver">
     <p>Enable driver</p>
     <tr>
@@ -66,23 +84,7 @@
   </fieldset>
 </div>
 
-<div>
-  <fieldset id="parameters">
-    <p>Logging</p>
-    <table>
-      <tr>
-        <label class="switch" id="log_switch_label">
-          <input type="checkbox", id="handle_logging", name="handle_logging", value="start">
-          <span class="slider round"></span>
-        </label>
-      </tr>
-      
-    </table>
-      
-    <input type="submit" value="Download">
-    <div><span id="result_download">---</span></div>
-  </fieldset>
-</div>
+
 
 {% endblock %}
 
@@ -133,19 +135,6 @@
 
 {% block script %}
 
-<script>
-  function enableDriver(ev) {
-    ev.preventDefault();
-    $.ajax({
-      method: 'POST',
-      /* url: {{ url_for('toggle_driver') | tojson }}, */
-      url: "../toggle_driver",
-      data: $(this).serialize()
-    }).done();
-  }
-
-  $('#toggle_driver').change(enableDriver);
-</script>
 
 <script>
   function enableLogging(ev) {
@@ -159,6 +148,21 @@
   }
 
   $('#handle_logging').change(enableLogging);
+</script>
+
+
+<script>
+  function enableDriver(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      /* url: {{ url_for('toggle_driver') | tojson }}, */
+      url: "../toggle_driver",
+      data: $(this).serialize()
+    }).done();
+  }
+
+  $('#toggle_driver').change(enableDriver);
 </script>
 
 
