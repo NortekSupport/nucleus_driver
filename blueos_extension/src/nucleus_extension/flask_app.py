@@ -95,10 +95,6 @@ if __name__ == "flask_app":
     def toggle_driver():
 
         enable = request.form.get("toggle_driver", None, type=str)
-        logging = request.form.get("handle_logging", None, type=str)
-
-        print(f'ENABLE VALUE {enable}')
-        print(f'LOGGING VALUE {logging}')
 
         if enable == 'enable':
             rov_link.set_enable_nucleus_input(enable=True)
@@ -116,6 +112,9 @@ if __name__ == "flask_app":
         print('\r\n\r\n\r\n HANDLE LOGGING FUNCTION TRIGGERED')
 
         logging = request.form.get("logging", None, type=str)
+
+
+        print(f'\r\n\r\n\r\n LOGGING TYPE: {logging}')
 
         if logging == 'start':
             status = rov_link.start_logging()
