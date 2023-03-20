@@ -151,41 +151,4 @@
   $('#toggle_driver').change(enableDriver);
 </script>
 
-
-<script>
-  /* Future support: logging
-  function enableLogging(ev) {
-    ev.preventDefault();
-    $.ajax({
-      method: 'POST',
-      url: {{ url_for('handle_logging') | tojson }},
-      url: "../handle_logging",
-      data: $(this).serialize()
-    }).done(updateLoggingStatus);
-  }
-
-  function updateLoggingStatus(data) {
-    $('#result_download').text(data.path);
-  }
-
-  $('#handle_logging').change(enableLogging);
-  */
-</script>
-
-<script>
-  /* Future support: logging
-  function downloadLogFile(ev) {
-    ev.preventDefault();
-    $.ajax({
-      method: 'GET',
-      url: {{ url_for('download_log_file')|tojson }},
-      url: "../download_log_file",
-      data: $(this).serialize()
-    }).done();
-  }
-
-  $('#download_log_file').on('submit', downloadLogFile);
-  */
-</script>
-
 {% endblock %}
