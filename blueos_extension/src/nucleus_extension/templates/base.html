@@ -14,7 +14,6 @@
       <li><a href="{{ url_for('index', js='home') }}" class="{% if js == 'home' %}active{% endif %}">Home</a></li>
       <li><a href="{{ url_for('index', js='pid_parameters') }}" class="{% if js == 'pid_parameters' %}active{% endif %}">PID parameters</a></li>
       <li><a href="{{ url_for('index', js='controller_parameters') }}" class="{% if js == 'controller_parameters' %}active{% endif %}">Controller parameters</a></li>
-      <!-- <li id="contact"><a href="#">Contact us</a></li> -->
     </ul>
   </header>
 
@@ -24,7 +23,7 @@
     <div class="grid_left">{% block grid_left %}{% endblock %}</div>
     <div class="grid_right">{% block grid_right %}{% endblock %}</div>
   </div>
-  <!-- {% block content %}{% endblock %} -->
+  
   {% block script %}{% endblock %}
 
   <script>
@@ -44,6 +43,7 @@
       $('#controller_parameters').text(data.controller_parameters);
 
       $('#toggle_driver').prop("checked", data.enable_nucleus_input);
+      $('#log_switch').prop("checked", data.logging);
 
       $('#AHRS_EKF_TYPE_current').text(data.AHRS_EKF_TYPE);
       $('#EK2_ENABLE_current').text(data.EK2_ENABLE);

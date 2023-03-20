@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_restful import Api
 import logging
 from rov_link import RovLink
@@ -111,6 +111,7 @@ if __name__ == "flask_app":
         
         status = rov_link.status
         status.update({'enable_nucleus_input': rov_link._enable_nucleus_input})
+        status.update({'logging': nucleus_driver.logger._logging})
         status.update(rov_link.config_parameters)
         status.update(rov_link.pid_parameters)
         status.update(rov_link.vision_position_delta_packet_counter)
@@ -118,6 +119,37 @@ if __name__ == "flask_app":
         print('message triggered from RovLink')
         print(status)
         return jsonify(status)
+
+    @app.route("/handle_logging", methods=['POST'])
+    def handle_logging():
+        
+        logging = request.form.get("logging", None, type=str)
+
+        if logging == 'start':
+            status = rov_link.start_logging()
+        else:
+            status = rov_link.stop_logging()
+
+        return jsonify(status)
+
+    @app.route("/download_log_file", methods=['GET'])
+    def download_log_file():
+        
+        if nucleus_driver.logger._logging:
+            logging.warning('Can not download file while logging')
+            return
+
+        path = rov_link.get_download_path()
+        log_file = rov_link.get_download_file_name()
+
+        return
+
+        if path is None:
+            logging.warning('Could not find path to download file')
+            return
+
+        return send_from_directory(directory=path, filename=log_file)
+
 
     ''' Future support
     @app.route("/nucleus_driver/start", methods=['GET'])

@@ -5,11 +5,11 @@ html {
 body {
   font-size: 1rem;
   line-height: 1.5;
-  max-width: 80em; /* 120em */
-  margin: auto;  /* auto - 0 */
+  max-width: 80em;
+  margin: auto;
   color: #000000;
   background-color: #fbf9f7;
-  padding: 0px;  /* 13px */
+  padding: 0px;
   vertical-align: middle;
 }  
 
@@ -19,15 +19,12 @@ header {
   background-color: #ffffff;
   padding: 20px 0px;
   text-align: center;
-  /* box-shadow: 0 0 3px #000000; */  /* Nortek website does not use shadow */
   overflow-x: hidden
 }
-
 
 header ul {
   padding-top: 20px;
 }
-
 
 header li {
   display: inline;
@@ -150,6 +147,7 @@ p {
   border-radius: 2px;
   box-shadow: none;
   box-sizing: border-box; }
+
 #parameters textarea:focus, #parameters select:focus, #parameters input[type]:focus {
   border: 1.5px solid #2374cc;
   outline: 0; }
@@ -166,9 +164,11 @@ p {
   border: 1.5px solid #002d73;
   cursor: pointer;
   box-sizing: border-box; }
+
 #parameters input[type="submit"][disabled] {
   cursor: default;
   opacity: .5; }
+
 #parameters input[type="submit"]:hover {
   background-color: #002d73;
   border-color: #002d73;
@@ -207,7 +207,7 @@ fieldset#status_table {
   width: 18rem;
 }
 
-fieldset#packet_table, fieldset#enable_driver {
+fieldset#packet_table, fieldset#enable_driver, fieldset#parameters {
   width: 10rem;
 }
 
@@ -223,7 +223,6 @@ fieldset#packet_table, fieldset#enable_driver {
   text-align: left;
   color: black;  /* green */
 }
-
 
 #status_table td, #status_table th, #packet_table td, #packet_table th {
   padding: 0px 2px;

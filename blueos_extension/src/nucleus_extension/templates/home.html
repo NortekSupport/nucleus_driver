@@ -66,6 +66,24 @@
   </fieldset>
 </div>
 
+<div>
+  <fieldset id="parameters">
+    <p>Logging</p>
+    <table>
+      <tr>
+        <label class="switch" id="log_switch_label">
+          <input type="checkbox", id="log_switch", name="logging", value="start">
+          <span class="slider round"></span>
+        </label>
+      </tr>
+      
+    </table>
+      
+    <input type="submit" value="Download">
+    <div><span id="result_download">---</span></div>
+  </fieldset>
+</div>
+
 {% endblock %}
 
 {% block grid_right %}
@@ -85,7 +103,7 @@
 <h2>Status</h2>
 <p>The status table displays the current status of all the checks that are required for this extension to work.</p>
 
-<p>All the checks must say "OK" in order for the Nucleus to provivde velocity data to the ROV.</p>
+<p>All the checks must say "OK" in order for the Nucleus to provide velocity data to the ROV.</p>
 
 <p>If a check says "Failed", do the following to resolve the problem:
 <ul id="default_list">
@@ -103,9 +121,9 @@
 
 <h2>Packet counter</h2>
 
-<p>The packet counter dispalys how many VISUAL_POSITION_DELTA packets that has been handled in the driver. The different counters means the following:
+<p>The packet counter displays how many VISUAL_POSITION_DELTA packets that has been handled in the driver. The different counters means the following:
   <ul id="default_list">
-    <li><b>Sent: </b>Number of packets succesfully sent to the ROV</li>
+    <li><b>Sent: </b>Number of packets successfully sent to the ROV</li>
     <li><b>Failed: </b>Number of packets failed being sent to the ROV</li> 
     <li><b>Skipped: </b>Number of packets not sent to the ROV due to driver not being enabled</li> 
   </ul>
@@ -123,15 +141,24 @@
       data: $(this).serialize()
     }).done();
   }
-  /*
-    }).done(enableDriverShow);
-  }
 
-  function enableDriverShow(data) {
-    $('#toggle_driver').prop("checked", data.result)
-  }
-  */
   $('#toggle_driver').change(enableDriver);
 </script>
+
+
+<script>
+  function enableLogging(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      url: {{ url_for('handle_logging') | tojson }},
+      data: $(this).serialize()
+    }).done();
+  }
+
+  $('#log_switch').change(enableDriver);
+</script>
+
+
 
 {% endblock %}

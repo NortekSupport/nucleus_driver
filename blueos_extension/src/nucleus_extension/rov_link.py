@@ -72,6 +72,8 @@ class RovLink(Thread):
 
         self._nucleus_running = False
 
+        self._log_path = None
+
         self.config_parameters = {
             'AHRS_EKF_TYPE': '---',
             'EK2_ENABLE': '---',
@@ -145,6 +147,31 @@ class RovLink(Thread):
             packet = self.packet_queue.get_nowait()
 
         return packet
+
+    def get_download_path(self):
+
+        return self._log_path
+
+    def start_logging(self):
+        
+        self._log_path = self.nucleus_driver.logger.start()
+
+        logging.info(f'Started logging to file {self._log_path}')
+
+        if self.nucleus_driver.logger._logging:
+            status = {'logging': True}
+        else:
+            status = {'logging': False}
+
+
+    def stop_logging(self):
+
+        self.nucleus_driver.logger.stop()
+
+        if self.nucleus_driver.logger._logging:
+            status = {'logging': True}
+        else:
+            status = {'logging': False}
 
     def set_parameter(self, parameter_id, parameter_value, parameter_type):
 
