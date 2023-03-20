@@ -34,8 +34,6 @@
 </fieldset>
 </div>
 
-
-
 <div>
   <fieldset id="enable_driver">
     <p>Enable driver</p>
@@ -68,6 +66,7 @@
   </fieldset>
 </div>
 
+<!-- Future support: logging
 <div>
   <fieldset id="parameters">
     <p>Logging</p>
@@ -87,7 +86,7 @@
     </form>
   </fieldset>
 </div>
-
+-->
 
 {% endblock %}
 
@@ -152,6 +151,7 @@
   $('#toggle_driver').change(enableDriver);
 </script>
 
+<!-- Future support: logging
 <script>
   function enableLogging(ev) {
     ev.preventDefault();
@@ -183,5 +183,5 @@
 
   $('#download_log_file').on('submit', downloadLogFile);
 </script>
-
+-->
 {% endblock %}

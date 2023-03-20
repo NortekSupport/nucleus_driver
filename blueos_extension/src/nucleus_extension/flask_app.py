@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
+from flask import Flask, request, jsonify, render_template
 from flask_restful import Api
 import logging
 from rov_link import RovLink
@@ -107,23 +107,6 @@ if __name__ == "flask_app":
         print(f'enable driver: {enabled}')
         return jsonify(result=enabled)
     
-    @app.route("/handle_logging", methods=['POST'])
-    def handle_logging():
-        
-        print('\r\n\r\n\r\n HANDLE LOGGING FUNCTION TRIGGERED')
-
-        logging = request.form.get("logging", None, type=str)
-
-
-        print(f'\r\n\r\n\r\n LOGGING TYPE: {logging}')
-
-        if logging == 'start':
-            status = rov_link.start_logging()
-        else:
-            status = rov_link.stop_logging()
-
-        return jsonify(status)
-
     @app.route("/get_status", methods=['GET'])
     def get_status():
         
@@ -136,6 +119,21 @@ if __name__ == "flask_app":
 
         return jsonify(status)
 
+    ''' Future support: logging
+    @app.route("/handle_logging", methods=['POST'])
+    def handle_logging():
+
+        logging = request.form.get("logging", None, type=str)
+
+        if logging == 'start':
+            status = rov_link.start_logging()
+        else:
+            status = rov_link.stop_logging()
+
+        return jsonify(status)
+    '''
+
+    ''' Future support: logging
     @app.route("/download_log_file", methods=['GET'])
     def download_log_file():
         
@@ -156,7 +154,7 @@ if __name__ == "flask_app":
 
         #return send_from_directory(path, "nucleus_log.csv", as_attachment=True)
         return send_file(f"{path}/nucleus_log.csv", as_attachment=True)
-
+    '''
 
     ''' Future support
     @app.route("/nucleus_driver/start", methods=['GET'])

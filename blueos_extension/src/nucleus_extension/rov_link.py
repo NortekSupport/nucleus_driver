@@ -147,11 +147,14 @@ class RovLink(Thread):
             packet = self.packet_queue.get_nowait()
 
         return packet
-
+    
+    """ Future support: logging
     def get_download_path(self):
 
         return self._log_path
-
+    """
+        
+    """ Future support: logging
     def start_logging(self):
         
         self._log_path = self.nucleus_driver.logger.start()
@@ -163,6 +166,9 @@ class RovLink(Thread):
         
         return status
 
+    """    
+
+    """ Future support: logging
     def stop_logging(self):
 
         self.nucleus_driver.logger.stop()
@@ -172,6 +178,7 @@ class RovLink(Thread):
 
         return status
     
+    """
     def set_parameter(self, parameter_id, parameter_value, parameter_type):
 
         def get_param_value_timestamp():
