@@ -133,8 +133,6 @@ if __name__ == "flask_app":
         status.update(rov_link.pid_parameters)
         status.update(rov_link.vision_position_delta_packet_counter)
 
-        print('message triggered from RovLink')
-        print(status)
         return jsonify(status)
 
     @app.route("/download_log_file", methods=['GET'])
@@ -151,7 +149,7 @@ if __name__ == "flask_app":
             logging.warning('Could not find path to download file')
             return jsonify({'status': None})
 
-        return send_from_directory(path, "nucleus_log.csv")
+        return send_from_directory(path, "nucleus_log.csv", as_attachment=True)
 
 
     ''' Future support
