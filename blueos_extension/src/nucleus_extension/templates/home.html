@@ -157,7 +157,7 @@
     ev.preventDefault();
     $.ajax({
       method: 'POST',
-      /* url: {{ url_for('handle_logging') | tojson }}, */
+      url: {{ url_for('handle_logging') | tojson }},
       url: "../handle_logging",
       data: $(this).serialize()
     }).done(updateLoggingStatus);
@@ -175,7 +175,7 @@
     ev.preventDefault();
     $.ajax({
       method: 'GET',
-      /* url: {{ url_for('download_log_file')|tojson }},*/
+      url: {{ url_for('download_log_file')|tojson }},
       url: "../download_log_file",
       data: $(this).serialize()
     }).done();
