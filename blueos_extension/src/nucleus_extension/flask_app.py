@@ -145,15 +145,13 @@ if __name__ == "flask_app":
             return
 
         path = rov_link.get_download_path()
-        log_file = rov_link.get_download_file_name()
-
-        return
+        #log_file = rov_link.get_download_file_name()
 
         if path is None:
             logging.warning('Could not find path to download file')
-            return
+            return jsonify({'status': None})
 
-        return send_from_directory(directory=path, filename=log_file)
+        return send_from_directory(directory=path, filename="nucleus_log.csv")
 
 
     ''' Future support

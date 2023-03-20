@@ -80,9 +80,11 @@
       </tr>
       
     </table>
-      
-    <input type="submit" value="Download">
-    <div><span id="result_download">---</span></div>
+    
+    <form id="download_log_file">
+      <input type="submit" value="Download">
+      <div><span id="result_download">---</span></div>
+    </form>
   </fieldset>
 </div>
 
@@ -166,6 +168,20 @@
   }
 
   $('#handle_logging').change(enableLogging);
+</script>
+
+<script>
+  function downloadLogFile(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      /* url: {{ url_for('download_log_file')|tojson }},*/
+      url: "../download_log_file",
+      data: $(this).serialize()
+    }).done();
+  }
+
+  $('#download_log_file').on('submit', downloadLogFile);
 </script>
 
 {% endblock %}
