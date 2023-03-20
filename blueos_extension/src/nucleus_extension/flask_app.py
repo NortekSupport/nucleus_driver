@@ -152,6 +152,8 @@ if __name__ == "flask_app":
 
         logging.info(f"downloading from path: {path}")
 
+        path = "/home/pi/blueos_extension/logs/230320_1201"
+
         #return send_from_directory(path, "nucleus_log.csv", as_attachment=True)
         return send_file(f"{path}/nucleus_log.csv", as_attachment=True)
 
