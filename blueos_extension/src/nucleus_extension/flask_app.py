@@ -90,7 +90,7 @@ if __name__ == "flask_app":
             status = 'Incorrect parameters set. Restart ROV'
 
         return jsonify(result=status)
-    '''
+    
     @app.route("/toggle_driver", methods=["POST"])
     def toggle_driver():
 
@@ -105,7 +105,7 @@ if __name__ == "flask_app":
 
         print(f'enable driver: {enabled}')
         return jsonify(result=enabled)
-    '''
+    
     @app.route("/handle_logging", methods=['POST'])
     def handle_logging():
         
