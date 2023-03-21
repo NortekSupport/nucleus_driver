@@ -1,10 +1,17 @@
-# Installation
+
+# BlueOS extension
+
+This is a Nucleus extension for the BlueOS software running on BlueRov. 
+
+It works by wrapping up the Nucleus Driver in a docker image, with a script that feeds velocity data from the Nucleus device into the Ardusub controll system through mavlink commands.
+
+This allows the user to utilize the "position hold" functionality in the ROV
 
 ## Nucleus setup
 
-set IP
-connect ethernet
-look for led light to see if healthy
+This extension relies on a TCP connection to the Nucleus through a static IP.
+
+
 
 ## Extension integration
 
