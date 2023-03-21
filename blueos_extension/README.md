@@ -1,22 +1,59 @@
 
 # BlueOS extension
 
-This is a Nucleus extension for the BlueOS software running on BlueRov. 
+This is a Nucleus extension for the BlueOS software running on BlueROV. 
 
-It works by wrapping up the Nucleus Driver in a docker image, with a script that feeds velocity data from the Nucleus device into the Ardusub controll system through mavlink commands.
+It works by wrapping up the Nucleus Driver in a docker image, with a script that feeds velocity data from the Nucleus device into the Ardusub control system through mavlink commands.
 
 This allows the user to utilize the "position hold" functionality in the ROV
 
-## Nucleus setup
+## setup
+
+### Nucleus
 
 This extension assumes that the Nucleus is connected to the network of the ROV through an ethernet connection. It is therefore necessary to set a static IP in the Nucleus.
 
-The network prefix of the BlueROV is 192.168.2.0, with a netmask of 255.255.255.0. The Nucleus' static IP must therefore be set to a fitting value, i.e. 192.168.2.201
+The network prefix of the BlueROV is 192.168.2.0, with a netmask of 255.255.255.0. The Nucleus' static IP must therefore be set to a fitting value, i.e. 192.168.2.201.
+
+### Ardusub
+
+Ardusub needs to be of version 4.1.0 or newer for it to support the VISUAL_POSITION_DELTA packets used to send velocity data to the ROV.
+
+
+## Adding extension to BlueOS
+
+### BlueOS
+
+The extension should be added through BlueOS' extensions menu.
+
+### Docker
+
+Alternatively, the extension can be added by ssh-ing into the onboard raspberry pi and running the following command.
+
+```
+docker run --net=host --name=BlueOS-Nucleus --restart=unless-stopped -e NUCLEUS_IP="192.168.2.201" martinbjnortek/blueos_nucleus:latest
+```
+
+N.B. the user interface that comes with the extension depends on being integrated through BlueOS and will not be available if the extension is added in this manner
+
+## Using the extension
 
 
 
 
-## Extension integration
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 This is an extension for the BlueROV, utilizing a Nucleus device to send velocity data to the ROV. 
 This allows for the ROV to use its "position hold" functionality.
