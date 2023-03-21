@@ -9,7 +9,10 @@ This allows the user to utilize the "position hold" functionality in the ROV
 
 ## Nucleus setup
 
-This extension relies on a TCP connection to the Nucleus through a static IP.
+This extension assumes that the Nucleus is connected to the network of the ROV through an ethernet connection. It is therefore necessary to set a static IP in the Nucleus.
+
+The network prefix of the BlueROV is 192.168.2.0, with a netmask of 255.255.255.0. The Nucleus' static IP must therefore be set to a fitting value, i.e. 192.168.2.201
+
 
 
 
