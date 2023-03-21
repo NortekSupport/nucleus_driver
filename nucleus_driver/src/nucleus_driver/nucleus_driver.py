@@ -168,12 +168,13 @@ class NucleusDriver:
 
         if not self.connection.get_connection_status():
             self.messages.write_warning('Nucleus not connected')
-            return b''
+            response = b''
 
-        response = self.commands._stop(timeout=3)
+        else:
+            response = self.commands._stop(timeout=3)
 
-        if self.logging_fieldcal:
-            time.sleep(0.5)
+            if self.logging_fieldcal:
+                time.sleep(0.5)
 
         if self.parser.thread_running:
             self.parser.stop()
