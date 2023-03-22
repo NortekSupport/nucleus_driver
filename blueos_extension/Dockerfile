@@ -54,6 +54,6 @@ LABEL support 'https://support.nortekgroup.com/'
 ARG PORT=80
 
 ENV FLASK_APP=src/nucleus_extension/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
-#ENV FLASK_RUN_PORT=${PORT}
+ENV FLASK_RUN_PORT=${PORT}
 
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000", "--no-reload"]
+CMD ["flask", "run", "--host=0.0.0.0", "--no-reload"]
