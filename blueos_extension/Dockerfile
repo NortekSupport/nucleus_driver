@@ -56,4 +56,6 @@ ARG PORT=5000
 ENV FLASK_APP=src/nucleus_extension/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
 ENV FLASK_RUN_PORT=${PORT}
 
+RUN echo ${PORT}
+
 CMD ["flask", "run", "--host=0.0.0.0", "--no-reload"]
