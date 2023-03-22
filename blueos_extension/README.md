@@ -34,88 +34,43 @@ Alternatively, the extension can be added by ssh-ing into the onboard raspberry 
 docker run --net=host --name=BlueOS-Nucleus --restart=unless-stopped -e NUCLEUS_IP="192.168.2.201" martinbjnortek/blueos_nucleus:latest
 ```
 
+Here "NUCLEUS_IP" has to be the static IP configured on the Nucleus device.
+
 N.B. the user interface that comes with the extension depends on being integrated through BlueOS and will not be available if the extension is added in this manner
 
-## Using the extension
+## Using the extension (Is this covering only the UI?)
 
+**N.B.** In order for the extension to work it is necessary to change certain controller parameters. Refer to "Controller parameters" section for more info
 
+**N.B.** In order for the "position hold" algorithm to perform well it might be necessary to change the ROV's PID parameters. Refer to "PID parameters" section for more info
 
+With the extension added, its user interface (UI) can be found by navigating to [blueos.local/nucleus](blueos.local/nucleus).
 
+The UI presents the user with a home page and two pages for paramterization. These pages can be navigated inbetween using the navigation banner at the top of the UI
 
+### Home
 
+The home screen presents the user with a status field which displays the results of various checks performed during the startup of the ROV. It is necessarry for all of these checks to pass in order for extension to work. Some easy troubleshooting is presented in the home screen in case any of these checks were to fail
 
+It is also a field which allows the user to decide whether the driver is enabled. The driver must be enabled for it to feed velocity data to the ROV. If it is not enabled the driver is still runnning and extracting data from the Nucleus, but the velocity is not sent to the ROV.
 
+The packet counter field displays how many velocity data packets has been handled by the extension. Sent packages refers to packages that has been sent to the ROV, Failed packets refers to packets that for some reason failed to be sent, and Skipped packets are packets that were in good condition and ready to be sent, but weren't due to the driver not being enabled.
 
+### PID parameters
 
+**N.B.** Adjusting any of these parameters **WILL** change the bahavior of the ROV
 
+**N.B.** Neither the extension nor the ROV will remember the original values of these parameters in case they are changed. It is therefore the users responsibility to remember the origial values in case they wish to revert back to the original parameterization.
 
+The PID parameters page gives the user opportuniy to modify selected PID parameters in the controller. Good parametirzation is necessary for a good performance of the ROV. The correct parameters varies from vehicle to vehicle as the physical attributes of the ROV has an impact on its behavior. However, recommended parameters for a standard BlueROV2 with only the Nucleus being the third party installation is presented on this page.
 
+### Controller parameters
 
+**N.B.** Adjusting any of these parameters may change the behaviour of the ROV
 
+**N.B.** Neither the extension nor the ROV will remember the original values of these parameters in case they are changed. It is therefore the users responsibility to remember the origial values in case they wish to revert back to the original parameterization.
 
+In order for the controller to accept and utilize the velocity packets sent from the Nucleus, certain parameters has to be changed. The parameters and their required values are presented on this page. 
 
-
-This is an extension for the BlueROV, utilizing a Nucleus device to send velocity data to the ROV. 
-This allows for the ROV to use its "position hold" functionality.
-
-For this implementation to work, the ROV needs to run ArduSub version of 4.1.0 or newer.
-
-This extension is available through Dockerhub and can be downloaded and executed through the following command:
-
-```
-docker run --net=host dockerhub/nucleus-something
-```
-
-# First use
-Upon startup the extension will check if necessary parameters are set to the correct values in ArduSub. These parameters are:
-
-* AHRS_EKF_TYPE: 3
-* EK2_ENABLE: 0
-* EK3_ENABLE: 1
-* VISO_TYPE: 1
-* GPS_TYPE: 0
-* EK3_SRC1_POSXY: 6
-* EK3_SRC1_VELXY: 6
-* EK3_SRC_POSZ: 1
-* SERIAL0_PROTOCOL: 2
-
-If any of these values are incorrect the extension will change the value of the parameter as listed above. 
-Any parameter changes will require a power cycle for the changes to take effect, thus the extension will not start sending data from the Nucleus until the device has been restarted.
-
-# General use
-
-# Running the extension
-
-Beyond the first use, and assuming the extension was able to set all the required parameters properly. 
-The extension will always run automatically upon vehicle startup and no interaction from the user is required.
-
-To verify that the Nucleus is running, ensure that the led light on the Nucleus is blinking.
-
-## PID parameters
-For better performance of the "position hold" functionality, certain PID parameters in the ROV will be changed on startup.
-These parameters and their values are:
-
-* PSC_POSXY_P: 2.0
-* PSC_POSZ_P: 1.0
-* PSC_VELXY_P: 5.0
-* PSC_VELXY_I: 0.5
-* PSC_VELXY_D: 0.8
-* PSC_VELZ_P: 5.0
-
-These parameters will change the behavior of the ROV, so be aware that the ROV will handle differently in general after these parameters has been set.
-
-## Communication
-
-The communication protocol used within ArduSub is Mavlink.
-With the parameter changes performed above, ArduSub will accept the VISION_POSITION_DELTA package, a package originally intended for visual odometry.
-The VISION_POSITION_DELTA package takes velocity and orientation data as input and feed this data into the extended kalman filter algorithm in ArduSub.
-
-The extension extracts velocity and orientation from the DVL and AHRS packages respectively from the Nucleus and feeds them to ArduSub through the VISION_POSITION_DELTA package.
-
-# User interaction
-
-The extension does not need any interaction from the user in order for it to work,
-however, a few commands has been added to the extension which allows the user to change the behavior of the extension.
-
-Be aware, utilizing these commands will change the behavior of the ROV and/or extension.
+After these parameters has been changed it is necessary to power cycle the vehicle for these parameters to take effect
 
