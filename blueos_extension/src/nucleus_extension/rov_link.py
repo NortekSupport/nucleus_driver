@@ -148,38 +148,6 @@ class RovLink(Thread):
 
         return packet
     
-    """ Future support: logging
-    def get_download_path(self):
-
-        return self._log_path
-    """
-        
-    """ Future support: logging
-    def start_logging(self):
-        
-        self._log_path = self.nucleus_driver.logger.start()
-
-        logging.info(f'Started logging to file {self._log_path}')
-
-        status = {'logging': self.nucleus_driver.logger._logging,
-                  'path': self._log_path}
-        
-        return status
-
-    """    
-
-    """ Future support: logging
-    def stop_logging(self):
-
-        self.nucleus_driver.logger.stop()
-    
-        status = {'logging': self.nucleus_driver.logger._logging,
-                  'path': self._log_path}
-
-        return status
-    
-    """
-    
     def set_parameter(self, parameter_id, parameter_value, parameter_type):
 
         def get_param_value_timestamp():

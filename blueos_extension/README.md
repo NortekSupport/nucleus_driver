@@ -38,7 +38,7 @@ Navigate to the blueos_extension folder (the folder containing the Dockerfile) a
 docker build . -t nucleus_driver
 ```
 
-The web interface of the extension is by default on port 5000. In the case of a BlueROV system the web interface can be accessed in a browser by navigating to `192.168.2.2:5000` or (`blueos.local:5000`) when the docker container is running.
+The web interface of the extension is by default on port 5000. In the case of a BlueROV system the web interface can be accessed in a browser by navigating to `192.168.2.2:5000` (or `blueos.local:5000`) when the docker container is running.
 
 If another port is preferred for the web interface the image can be build with the preffered port as an argument with the following command
 
