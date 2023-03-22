@@ -28,15 +28,41 @@ The extension should be added through BlueOS' extensions menu.
 
 ### Docker
 
-Alternatively, the extension can be added by ssh-ing into the onboard raspberry pi and running the following command.
+It is also possible to run a docker container directly on the onboard computer without going through BlueOS.
+
+**N.B.** It is assumed that the build cammand in this section is executed on the ROVs onboard computer. If not, refer to dockers `buildx` functionality and ensure that that the image is build for the hardware matching the onboard computer.
+
+Navigate to the blueos_extension folder (the folder containing the Dockerfile) and build the docker image with the following command:
 
 ```
-docker run --net=host --name=BlueOS-Nucleus --restart=unless-stopped -e NUCLEUS_IP="192.168.2.201" martinbjnortek/blueos_nucleus:latest
+docker build . -t nucleus_driver
 ```
 
-Here "NUCLEUS_IP" has to be the static IP configured on the Nucleus device.
+The web interface of the extension is by default on port 5000. In the case of a BlueROV system the web interface can be accessed in a browser by navigating to `192.168.2.2:5000` or (`blueos.local:5000`) when the docker container is running.
 
-N.B. the user interface that comes with the extension depends on being integrated through BlueOS and will not be available if the extension is added in this manner
+If another port is preferred for the web interface the image can be build with the preffered port as an argument with the following command
+
+```
+docker build . -t nucleus_driver --build-arg PORT=5000
+```
+
+with the value following "`PORT=`" being your preferred port.
+
+**N.B.** The docker image built for the BlueOS extension has the web interface running on port 80, allowing BlueOS to handle how the web interface should be accessed. 
+
+The docker container can be executed with the following command
+
+```
+docker run --net=host --name=Nucleus-Driver --restart=unless-stopped -e NUCLEUS_IP="192.168.2.201" nucleus_driver
+```
+
+`--net=host` allows the container to share the network of the ROV which is necessary for it to communicate with the ROV and make the web interface available
+
+`--name=Nucleus-Driver` is the preferred name of the container.
+
+`--restart=unless-stopped` allows the extension to automatically start when the ROV is powered up
+
+`-e NUCLEUS_IP="192.168.2.201"` is the IP adress of the Nucleus device. Ensure that this value matches the static IP set on the device.
 
 ## Using the extension (Is this covering only the UI?)
 

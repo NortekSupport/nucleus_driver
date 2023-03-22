@@ -51,7 +51,7 @@ LABEL readme 'https://github.com/nortekgroup/nucleus_driver/blueos_extension/REA
 LABEL website 'https://github.com/nortekgroup/nucleus_driver/blueos_extension'
 LABEL support 'https://support.nortekgroup.com/'
 
-ARG PORT=80
+ARG PORT=5000
 
 ENV FLASK_APP=src/nucleus_extension/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
 ENV FLASK_RUN_PORT=${PORT}

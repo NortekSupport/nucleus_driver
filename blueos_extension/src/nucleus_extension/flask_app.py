@@ -19,7 +19,6 @@ if __name__ == "flask_app":
     rov_link.start()
 
     app = Flask(__name__)
-    #app.use_x_sendfile = True
     api = Api(app)
 
     @app.route("/", defaults={"js": "home"})
