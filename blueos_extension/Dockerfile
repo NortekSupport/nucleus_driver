@@ -1,5 +1,7 @@
 FROM python:3.9-slim-bullseye
 
+ARG PORT=5001
+
 RUN apt-get update && apt-get -y upgrade
 
 RUN useradd --create-home pi
@@ -52,4 +54,4 @@ LABEL website 'https://github.com/nortekgroup/nucleus_driver/blueos_extension'
 LABEL support 'https://support.nortekgroup.com/'
 
 ENV FLASK_APP=src/nucleus_extension/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
-CMD ["flask", "run", "--host=0.0.0.0", "--port=80", "--no-reload"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=${PORT}", "--no-reload"]
