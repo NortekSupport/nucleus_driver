@@ -64,7 +64,7 @@ docker run --net=host --name=Nucleus-Driver --restart=unless-stopped -e NUCLEUS_
 
 `-e NUCLEUS_IP="192.168.2.201"` is the IP adress of the Nucleus device. Ensure that this value matches the static IP set on the device.
 
-## Using the extension (Is this covering only the UI?)
+## Using the extension
 
 **N.B.** In order for the extension to work it is necessary to change certain controller parameters. Refer to "Controller parameters" section for more info
 
