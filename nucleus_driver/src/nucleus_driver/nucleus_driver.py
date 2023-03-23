@@ -91,7 +91,8 @@ class NucleusDriver:
 
             message = self.commands._handle_reply(command=command_encoded, terminator=b'OK\r\n', timeout=1)
 
-            self.messages.write_message(message)
+            for entry in message:
+                self.messages.write_message(entry.decode(), skip_newline=True)
 
     ###########################################
     # Logging
