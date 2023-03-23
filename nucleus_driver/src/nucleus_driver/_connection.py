@@ -9,7 +9,9 @@ import errno
 
 
 class Connection:
+
     CONNECTION_TYPES = ['serial', 'tcp']
+    TIMEOUT = 0.01  # This is not the timeout for the read function of this driver as that is handled in the read function, but rather the timeout of the actual pyserial and socket read function
 
     @dataclass
     class SerialConfiguration:
@@ -22,6 +24,7 @@ class Connection:
         port: int = 9000
 
     def __init__(self, **kwargs):
+
 
         self.messages = kwargs.get('messages')
         self.commands = None
@@ -182,7 +185,7 @@ class Connection:
             try:
                 self.serial = serial.Serial(port=self.serial_configuration.port,
                                             baudrate=self.serial_configuration.baudrate,
-                                            timeout=self.timeout)
+                                            timeout=self.TIMEOUT)
 
                 return True
 
@@ -239,7 +242,7 @@ class Connection:
             try:
                 self.tcp = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
                 self.tcp.connect((self.tcp_configuration.host, self.tcp_configuration.port))
-                self.tcp.settimeout(self.timeout)
+                self.tcp.settimeout(self.TIMEOUT)
 
             except Exception as exception:
                 self.messages.write_exception(message='Failed to connect through TCP: {}'.format(exception))
@@ -424,23 +427,19 @@ class Connection:
             serial_data = b''
 
             try:
-                if terminator is not None:
-                    init_time = datetime.now()
-                    while (datetime.now() - init_time).seconds < timeout:
-                        serial_data += self.serial.read_until(terminator, size)
+
+                init_time = datetime.now()
+
+                while (datetime.now() - init_time).total_seconds() <= timeout:
+                    serial_data += self.serial.read(1)
+
+                    if terminator is not None:
                         if terminator in serial_data or b'ERROR\r\n' in serial_data:
                             break
 
-                elif size is not None:
-                    init_time = datetime.now()
-                    while (datetime.now() - init_time).seconds < timeout:
-                        serial_data += self.serial.read(size=max(0, size - len(serial_data)))
+                    if size is not None:
                         if len(serial_data) >= size:
                             break
-
-                else:
-                    if self.serial.in_waiting:
-                        serial_data += self.serial.read(self.serial.in_waiting)
 
             except Exception as exception:
                 self.messages.write_exception(message='Failed to read serial data from Nucleus: {}'.format(exception))
@@ -456,41 +455,38 @@ class Connection:
                 except socket.timeout:
                     return True
                 except Exception as exception:
-                    if self.get_connection_status():
-                        self.messages.write_exception(message='Failed to read tcp data from Nucleus: {}'.format(exception))
-
+                    self.messages.write_exception(message='Failed to read tcp data from Nucleus: {}'.format(exception))
                     return False
 
-            if terminator is not None:
+            def _get_byte_from_tcp_buffer() -> bytes:
 
-                init_time = datetime.now()
-                while (datetime.now() - init_time).seconds < timeout:
-                    if terminator in self.tcp_buffer:
+                if len(self.tcp_buffer) == 0:
+                    return b''
+
+                byte = self.tcp_buffer[0:1]
+                self.tcp_buffer = self.tcp_buffer[1:]
+
+                return byte
+
+            tcp_data = b''
+
+            init_time = datetime.now()
+
+            while (datetime.now() - init_time).total_seconds() <= timeout:
+
+                if len(self.tcp_buffer) == 0:
+                    if not _read():
                         break
-                    else:
-                        if not _read():
-                            break
 
-                line, separator, self.tcp_buffer = self.tcp_buffer.partition(terminator)
-                tcp_data = line + separator
+                tcp_data += _get_byte_from_tcp_buffer()
 
-            elif size is not None:
-
-                init_time = datetime.now()
-                while (datetime.now() - init_time).seconds < timeout:
-                    if len(self.tcp_buffer) >= size:
+                if terminator is not None:
+                    if terminator in tcp_data or b'ERROR\r\n' in tcp_data:
                         break
-                    else:
-                        if not _read():
-                            break
 
-                tcp_data = self.tcp_buffer[:size]
-                self.tcp_buffer = self.tcp_buffer[size:]
-
-            else:
-                _read()
-                tcp_data = self.tcp_buffer
-                self.tcp_buffer = b''
+                if size is not None:
+                    if len(tcp_data) >= size:
+                        break
 
             return tcp_data
 
