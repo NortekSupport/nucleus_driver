@@ -4,6 +4,6 @@
     "icon":"images/nortek_logo_small.png",
     "company":"Nortek",
     "version":"1.0.0",
-    "webpage":"https://github.com/nortekgroup/nucleus_driver/blueos_extension",
+    "webpage":"https://github.com/nortekgroup/nucleus_driver/tree/main/blueos_extension",
     "api":""
  }
