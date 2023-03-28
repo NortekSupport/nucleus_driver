@@ -108,7 +108,6 @@ if __name__ == "flask_app":
         
         status = rov_link.status
         status.update({'enable_nucleus_input': rov_link._enable_nucleus_input})
-        #status.update({'logging': nucleus_driver.logger._logging})
         status.update(rov_link.config_parameters)
         status.update(rov_link.pid_parameters)
         status.update(rov_link.vision_position_delta_packet_counter)
@@ -126,16 +125,10 @@ if __name__ == "flask_app":
         if hostname is None:
             logging.warning(f'Hostname can not be None')
             return jsonify(result='Hostname can not be None')
-                            
-        #rov_link.hostname = hostname
 
         rov_link.set_hostname(hostname)
 
         return jsonify(result=f'Hostname set to {hostname}')
 
-    #@app.route("/get_hostname", methods=['GET'])
-    #def get_hostname():
-    #
-    #    jsonify(hostname=rov_link.hostname)
 
 

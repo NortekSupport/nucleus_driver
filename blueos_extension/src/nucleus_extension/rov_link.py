@@ -126,8 +126,6 @@ class RovLink(Thread):
             Load settings from .config/nucleus/settings.json
             """
 
-            print(f'LOADING FILE FROM: {self.settings_path}')
-
             try:
                 with open(self.settings_path) as settings:
                     data = json.load(settings)
@@ -168,15 +166,10 @@ class RovLink(Thread):
             logging.warning(f'Failed to write settings to file: {e}')
 
     def set_hostname(self, hostname):
-        
-        print('SETTING HOSTNAME')
+
         self.hostname = hostname
 
-        print(f'HOSTNAME SET: {self.hostname}')
-
         self.save_settings()
-
-        print('SETTINGS SAVED')
 
     def timestamp(self) -> str:
 
