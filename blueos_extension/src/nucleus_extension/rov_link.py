@@ -151,21 +151,29 @@ class RovLink(Thread):
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
-        ensure_dir(self.settings_path)
-        with open(self.settings_path, "w") as settings:
-            settings.write(
-                json.dumps(
-                    {
-                        "hostname": self.hostname
-                    }
+        try:
+            ensure_dir(self.settings_path)
+            with open(self.settings_path, "w") as settings:
+                settings.write(
+                    json.dumps(
+                        {
+                            "hostname": self.hostname
+                        }
+                    )
                 )
-            )
+        except Exception as e:
+            logging.warning(f'Failed to write settings to file: {e}')
 
     def set_hostname(self, hostname):
         
+        print('SETTING HOSTNAME')
         self.hostname = hostname
 
+        print(f'HOSTNAME SET: {self.hostname}')
+
         self.save_settings()
+
+        print('SETTINGS SAVED')
 
     def timestamp(self) -> str:
 
