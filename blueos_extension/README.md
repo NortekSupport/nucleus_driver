@@ -15,6 +15,7 @@ This extension assumes that the Nucleus is connected to the network of the ROV t
 
 The network prefix of the BlueROV is 192.168.2.0, with a netmask of 255.255.255.0. The Nucleus' static IP must therefore be set to a fitting value, i.e. 192.168.2.201.
 
+
 ### Ardusub
 
 Ardusub needs to be of version 4.1.0 or newer for it to support the VISUAL_POSITION_DELTA packets used to send velocity data to the ROV.
