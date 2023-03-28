@@ -8,7 +8,7 @@ from nucleus_driver import NucleusDriver
 
 logging.basicConfig(level=logging.DEBUG)
 
-NUCLEUS_IP = os.environ["NUCLEUS_IP"]
+#NUCLEUS_IP = os.environ["NUCLEUS_IP"]
 
 if __name__ == "flask_app":
 
