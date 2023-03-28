@@ -2,7 +2,8 @@ import time
 import logging
 from threading import Thread
 from queue import Queue
-#import socket
+import json
+import os
 from datetime import datetime
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -40,6 +41,8 @@ class RovLink(Thread):
 
         self.nucleus_driver = driver
 
+        self.settings_path = os.path.join(os.path.expanduser("~"), ".config", "nucleus", "settings.json")
+
         self.thread = Thread()
         self.thread_running = True
 
@@ -47,6 +50,7 @@ class RovLink(Thread):
         self.orientation_current = None
         self.orientation_previous = None
 
+        self.hostname = '---'
         self.nucleus_id = None
         self.nucleus_firmware = None
 
@@ -116,6 +120,52 @@ class RovLink(Thread):
     def get_enable_nucleus_input(self):
 
         return self._enable_nucleus_input
+
+    def load_settings(self) -> None:
+            """
+            Load settings from .config/dvl/settings.json
+            """
+            try:
+                with open(self.settings_path) as settings:
+                    data = json.load(settings)
+                    self.hostname = data["hostname"]
+                    logging.debug("Loaded settings: ", data)
+            except FileNotFoundError:
+                logging.warning("Settings file not found, using default.")
+            except ValueError:
+                logging.warning("File corrupted, using default settings.")
+            except KeyError as error:
+                logging.warning("key not found: ", error)
+                logging.warning("using default instead")
+
+    def save_settings(self) -> None:
+        """
+        Load settings from .config/dvl/settings.json
+        """
+
+        def ensure_dir(file_path) -> None:
+            """
+            Helper to guarantee that the file path exists
+            """
+            directory = os.path.dirname(file_path)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+
+        ensure_dir(self.settings_path)
+        with open(self.settings_path, "w") as settings:
+            settings.write(
+                json.dumps(
+                    {
+                        "hostname": self.hostname
+                    }
+                )
+            )
+
+    def set_hostname(self, hostname):
+        
+        self.hostname = hostname
+
+        self.save_settings()
 
     def timestamp(self) -> str:
 
@@ -401,6 +451,7 @@ class RovLink(Thread):
         
         self.status['nucleus_connected'] = 'Connecting...'
 
+        self.nucleus_driver.set_tcp_configuration(host=self.hostname)
         if not self.nucleus_driver.connect(connection_type='tcp'):
             logging.warning('Failed to connect to Nucleus')
             self.status['nucleus_connected'] = 'Failed'
@@ -604,6 +655,8 @@ class RovLink(Thread):
             logging.warning(f'{self.timestamp()} VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
     
     def run(self):
+        
+        self.load_settings()
 
         self.wait_for_cableguy()
 
@@ -623,7 +676,8 @@ class RovLink(Thread):
 
         time.sleep(self.TIMEOUT)
 
-        self.start_nucleus()
+        if self._nucleus_connected and self._dvl_enabled:
+            self.start_nucleus()
 
         logging.info(f"{self.timestamp()} Nucleus driver running")
 
@@ -637,8 +691,16 @@ class RovLink(Thread):
                 if not self._nucleus_connected:
                     logging.warning(f"{self.timestamp()} Nucleus is not connected")
 
+                    self.connect_nucleus()
+
                 if not self._dvl_enabled:
                     logging.warning(f"{self.timestamp()} DVL is not enabled on Nucleus")
+
+                    if self._nucleus_connected:  # TODO: Maybe?
+                        self.setup_nucleus()
+
+                if self._nucleus_connected and self._dvl_enabled:
+                    self.start_nucleus()
 
                 if not self._heartbeat:
                     logging.warning(f"{self.timestamp()} Can't detect heartbeat")

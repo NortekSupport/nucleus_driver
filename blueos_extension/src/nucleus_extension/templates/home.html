@@ -35,6 +35,23 @@
 </div>
 
 <div>
+  <form id="set_hostname">
+    <fieldset id="status_table">
+      <p>Nucleus Connection</p>
+      <table style="text-align:center;">
+        <tr>
+          <td><label for="HOST">Hostname </label></td>
+          <td><span id="HOST_current">---</span></td>
+          <td><input type="text" id="HOST" name="HOST"></td>
+        </tr>
+      </table>
+      <input type="submit" value="Set hostname">
+      <div><span id="result_hostname">---</span></div>
+    </fieldset>
+  </form>
+</div>
+
+<div>
   <fieldset id="enable_driver">
     <p>Enable driver</p>
     <tr>
@@ -126,6 +143,23 @@
   }
 
   $('#toggle_driver').change(enableDriver);
+</script>
+
+<script>
+  function setHostname(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      url: {{ url_for('set_hostname') | tojson }},
+      data: $(this).serialize()
+    }).done(setHostnameShow);
+  }
+
+  function setHostnameShow(data) {
+    $('#result_hostname').text(data.result);
+  }
+
+  $('#set_hostname').on('submit', setHostname);
 </script>
 
 {% endblock %}

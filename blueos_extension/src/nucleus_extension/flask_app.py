@@ -13,7 +13,7 @@ NUCLEUS_IP = os.environ["NUCLEUS_IP"]
 if __name__ == "flask_app":
 
     nucleus_driver = NucleusDriver()
-    nucleus_driver.set_tcp_configuration(host=NUCLEUS_IP)
+    #nucleus_driver.set_tcp_configuration(host=NUCLEUS_IP)
 
     rov_link = RovLink(driver=nucleus_driver)
     rov_link.start()
@@ -112,5 +112,28 @@ if __name__ == "flask_app":
         status.update(rov_link.config_parameters)
         status.update(rov_link.pid_parameters)
         status.update(rov_link.vision_position_delta_packet_counter)
+        status.update({'hostname': rov_link.hostname})
 
         return jsonify(status)
+
+    @app.route("/set_hostname", methods=['POST'])
+    def set_hostname():
+
+        hostname = request.form.get("HOSTNAME", None, type=str)
+
+        if hostname is None:
+            logging.warning(f'Hostname can not be None')
+            jsonify(status='Hostname can not be None')
+                            
+        #rov_link.hostname = hostname
+
+        rov_link.set_hostname(hostname)
+
+        jsonify(result=f'Hostname set to {hostname}')
+
+    #@app.route("/get_hostname", methods=['GET'])
+    #def get_hostname():
+    #
+    #    jsonify(hostname=rov_link.hostname)
+
+
