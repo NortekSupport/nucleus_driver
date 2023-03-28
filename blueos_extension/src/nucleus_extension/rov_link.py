@@ -123,8 +123,11 @@ class RovLink(Thread):
 
     def load_settings(self) -> None:
             """
-            Load settings from .config/dvl/settings.json
+            Load settings from .config/nucleus/settings.json
             """
+
+            print(f'LOADING FILE FROM: {self.settings_path}')
+
             try:
                 with open(self.settings_path) as settings:
                     data = json.load(settings)
@@ -669,8 +672,7 @@ class RovLink(Thread):
         self.wait_for_cableguy()
 
         if self._cable_guy:
-            self.connect_nucleus()
-
+            self.connect_nucleus()  # TODO: Check if Nucleus is running instead of stopping
         if self._nucleus_connected:
             self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
             self.setup_nucleus()
