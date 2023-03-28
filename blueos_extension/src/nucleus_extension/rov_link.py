@@ -705,6 +705,7 @@ class RovLink(Thread):
                     logging.warning(f"{self.timestamp()} DVL is not enabled on Nucleus")
 
                     if self._nucleus_connected:  # TODO: Maybe?
+                        self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
                         self.setup_nucleus()
 
                 if self._nucleus_connected and self._dvl_enabled:
