@@ -8,12 +8,12 @@ from nucleus_driver import NucleusDriver
 
 logging.basicConfig(level=logging.DEBUG)
 
-#NUCLEUS_IP = os.environ["NUCLEUS_IP"]
+#NUCLEUS_IP = os.environ["NUCLEUS_IP"]  # TODO: Enable when BlueOS supports environment variables in docker run
 
 if __name__ == "flask_app":
 
     nucleus_driver = NucleusDriver()
-    #nucleus_driver.set_tcp_configuration(host=NUCLEUS_IP)
+    #nucleus_driver.set_tcp_configuration(host=NUCLEUS_IP)  # TODO: Enable when BlueOS supports environment variables in docker run
 
     rov_link = RovLink(driver=nucleus_driver)
     rov_link.start()
@@ -119,8 +119,6 @@ if __name__ == "flask_app":
     def set_hostname():
 
         hostname = request.form.get("HOSTNAME", None, type=str)
-
-        print(f'sEtTiNg HOSTNAME: {hostname}')
 
         if hostname is None:
             logging.warning(f'Hostname can not be None')

@@ -690,21 +690,23 @@ class RovLink(Thread):
 
                 if not self._cable_guy:
                     logging.warning(f"{self.timestamp()} Cable guy not available")
+                
+                if not self._nucleus_connected or not self._dvl_enabled:
 
-                if not self._nucleus_connected:
-                    logging.warning(f"{self.timestamp()} Nucleus is not connected")
+                    if not self._nucleus_connected:
+                        logging.warning(f"{self.timestamp()} Nucleus is not connected")
 
-                    self.connect_nucleus()
+                        self.connect_nucleus()
 
-                if not self._dvl_enabled:
-                    logging.warning(f"{self.timestamp()} DVL is not enabled on Nucleus")
+                    if self._nucleus_connected and not self._dvl_enabled:
+                        logging.warning(f"{self.timestamp()} DVL is not enabled on Nucleus")
 
-                    if self._nucleus_connected:  # TODO: Maybe?
                         self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
                         self.setup_nucleus()
 
-                if self._nucleus_connected and self._dvl_enabled:
-                    self.start_nucleus()
+                    if self._nucleus_connected and self._dvl_enabled:
+                        self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
+                        self.start_nucleus()
 
                 if not self._heartbeat:
                     logging.warning(f"{self.timestamp()} Can't detect heartbeat")

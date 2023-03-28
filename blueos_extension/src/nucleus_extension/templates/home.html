@@ -36,7 +36,7 @@
 
 <div>
   <form id="set_hostname">
-    <fieldset id="parameters">
+    <fieldset id="parameters" style="width:18rem">
       <p>Nucleus hostname</p>
       <table style="text-align:center;">
         <tr>
@@ -45,7 +45,7 @@
         </tr>
         <tr>
           <td><label for="HOSTNAME">New </label></td>
-          <td><input type="text" id="HOSTNAME" name="HOSTNAME"></td>
+          <td><input type="text" id="HOSTNAME" name="HOSTNAME" style="width:12rem"></td>
         </tr>
       </table>
       <input type="submit" value="Set hostname">
@@ -116,6 +116,10 @@
   <li><b>Controller parameters: </b>Set the correct controller parameters, then power cycle the ROV</li>
 </ul>
 </p>
+
+<h2>Nucleus hostname</h2>
+
+Displays and modifies the hostname used to connect to the Nucleus device. This should be the static IP which is configured on the Nortek Nucleus device.
 
 <h2>Enable Driver</h2>
 
