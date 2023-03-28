@@ -121,7 +121,7 @@ if __name__ == "flask_app":
 
         hostname = request.form.get("HOSTNAME", None, type=str)
 
-        print(f'HOSTNAME: {hostname}')
+        print(f'sEtTiNg HOSTNAME: {hostname}')
 
         if hostname is None:
             logging.warning(f'Hostname can not be None')
