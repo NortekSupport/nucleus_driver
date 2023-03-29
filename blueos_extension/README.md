@@ -21,7 +21,7 @@ The network prefix of the BlueROV is 192.168.2.0, with a netmask of 255.255.255.
 Ardusub needs to be of version 4.1.0 or newer for it to support the VISUAL_POSITION_DELTA packets used to send velocity data to the ROV.
 
 
-## Adding extension to BlueOS
+## Adding extension to BlueROV2
 
 ### BlueOS
 
@@ -29,9 +29,17 @@ The extension should be added through BlueOS' extensions menu.
 
 ### Docker
 
-It is also possible to run a docker container directly on the onboard computer without going through BlueOS.
+It is also possible to add the extension manually on the onboard computer without going through BlueOS.
 
-**N.B.** It is assumed that the build cammand in this section is executed on the ROVs onboard computer. If not, refer to dockers `buildx` functionality and ensure that that the image is build for the hardware matching the onboard computer.
+To set this extension up manually, ssh into the Raspberry Pi on the BlueROV2 (or access via red-pill in [BlueOS terminal](https://docs.bluerobotics.com/ardusub-zola/software/onboard/BlueOS-1.0/advanced-usage/#terminal)).
+
+**N.B.** The docker image available on dockerhub is set to use port 80 for its user interface which allows BlueOS to handle which port this user interface should be available at. For the manual approach it is therefore necessary to build the docker image with a different port if you wish to have access to the user interface.
+
+Clone this repo in your preferred path with the following command:
+
+```
+git clone git@github.com:nortekgroup/nucleus_driver.git
+```
 
 Navigate to the blueos_extension folder (the folder containing the Dockerfile) and build the docker image with the following command:
 
@@ -39,7 +47,7 @@ Navigate to the blueos_extension folder (the folder containing the Dockerfile) a
 docker build . -t nucleus_driver
 ```
 
-The web interface of the extension is by default on port 5000. In the case of a BlueROV system the web interface can be accessed in a browser by navigating to `192.168.2.2:5000` (or `blueos.local:5000`) when the docker container is running.
+The web interface of the extension is by default on port 5000. The web interface can be accessed in a browser by navigating to `192.168.2.2:5000` (or `blueos.local:5000`) when the docker container is running.
 
 If another port is preferred for the web interface the image can be build with the preffered port as an argument with the following command
 
@@ -49,21 +57,20 @@ docker build . -t nucleus_driver --build-arg PORT=5000
 
 with the value following "`PORT=`" being your preferred port.
 
-**N.B.** The docker image built for the BlueOS extension has the web interface running on port 80, allowing BlueOS to handle how the web interface should be accessed. 
-
 The docker container can be executed with the following command
 
 ```
-docker run --net=host --name=Nucleus-Driver --restart=unless-stopped -e NUCLEUS_IP="192.168.2.201" nucleus_driver
+docker run --net=host -v /root/.config/blueos:/root/.config --name=nucleus_driver --restart=unless-stopped nucleus_driver
 ```
 
 `--net=host` allows the container to share the network of the ROV which is necessary for it to communicate with the ROV and make the web interface available
+
+`-v /root/.config/blueos:/root/.config` maps the volume "/root/.config/blueos" from the Raspberry Pi into "/root/.config" in the container. This allows the container the store configuraiton data inbetween runs.
 
 `--name=Nucleus-Driver` is the preferred name of the container.
 
 `--restart=unless-stopped` allows the extension to automatically start when the ROV is powered up
 
-`-e NUCLEUS_IP="192.168.2.201"` is the IP adress of the Nucleus device. Ensure that this value matches the static IP set on the device.
 
 ## Using the extension
 
@@ -78,6 +85,8 @@ The UI presents the user with a home page and two pages for paramterization. The
 ### Home
 
 The home screen presents the user with a status field which displays the results of various checks performed during the startup of the ROV. It is necessarry for all of these checks to pass in order for extension to work. Some easy troubleshooting is presented in the home screen in case any of these checks were to fail
+
+The Nucleus hostname field is used to set the IP address used to connect to the Nucleus device. This IP adress should be the same as the static IP configured on the Nucleus device.
 
 It is also a field which allows the user to decide whether the driver is enabled. The driver must be enabled for it to feed velocity data to the ROV. If it is not enabled the driver is still runnning and extracting data from the Nucleus, but the velocity is not sent to the ROV.
 
