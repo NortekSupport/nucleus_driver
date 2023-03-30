@@ -151,17 +151,10 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
-        '''
-        if self.nucleus_driver.parser.nucleus_running and self.nucleus_driver.parser.thread_running:
-            self.nucleus_driver.messages.write_warning('Nucleus is already running')
-            return
-        '''
-
         if path is not None:
             self.nucleus_driver.set_log_path(path=path)
 
-        self.nucleus_driver.start_logging()
-        self.nucleus_driver.start_measurement()
+        self.nucleus_driver.start_measurement_and_logging()
 
     start_field_calibration_parser = Cmd2ArgumentParser(description='Start field calibration')
     start_field_calibration_parser.add_argument('-p', '--path', help='Set path for log files', completer=cmd2.Cmd.path_complete)

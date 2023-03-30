@@ -28,7 +28,7 @@ class Commands:
         elif self.parser.get_queuing()['ascii'] is True:
             self.parser.clear_queue(queue_name='ascii')
 
-    def _get_reply(self, terminator: bytes = None, timeout: int = 1) -> [bytes]:
+    def _get_reply(self, terminator: bytes = None, timeout: int = 1, command=None) -> [bytes]:
 
         get_reply = b''
 
@@ -71,7 +71,7 @@ class Commands:
             nmea_checksum = self._nmea_checksum(terminator)
             terminator = terminator + b'*' + nmea_checksum + b'\r\n'
 
-        get_reply = self._get_reply(terminator=terminator, timeout=timeout)
+        get_reply = self._get_reply(terminator=terminator, timeout=timeout, command=command)
         self._check_reply(data=get_reply, terminator=terminator, command=command)
 
         reply_list = [i + b'\r\n' for i in get_reply.split(b'\r\n') if i]
@@ -1070,7 +1070,7 @@ class Commands:
 
         self.connection.write(command)
 
-        get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+        get_reply = self._handle_reply(command=command, terminator=b'OK\r\n', timeout=2)
 
         return get_reply
 
@@ -1660,7 +1660,7 @@ class Commands:
 
         self.connection.write(command)
 
-        get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+        get_reply = self._handle_reply(command=command, terminator=b'OK\r\n', timeout=2)
 
         return get_reply
 

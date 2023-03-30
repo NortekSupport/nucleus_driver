@@ -196,8 +196,8 @@ class Logger:
         self.condition_file = open(folder + '/condition_log.csv', 'w', newline='')
         self.ascii_file = open(folder + '/ascii_log.csv', 'w', newline='')
 
-        if self.connection.get_connection_status():
-            self.connection.get_info()
+        #if self.connection.get_connection_status():
+        #    self.connection.get_info()
 
         if self.connection.get_all is not None and _converting is False:
             with open(folder + '/get_all.txt', 'w') as file:
