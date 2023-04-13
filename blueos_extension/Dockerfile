@@ -47,8 +47,8 @@ LABEL company '{\
         "name": "Nortek",\
         "email": ""\
     }'
-LABEL readme 'https://github.com/nortekgroup/nucleus_driver/blueos_extension/README.md'
-LABEL website 'https://github.com/nortekgroup/nucleus_driver/blueos_extension'
+LABEL readme 'https://github.com/nortekgroup/nucleus_driver/blob/main/blueos_extension/README.md'
+LABEL website 'https://github.com/nortekgroup/nucleus_driver/blob/main/blueos_extension'
 LABEL support 'https://support.nortekgroup.com/'
 
 ARG PORT=5000
