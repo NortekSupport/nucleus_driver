@@ -168,7 +168,7 @@ class Commands:
 
         self.connection.write(fieldcal_command)
 
-        get_reply = self._handle_reply(command=fieldcal_command, terminator=b'OK\r\n')
+        get_reply = self._handle_reply(command=fieldcal_command, terminator=b'OK\r\n', timeout=2)
 
         return get_reply
 

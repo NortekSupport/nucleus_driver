@@ -356,7 +356,11 @@ class Connection:
         def _disconnect_tcp():
 
             try:
+                #self.tcp.shutdown(socket.SHUT_RDWR)
                 self.tcp.close()
+
+                time.sleep(0.01)
+
                 self._connection_type = None
                 self.tcp = socket.socket()
 
