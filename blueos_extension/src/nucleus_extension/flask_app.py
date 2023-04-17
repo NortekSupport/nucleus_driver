@@ -18,7 +18,7 @@ if __name__ == "flask_app":
     rov_link = RovLink(driver=nucleus_driver)
     rov_link.start()
 
-    app = Flask(__name__)
+    app = Flask(__name__, static_url_path="/static", static_folder="static")
     api = Api(app)
 
     @app.route("/", defaults={"js": "home"})
@@ -128,5 +128,7 @@ if __name__ == "flask_app":
 
         return jsonify(result=f'Hostname set to {hostname}')
 
-
+    @app.route("/register_service")
+    def register_service():
+        return app.send_static_file("register_service")
 

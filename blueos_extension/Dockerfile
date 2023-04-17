@@ -26,6 +26,7 @@ LABEL permissions '\
   },\
   "HostConfig": {\
     "Binds":["/root/.config:/root/.config"],\
+    "ExtraHosts": ["host.docker.internal:host-gateway"],\
     "PortBindings": {\
       "80/tcp": [\
         {\
@@ -47,7 +48,7 @@ LABEL company '{\
         "name": "Nortek",\
         "email": ""\
     }'
-LABEL readme 'https://github.com/nortekgroup/nucleus_driver/blob/main/blueos_extension/README.md'
+LABEL readme 'https://raw.githubusercontent.com/nortekgroup/nucleus_driver/main/blueos_extension/README.md'
 LABEL website 'https://github.com/nortekgroup/nucleus_driver/tree/main/blueos_extension'
 LABEL support 'https://support.nortekgroup.com/'
 

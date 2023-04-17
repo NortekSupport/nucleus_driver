@@ -201,7 +201,6 @@ class NucleusDriver:
         if not self.parser.thread_running:
             self.parser.start()
 
-
         time.sleep(0.1)
 
         self.logger.get_cp_nc()

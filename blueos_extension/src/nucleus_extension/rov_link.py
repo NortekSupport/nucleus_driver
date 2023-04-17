@@ -8,7 +8,8 @@ from datetime import datetime
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
-MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
+#MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
+MAVLINK2REST_URL = "http://host.docker.internal/mavlink2rest"
 
 class RovLink(Thread):
 
@@ -435,7 +436,7 @@ class RovLink(Thread):
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
 
-        response = session.get('http://127.0.0.1/cable-guy/v1.0/ethernet')
+        response = session.get('http://host.docker.internal/cable-guy/v1.0/ethernet')
 
         if response.status_code == 200 and response.json()[0]['info']['connected'] is True:
             logging.info(f'{self.timestamp()} Cable guy online')
