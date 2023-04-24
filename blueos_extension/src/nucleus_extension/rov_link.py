@@ -131,14 +131,14 @@ class RovLink(Thread):
                 with open(self.settings_path) as settings:
                     data = json.load(settings)
                     self.hostname = data["hostname"]
-                    logging.debug("Loaded settings: ", data)
+                    logging.debug(f"[{self.timestamp()}] Loaded settings: {data}")
             except FileNotFoundError:
-                logging.warning("Settings file not found, using default.")
+                logging.warning(f"[{self.timestamp()}] Settings file not found, using default.")
             except ValueError:
-                logging.warning("File corrupted, using default settings.")
+                logging.warning(f"[{self.timestamp()}] File corrupted, using default settings.")
             except KeyError as error:
-                logging.warning("key not found: ", error)
-                logging.warning("using default instead")
+                logging.warning(f"[{self.timestamp()}] key not found: {error}")
+                logging.warning(f"[{self.timestamp()}] using default instead")
 
     def save_settings(self) -> None:
         """
@@ -164,7 +164,7 @@ class RovLink(Thread):
                     )
                 )
         except Exception as e:
-            logging.warning(f'Failed to write settings to file: {e}')
+            logging.warning(f'[{self.timestamp()}] Failed to write settings to file: {e}')
 
     def set_hostname(self, hostname):
 
@@ -213,7 +213,7 @@ class RovLink(Thread):
                 param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
 
             except Exception as e:
-                logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
+                logging.warning(f'[{self.timestamp()}] Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
 
             return param_value_pre_timestamp
 
@@ -256,7 +256,7 @@ class RovLink(Thread):
                             break
 
                     except Exception as e:
-                        logging.warning(f'Failed to obtain PARAM_VALUE for parameter {parameter_id}: {e}')
+                        logging.warning(f'[{self.timestamp()}] Failed to obtain PARAM_VALUE for parameter {parameter_id}: {e}')
                         continue
 
                 return param_value
@@ -264,13 +264,13 @@ class RovLink(Thread):
             post_response = post()
 
             if post_response.status_code != 200:
-                logging.warning(f'PARAM_SET command did not respond with 200: {post_response.status_code}')
+                logging.warning(f'[{self.timestamp()}] PARAM_SET command did not respond with 200: {post_response.status_code}')
                 return post_response
 
             get_response = get()
 
             if get_response.status_code != 200:
-                logging.warning(f'PARAM_VALUE command did not respond with 200: {get_response.status_code}')
+                logging.warning(f'[{self.timestamp()}] PARAM_VALUE command did not respond with 200: {get_response.status_code}')
 
             return get_response
 
@@ -329,7 +329,7 @@ class RovLink(Thread):
                 param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
 
             except Exception as e:
-                logging.warning(f'Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
+                logging.warning(f'[{self.timestamp()}] Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
 
             return param_value_pre_timestamp
 
@@ -371,7 +371,7 @@ class RovLink(Thread):
                             break
 
                     except Exception as e:
-                        logging.warning(f'Failed to obtain PARAM_VALUE for parameter {parameter_id}: {e}')
+                        logging.warning(f'[{self.timestamp()}] Failed to obtain PARAM_VALUE for parameter {parameter_id}: {e}')
                         continue
 
                 return param_value
@@ -379,13 +379,13 @@ class RovLink(Thread):
             post_response = post()
 
             if post_response.status_code != 200:
-                logging.warning(f'PARAM_SREQUEST_READ command did not respond with 200: {post_response.status_code}')
+                logging.warning(f'[{self.timestamp()}] PARAM_REQUEST_READ command did not respond with 200: {post_response.status_code}')
                 return post_response
 
             get_response = get()
 
             if get_response.status_code != 200:
-                logging.warning(f'PARAM_VALUE command did not respond with 200: {get_response.status_code}')
+                logging.warning(f'[{self.timestamp()}] PARAM_VALUE command did not respond with 200: {get_response.status_code}')
 
             return get_response
 
@@ -458,7 +458,7 @@ class RovLink(Thread):
 
         self.nucleus_driver.set_tcp_configuration(host=self.hostname)
         if not self.nucleus_driver.connect(connection_type='tcp'):
-            logging.warning('Failed to connect to Nucleus')
+            logging.warning(f'{self.timestamp()} Failed to connect to Nucleus')
             self.status['nucleus_connected'] = 'Failed'
 
             self._nucleus_connected = False
@@ -563,8 +563,8 @@ class RovLink(Thread):
             response = self.get_parameter(parameter)
             status_code = response.status_code
 
-            if status_code != 200:
-                logging.warning(f'[{self.timestamp()}] get_parameter did not respond with status code 200. Actual status code: {status_code}')
+            if not str(status_code).startswith('2'):
+                logging.warning(f'[{self.timestamp()}] get_parameter did not respond with status code 2xx. Actual status code: {status_code}')
                 status = False
                 continue
 
@@ -583,8 +583,8 @@ class RovLink(Thread):
             response = self.get_parameter(parameter)
             status_code = response.status_code
 
-            if status_code != 200:
-                logging.warning(f'[{self.timestamp()}] get_parameter did not respond with status code 200. Actual status code: {status_code}')
+            if not str(status_code).startswith('2'):
+                logging.warning(f'[{self.timestamp()}] get_parameter did not respond with status code 2xx. Actual status code: {status_code}')
                 correct_values = False
                 continue
 
