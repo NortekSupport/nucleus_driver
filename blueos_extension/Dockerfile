@@ -18,7 +18,7 @@ WORKDIR /home/pi/blueos_extension
 
 EXPOSE 80/tcp
 
-LABEL version="0.0.2"
+LABEL version="1.0.1"
 LABEL permissions='\
 {\
   "ExposedPorts": {\
