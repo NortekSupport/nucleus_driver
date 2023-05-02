@@ -18,8 +18,8 @@ WORKDIR /home/pi/blueos_extension
 
 EXPOSE 80/tcp
 
-LABEL version="0.0.1"
-LABEL permissions '\
+LABEL version="0.0.2"
+LABEL permissions='\
 {\
   "ExposedPorts": {\
     "80/tcp": {}\
@@ -36,21 +36,30 @@ LABEL permissions '\
     }\
   }\
 }'
-LABEL authors '[\
+LABEL authors='[\
     {\
         "name": "Martin Bergene Johansen",\
         "email": "martin.johansen@nortekgroup.com"\
     }\
 ]'
-LABEL docs ''
-LABEL company '{\
+LABEL company='{\
         "about": "",\
         "name": "Nortek",\
         "email": ""\
     }'
-LABEL readme 'https://raw.githubusercontent.com/nortekgroup/nucleus_driver/main/blueos_extension/README.md'
-LABEL website 'https://github.com/nortekgroup/nucleus_driver/tree/main/blueos_extension'
-LABEL support 'https://support.nortekgroup.com/'
+LABEL type="device-integration"
+LABEL tags='[\
+    "positioning",\
+    "navigation",\
+    "doppler-velocity-log",\
+    "water-tracking",\
+    "current-profiling"\
+]'
+LABEL readme='https://raw.githubusercontent.com/nortekgroup/nucleus_driver/main/blueos_extension/README.md'
+LABEL links='{\
+        "website": "https://github.com/nortekgroup/nucleus_driver/tree/main/blueos_extension",\
+        "support": "https://support.nortekgroup.com/"\
+    }'
 
 ARG PORT=5000
 
