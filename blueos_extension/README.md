@@ -7,6 +7,10 @@ It works by wrapping the Nucleus Driver in a docker image, with a script that fe
 
 This allows the user to utilize the "position hold" functionality in the ROV
 
+## Nortek Nucleus integration
+
+To mount the Nucleus unto the BlueROV2 and connect it to its network, refer Nortek's [Nucleus integration guide](https://support.nortekgroup.com/hc/en-us/articles/8246995934748-Nucleus-integration-with-BlueROV2).
+
 ## setup
 
 ### BlueOS
