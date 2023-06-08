@@ -148,7 +148,6 @@ class NucleusDriver:
 
         time.sleep(0.1)
 
-        response = self.logger.get_cp_nc()
         response = self.commands._start()
 
         return response
@@ -164,7 +163,6 @@ class NucleusDriver:
 
         time.sleep(0.1)
 
-        self.logger.get_cp_nc()
         self.connection.get_info()
 
         response = self.commands._start()
@@ -203,7 +201,6 @@ class NucleusDriver:
 
         time.sleep(0.1)
 
-        self.logger.get_cp_nc()
         self.connection.get_info()
 
         response = self.commands._fieldcal()

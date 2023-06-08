@@ -19,7 +19,7 @@ class Download:
         self.dvl_download_statistics['successful bytes'] = 0
         self.dvl_download_statistics['failed bytes'] = 0
 
-        self.PACKET_LENGTH = 1024 * 10
+        self.PACKET_LENGTH = 1024 * 1024
 
     @staticmethod
     def _handle_crc(dvl_data: bytes):
@@ -164,17 +164,18 @@ class Download:
 
         return True, download_parameters
 
-    def download_data(self, fid, src, sa, length) -> (bool, bytes):
-
+    def download_data(self, fid, src, sa, length, timeout=3) -> (bool, bytes):
+        
         expected_data_length = len(str(length)) + 2 + length + 2 + 10 + 4  # length of _len number + length of \r\n + length of _len + length of \r\n + length of crc and \r\n + length of OK\r\n
 
         command = b'DOWNLOAD,FID=' + str(fid).encode() + b',SRC=' + str(src).encode() + b',SA=' + str(sa).encode() + b',LEN=' + str(length).encode() + b',CRC=1\r\n'
         self.connection.write(command)
-        data = self.connection.read(size=expected_data_length, timeout=3)
+        data = self.connection.read(size=expected_data_length, timeout=timeout)
         self.commands._check_reply(data=data, terminator=b'OK\r\n', command=command)
 
         if len(data) != expected_data_length:
-            self.messages.write_warning('received data from download reply is incorrect length')
+            self.messages.write_warning(f'received data from download reply is incorrect length: {len(data)} / {expected_data_length}')
+            self.connection.reset_buffers()
             return False, b''
 
         length_reply = data[:len(str(length)) + 2]
@@ -183,25 +184,30 @@ class Download:
         ok_reply = data[-4:]
 
         if length_reply[-2:] != b'\r\n':
-            self.messages.write_warning('unexpected format of the length reply from download command')
+            self.messages.write_warning(f"unexpected format of the length reply from download command. Reply should end with b'\r\n': {length_reply}")
+            self.connection.reset_buffers()
             return False, b''
 
         if data_reply[-2:] != b'\r\n':
-            self.messages.write_warning('unexpected format of the data reply from download command')
+            self.messages.write_warning(f"unexpected format of the data reply from download command. Reply should end with b'\r\n': {data_reply}")
+            self.connection.reset_buffers()
             return False, b''
 
         if crc_reply[-2:] != b'\r\n':
-            self.messages.write_warning('unexpected format of the crc reply from download command')
+            self.messages.write_warning(f"unexpected format of the crc reply from download command. Reply should end with b'\r\n': {crc_reply}")
+            self.connection.reset_buffers()
             return False, b''
 
         if ok_reply[-2:] != b'\r\n':
-            self.messages.write_warning('unexpected format of the ok reply from download command')
+            self.messages.write_warning(f"unexpected format of the ok reply from download command. Reply should end with b'\r\n': {ok_reply}")
+            self.connection.reset_buffers()
             return False, b''
 
         try:
             crc = int(crc_reply[:-2].decode(), 16)
         except ValueError:
-            self.messages.write_warning('Unable to convert received crc value to integer')
+            self.messages.write_warning(f'Unable to convert received crc value to integer. crc value: {crc_reply}')
+            self.connection.reset_buffers()
             return False, b''
 
         if crc32(data_reply[:-2]) == crc:
@@ -377,7 +383,10 @@ class Download:
 
             failed_attempt = False
             for attempt in range(1, 11):
-                status, package = self.download_data(fid=download_parameters['fid'], src=1, sa=index, length=min(download_parameters['end'] - index, self.PACKET_LENGTH))
+                
+                timeout = min(2 + attempt, 10)  # First iteration is 3s, 3 last iterations are 10s
+
+                status, package = self.download_data(fid=download_parameters['fid'], src=1, sa=index, length=min(download_parameters['end'] - index, self.PACKET_LENGTH), timeout=timeout)
 
                 if status:
                     if failed_attempt:
@@ -517,7 +526,10 @@ class Download:
 
             failed_attempt = False
             for attempt in range(1, 11):
-                status, package = self.download_data(fid=download_parameters['fid'], src=0, sa=index, length=min(download_parameters['end'] - index, self.PACKET_LENGTH))
+
+                timeout = min(2 + attempt, 10)  # First iteration is 3s, 3 last iterations are 10s
+
+                status, package = self.download_data(fid=download_parameters['fid'], src=0, sa=index, length=min(download_parameters['end'] - index, self.PACKET_LENGTH), timeout=timeout)
 
                 if status:
                     if failed_attempt:

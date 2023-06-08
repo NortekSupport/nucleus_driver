@@ -15,6 +15,8 @@ class Logger:
         self.commands = None
 
         self._logging = False
+        self._logging_folder = None
+        self._current_profile_logging = False
 
         self._writing_packet = False
         self._writing_ascii = False
@@ -22,10 +24,12 @@ class Logger:
 
         self._path = str(Path.cwd()) + '/logs'
         self.packet_file = None
+        self.current_profile_file = None
         self.ascii_file = None
         self.condition_file = None
 
         self.packet_writer = None
+        self.current_profile_writer = None
         self.ascii_writer = None
         self.condition_writer = None
 
@@ -85,7 +89,7 @@ class Logger:
         alti_fields = ['status.altimeterDistanceValid', 'status.altimeterQualityValid', 'status.pressureValid', 'status.temperatureValid',
                        'serialNumber', 'soundSpeed', 'temperature', 'pressure',
                        'altimeterDistance', 'altimeterQuality']
-
+        '''
         cp_fields = ['serialNumber', 'soundVelocity', 'temperature', 'pressure',
                      'cellSize', 'blanking', 'numberOfCells', 'ambiguityVelocity']
 
@@ -98,7 +102,7 @@ class Logger:
 
             for index in range(self.cp_nc * 3):
                 cp_fields.append('correlationData_{}'.format(index))
-
+        '''
         fc_fields = ['status.pointsUsedInEstimation',
                      'hardIron.x', 'hardIron.y', 'hardIron.z',
                      'sAxis_0', 'sAxis_1', 'sAxis_2',
@@ -119,7 +123,7 @@ class Logger:
                        mag_fields,
                        dvl_fields,
                        alti_fields,
-                       cp_fields,
+                       #cp_fields,
                        fc_fields,
                        string_fields]
 
@@ -149,41 +153,66 @@ class Logger:
 
         return self._logging
 
-    def get_cp_nc(self):
+    def get_current_profile_logging_status(self):
 
-        reply = self.commands.get_cur_prof(profile_range=True, cs=True, bd=True, ds=True)
-
-        if len(reply) != 2:
-            self.messages.write_warning('Unable to obtain current profile configuration')
-
-        else:
-            try:
-                cp_data = reply[0].split(b',')
-                cp_range = float(cp_data[0].decode())
-                cp_cs = float(cp_data[1].decode())
-                cp_bd = float(cp_data[2].decode())
-                cp_ds = cp_data[3].rstrip(b'\r\n').decode()
-
-                if cp_ds == '"OFF"':
-                    self.cp_nc = 0
-
-                else:
-                    nc = ceil((cp_range - cp_bd) / cp_cs)
-                    if nc > 0:
-                        self.cp_nc = nc
-                    else:
-                        self.cp_nc = None
-
-            except Exception as e:
-                self.messages.write_warning('Error occured when trying to extract current profile data: {}'.format(e))
-
+        return self._current_profile_logging
+    
     def set_path(self, path: str):
 
         self._path = path.rstrip('/')
 
+    def open_current_profile_writer(self, number_of_cells: int) -> bool:
+        
+        def _get_field_names():
+
+            header_fields = ['sizeHeader', 'id', 'family', 'sizeData', 'size', 'dataCheckSum', 'headerCheckSum']
+
+            common_fields = ['version', 'offsetOfData', 'flags.posixTime', 'timeStamp', 'microSeconds']
+
+            driver_fields = ['timestampPython']
+
+            cp_fields = ['serialNumber', 'soundVelocity', 'temperature', 'pressure',
+                        'cellSize', 'blanking', 'numberOfCells', 'ambiguityVelocity']
+
+            for index in range(number_of_cells * 3):
+                cp_fields.append('velocityData_{}'.format(index))
+
+            for index in range(number_of_cells * 3):
+                cp_fields.append('amplitudeData_{}'.format(index))
+
+            for index in range(number_of_cells * 3):
+                cp_fields.append('correlationData_{}'.format(index))
+
+            data_fields = [header_fields,
+                           common_fields,
+                           driver_fields,
+                           cp_fields]
+
+            field_names = list()
+            for fields in data_fields:
+                for field in fields:
+                    if field not in field_names:
+                        field_names.append(field)
+
+            return field_names
+
+        if self._logging_folder is None:
+            return False
+        
+        self.current_profile_file = open(self._logging_folder + '/current_profile_log.csv', 'w', newline='')
+
+        self.current_profile_writer = csv.DictWriter(self.current_profile_file, fieldnames=_get_field_names())
+        
+        self.current_profile_writer.writeheader()
+
+        self._current_profile_logging = True
+
+        return True
+
     def start(self, _converting=False) -> str:
 
         folder = self._path + '/' + datetime.now().strftime('%y%m%d_%H%M%S')
+        self._logging_folder = folder
 
         Path(folder).mkdir(parents=True, exist_ok=True)
 
@@ -195,9 +224,6 @@ class Logger:
         self.packet_file = open(folder + '/nucleus_log.csv', 'w', newline='')
         self.condition_file = open(folder + '/condition_log.csv', 'w', newline='')
         self.ascii_file = open(folder + '/ascii_log.csv', 'w', newline='')
-
-        #if self.connection.get_connection_status():
-        #    self.connection.get_info()
 
         if self.connection.get_all is not None and _converting is False:
             with open(folder + '/get_all.txt', 'w') as file:
@@ -218,9 +244,11 @@ class Logger:
     def stop(self):
 
         self._logging = False
+        self._logging_folder = None
+        self._current_profile_logging = False
 
         # give the writers up to 0.1 sec to complete writing
-        for i in range(10):
+        for _ in range(10):
 
             if not self._writing_packet and not self._writing_ascii and not self._writing_condition:
                 break
@@ -229,6 +257,9 @@ class Logger:
 
         if isinstance(self.packet_file, io.TextIOWrapper):
             self.packet_file.close()
+
+        if isinstance(self.current_profile_file, io.TextIOWrapper):
+            self.current_profile_file.close()
 
         if isinstance(self.condition_file, io.TextIOWrapper):
             self.condition_file.close()

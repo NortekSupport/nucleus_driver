@@ -270,7 +270,7 @@ class Connection:
             self._connected = _connect_tcp()
 
         if not self.get_connection_status():
-            self.messages.write_warning('Failed to set current time on Nucleus device')
+            self.messages.write_warning('Failed to establish connection to device')
             return False
 
         if get_device_info:
