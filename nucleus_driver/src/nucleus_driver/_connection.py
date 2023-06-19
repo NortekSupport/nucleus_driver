@@ -355,7 +355,7 @@ class Connection:
         def _disconnect_tcp():
 
             try:
-                #self.tcp.shutdown(socket.SHUT_RDWR)
+                self.tcp.shutdown(socket.SHUT_RDWR)
                 self.tcp.close()
 
                 time.sleep(0.01)
@@ -434,19 +434,23 @@ class Connection:
             serial_data = b''
 
             try:
-
-                init_time = datetime.now()
-
-                while (datetime.now() - init_time).total_seconds() <= timeout:
-                    serial_data += self.serial.read(1)
-
-                    if terminator is not None:
+                if terminator is not None:
+                    init_time = datetime.now()
+                    while (datetime.now() - init_time).seconds < timeout:
+                        serial_data += self.serial.read_until(terminator, size)
                         if terminator in serial_data or b'ERROR\r\n' in serial_data:
                             break
 
-                    if size is not None:
+                elif size is not None:
+                    init_time = datetime.now()
+                    while (datetime.now() - init_time).seconds < timeout:
+                        serial_data += self.serial.read(size=max(0, size - len(serial_data)))
                         if len(serial_data) >= size:
                             break
+
+                else:
+                    if self.serial.in_waiting:
+                        serial_data += self.serial.read(self.serial.in_waiting)
 
             except Exception as exception:
                 self.messages.write_exception(message='Failed to read serial data from Nucleus: {}'.format(exception))
@@ -462,38 +466,41 @@ class Connection:
                 except socket.timeout:
                     return True
                 except Exception as exception:
-                    self.messages.write_exception(message='Failed to read tcp data from Nucleus: {}'.format(exception))
+                    if self.get_connection_status():
+                        self.messages.write_exception(message='Failed to read tcp data from Nucleus: {}'.format(exception))
+
                     return False
 
-            def _get_byte_from_tcp_buffer() -> bytes:
+            if terminator is not None:
 
-                if len(self.tcp_buffer) == 0:
-                    return b''
-
-                byte = self.tcp_buffer[0:1]
-                self.tcp_buffer = self.tcp_buffer[1:]
-
-                return byte
-
-            tcp_data = b''
-
-            init_time = datetime.now()
-
-            while (datetime.now() - init_time).total_seconds() <= timeout:
-
-                if len(self.tcp_buffer) == 0:
-                    if not _read():
+                init_time = datetime.now()
+                while (datetime.now() - init_time).seconds < timeout:
+                    if terminator in self.tcp_buffer:
                         break
+                    else:
+                        if not _read():
+                            break
 
-                tcp_data += _get_byte_from_tcp_buffer()
+                line, separator, self.tcp_buffer = self.tcp_buffer.partition(terminator)
+                tcp_data = line + separator
 
-                if terminator is not None:
-                    if terminator in tcp_data or b'ERROR\r\n' in tcp_data:
+            elif size is not None:
+
+                init_time = datetime.now()
+                while (datetime.now() - init_time).seconds < timeout:
+                    if len(self.tcp_buffer) >= size:
                         break
+                    else:
+                        if not _read():
+                            break
 
-                if size is not None:
-                    if len(tcp_data) >= size:
-                        break
+                tcp_data = self.tcp_buffer[:size]
+                self.tcp_buffer = self.tcp_buffer[size:]
+
+            else:
+                _read()
+                tcp_data = self.tcp_buffer
+                self.tcp_buffer = b''
 
             return tcp_data
 
