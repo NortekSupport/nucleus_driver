@@ -332,7 +332,6 @@ class Connection:
         else:
             self.messages.write_warning('Unable to obtain GETALL information')
 
-
     def disconnect(self) -> bool:
 
         if self.get_connection_status() is False:
