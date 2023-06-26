@@ -762,7 +762,7 @@ class Parser:
                 time.sleep(0.05)
                 continue
 
-            data = self.connection.read()
+            data = self.connection.read(timeout=None)
 
             if data:
 
