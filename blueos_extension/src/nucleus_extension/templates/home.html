@@ -100,6 +100,8 @@
 
 <p>In order for the ROV to perform well in "position hold", the PID parameters in the ROV should be configured. Navigate to "PID parameters" to perform these configurations.</p>
 
+<p>In order to establish connection to the Nortek Nucleus device, the IP address of the Nucleus must be set under "Nucleus hostname"</p>
+
 <p>A description of the contents of this page is given in the following paragraphs.</p>
 
 <h2>Status</h2>
@@ -110,7 +112,7 @@
 <p>If a check says "Failed", do the following to resolve the problem:
 <ul id="default_list">
   <li><b>Cable guy: </b>Power cycle the ROV</li>
-  <li><b>Nucleus connected: </b>Ensure that the static IP of the Nucleus is correct</li> 
+  <li><b>Nucleus connected: </b>Ensure that the IP address specified for Nucleus hostname is matching the static IP of the Nucleus device</li> 
   <li><b>DVL enabled: </b>Power cycle the ROV</li>
   <li><b>Heartbeat: </b>Power cycle the ROV</li>
   <li><b>Controller parameters: </b>Set the correct controller parameters, then power cycle the ROV</li>
@@ -119,7 +121,7 @@
 
 <h2>Nucleus hostname</h2>
 
-Displays and modifies the hostname used to connect to the Nucleus device. This should be the static IP which is configured on the Nortek Nucleus device.
+Defines the hostname used to connect to the Nucleus device. This value should match the static IP which is configured on the Nortek Nucleus device.
 
 <h2>Enable Driver</h2>
 

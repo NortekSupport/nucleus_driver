@@ -481,19 +481,6 @@ class RovLink(Thread):
     def setup_nucleus(self):
 
         logging.info(f'{self.timestamp()} setting up nucleus')
-        
-
-        reply = self.nucleus_driver.commands.set_default_config()
-        if b'OK\r\n' not in reply:
-            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETDEFAULT,CONFIG: {reply}')
-
-        reply = self.nucleus_driver.commands.set_default_mission()
-        if b'OK\r\n' not in reply:
-            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETDEFAULT,MISSION: {reply}')
-
-        reply = self.nucleus_driver.commands.set_default_magcal()
-        if b'OK\r\n' not in reply:
-            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETDEFAULT,MAGCAL: {reply}')
 
         reply = self.nucleus_driver.commands.set_ahrs(ds="ON")
         if b'OK\r\n' not in reply:

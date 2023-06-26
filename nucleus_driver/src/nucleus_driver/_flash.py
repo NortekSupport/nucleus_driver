@@ -150,8 +150,9 @@ class Flash:
 
         if self.dvl_firmware_name is not None:
             dvl_rematch = re.match(self.LDR_FILE_PATTERN, self.dvl_firmware_name)
-            firmware_name_version['DVLFW'] = dvl_rematch[2]
-            firmware_name_version['DVLMINOR'] = dvl_rematch[3]
+            if dvl_rematch is not None:
+                firmware_name_version['DVLFW'] = dvl_rematch[2]
+                firmware_name_version['DVLMINOR'] = dvl_rematch[3]
 
         if self.nucleus_firmware_name is not None and not nucleus_rematch:
             self.messages.write_warning(message='Nucleus firmware does not contain version number in its file name')

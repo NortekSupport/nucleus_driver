@@ -118,8 +118,14 @@ class Parser:
 
             self.logger._writing_packet = True
 
+            if packet['id'] == self.ID_CURRENT_PROFILE and not self.logger.get_current_profile_logging_status():
+                self.logger.open_current_profile_writer(number_of_cells=int(packet['numberOfCells']))
+
             try:
-                self.logger.packet_writer.writerow(packet)
+                if packet['id'] == self.ID_CURRENT_PROFILE:
+                    self.logger.current_profile_writer.writerow(packet)
+                else:
+                    self.logger.packet_writer.writerow(packet)
             except ValueError as exception:
                 self.messages.write_warning('Failed to write package to csv file: {}'.format(exception))
 
@@ -163,7 +169,7 @@ class Parser:
 
             try:
                 self.logger.ascii_writer.writerow(ascii_packet)
-            except ValueError as exception:
+            except Exception as exception:
                 self.messages.write_warning('Failed to write ascii message to csv file: {}'.format(exception))
 
             self.logger._writing_ascii = False
@@ -314,14 +320,8 @@ class Parser:
             return status
 
         def get_header_data():
-
-            header = {'sizeHeader': None,
-                      'id': None,
-                      'family': None,
-                      'sizeData': None,
-                      'size': None,
-                      'dataCheckSum': None,
-                      'headerCheckSum': None}
+            
+            header = None
 
             try:
                 header = {'sizeHeader': unpack('<B', binary_packet[1:2])[0],
@@ -333,18 +333,13 @@ class Parser:
                           'headerCheckSum': unpack('<H', binary_packet[8:10])[0]}
 
             except struct_error:
-                self.messages.write_warning('Failed to unpack header data')
-                self.messages.write_warning(data)
+                self.messages.write_warning(f'Failed to unpack header data: {binary_packet}')
 
             return header
 
         def get_common_data():
 
-            common = {'version': None,
-                      'offsetOfData': None,
-                      'flags.posixTime': None,
-                      'timeStamp': None,
-                      'microSeconds': None}
+            common = None
 
             try:
                 status = unpack('<B', data[2:3])[0]
@@ -356,8 +351,7 @@ class Parser:
                           'microSeconds': unpack('<I', data[8:12])[0]}
 
             except struct_error:
-                self.messages.write_warning('Failed to unpack common data')
-                self.messages.write_warning(data)
+                self.messages.write_warning(f'Failed to unpack common data: {data}')
 
             return common
 
@@ -560,7 +554,6 @@ class Parser:
                         velocity_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'H')
                         velocity_data_offset = common_data['offsetOfData']
                         velocity_data_size = 2 * 3 * sensor['numberOfCells']
-                        # sensor['velocityData'] = unpack(velocity_data_format, data[velocity_data_offset: velocity_data_offset + velocity_data_size])[:velocity_data_size]
                         velocity_data = unpack(velocity_data_format, data[velocity_data_offset: velocity_data_offset + velocity_data_size])[:velocity_data_size]
                         for index, velocity_cell in enumerate(velocity_data):
                             sensor['velocityData_{}'.format(index)] = velocity_cell
@@ -568,7 +561,6 @@ class Parser:
                         amplitude_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'B')
                         amplitude_data_offset = common_data['offsetOfData'] + 6 * sensor['numberOfCells']
                         amplitude_data_size = 1 * 3 * sensor['numberOfCells']
-                        # sensor['amplitudeData'] = unpack(amplitude_data_format, data[amplitude_data_offset: amplitude_data_offset + amplitude_data_size])[:amplitude_data_size]
                         amplitude_data = unpack(amplitude_data_format, data[amplitude_data_offset: amplitude_data_offset + amplitude_data_size])[:amplitude_data_size]
                         for index, amplitude_cell in enumerate(amplitude_data):
                             sensor['amplitudeData_{}'.format(index)] = amplitude_cell
@@ -576,7 +568,6 @@ class Parser:
                         correlation_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'B')
                         correlation_data_offset = common_data['offsetOfData'] + 9 * sensor['numberOfCells']
                         correlation_data_size = 1 * 3 * sensor['numberOfCells']
-                        # sensor['correlationData'] = unpack(correlation_data_format, data[correlation_data_offset: correlation_data_offset + correlation_data_size])[:correlation_data_size]
                         correlation_data = unpack(correlation_data_format, data[correlation_data_offset: correlation_data_offset + correlation_data_size])[:correlation_data_size]
                         for index, correlation_cell in enumerate(correlation_data):
                             sensor['correlationData_{}'.format(index)] = correlation_cell
@@ -622,9 +613,10 @@ class Parser:
             self.messages.write_exception('Packet is smaller than specified header length. Extraction aborted')
             return header_checksum, data_checksum, packet
 
-
-
         header_data = get_header_data()
+
+        if header_data is None:
+            return header_checksum, data_checksum, packet
 
         if self.checksum(binary_packet[:header_data['sizeHeader'] - 2]) == header_data['headerCheckSum']:
             header_checksum = True
@@ -648,6 +640,10 @@ class Parser:
 
         if header_data['id'] != self.ID_ASCII:
             common_data = get_common_data()
+
+            if common_data is None:
+                return header_checksum, False, packet
+
             packet.update(common_data)
 
         packet['timestampPython'] = datetime.now().timestamp()
@@ -766,7 +762,7 @@ class Parser:
                 time.sleep(0.05)
                 continue
 
-            data = self.connection.read()
+            data = self.connection.read(timeout=None)
 
             if data:
 

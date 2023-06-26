@@ -324,6 +324,12 @@ class App(cmd2.Cmd):
         for message in response:
             self.nucleus_driver.messages.write_message(message)
 
+        if self.nucleus_driver.connection.get_connection_type() == 'tcp':
+            self.nucleus_driver.messages.write_warning('TCP connection has been lost due to device being restarted after clearing syslog. Reconnect to device!')
+            self.nucleus_driver.connection.disconnet()
+
+        
+
     ##########################################
     # Download
     ###########################################
