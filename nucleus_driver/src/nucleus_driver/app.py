@@ -239,7 +239,7 @@ class App(cmd2.Cmd):
             password = input('password: ')
 
         self.nucleus_driver.flash_firmware(path=path, password=password)
-nucleus_driver.
+
     ###########################################
     # Assert
     ###########################################
