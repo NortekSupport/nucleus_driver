@@ -73,7 +73,9 @@ class NucleusDriver:
     # Command
     ###########################################
 
-    def send_command(self, command: str):
+    def send_command(self, command: str) -> [bytes]:
+
+        reply = list()
 
         BLOCKED_COMMANDS = ['START', 'FIELDCAL', 'STARTSPECTRUM', 'STOP', 'UPLOAD', 'FWUPDATE', 'DVLUPDATE']
 
@@ -90,11 +92,11 @@ class NucleusDriver:
 
             self.connection.write(command_encoded)
 
-            message = self.commands._handle_reply(command=command_encoded, terminator=b'OK\r\n', timeout=1)
+            reply = self.commands._handle_reply(command=command_encoded, terminator=b'OK\r\n', timeout=1)
 
-            for entry in message:
-                self.messages.write_message(entry.decode(), skip_newline=True)
+        return reply
 
+            
     ###########################################
     # Logging
     ###########################################
