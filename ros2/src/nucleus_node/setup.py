@@ -20,7 +20,13 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'nucleus_node = nucleus_node.nucleus_node:main'
+            'nucleus_node = nucleus_node.nucleus_node:main',
+            'connect_tcp = nucleus_node.client_connect_tcp:main',
+            'connect_serial = nucleus_node.client_connect_serial:main',
+            'disconnect = nucleus_node.client_disconnect:main',
+            'start = nucleus_node.client_start:main',
+            'stop = nucleus_node.client_stop:main',
+            'read_packet = nucleus_node.client_read_packet:main',
         ],
     },
 )

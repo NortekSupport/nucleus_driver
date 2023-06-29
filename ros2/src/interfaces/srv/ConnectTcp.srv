@@ -1,0 +1,4 @@
+string host
+string password
+---
+bool status

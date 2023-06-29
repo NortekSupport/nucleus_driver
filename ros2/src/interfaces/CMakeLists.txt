@@ -26,9 +26,12 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Packet.msg"
-  "srv/Connection.srv"
-  "srv/StartStop.srv"
+  "srv/ConnectSerial.srv"
+  "srv/ConnectTcp.srv"
+  "srv/Disconnect.srv"
+  "srv/Start.srv"
+  "srv/Stop.srv"
+  "srv/ReadPacket.srv"
 )
 
 ament_package()
