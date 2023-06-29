@@ -24,7 +24,7 @@ class NucleusNode(Node):
 
     def connect_tcp_callback(self, request, response):
 
-        if request.tcp_password != '':
+        if request.password != '':
             password = request.password
         else:
             password = None
@@ -132,6 +132,25 @@ class NucleusNode(Node):
             packet_list.append(packet)
 
         response.packet_list = json.dumps(packet_list)
+
+        return response
+    
+    def command_callback(self, request, response):
+
+        if not self.nucleus_driver.connection.get_connection_status():
+            self.get_logger().info(f'Nucleus is not connected')
+            response.reply = f'Nucleus is not connected'
+
+        else:
+            command = request.command
+
+            reply = self.nucleus_driver.send_command(command=command)
+            
+            try:
+                response.reply = reply[0].decode()
+                self.get_logger().info(f'stop reply: {response.reply}')
+            except Exception as e:
+                response.reply = f'Failed to decode response from start command: {e}'
 
         return response
 

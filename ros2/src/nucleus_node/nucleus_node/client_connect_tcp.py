@@ -17,7 +17,11 @@ class ClientConnectTcp(Node):
 
     def send_request(self):
         self.request.host = str(sys.argv[1])
-        self.request.password = str(sys.argv[2])
+        
+        try:
+            self.request.password = str(sys.argv[2])
+        except IndexError:
+            self.request.password = ''
 
         self.call = self.client.call_async(self.request)
 
