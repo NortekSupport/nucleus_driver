@@ -10,8 +10,8 @@ class ClientReadPacket(Node):
 
         super().__init__('client_read_packet')
 
-        self.client_read_packet = self.create_client(ReadPacket, 'read_packet')
-        while not self.client_read_packet.wait_for_service(timeout_sec=1.0):
+        self.client = self.create_client(ReadPacket, 'read_packet')
+        while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('read_packet service not available. Waiting...')
         self.request = ReadPacket.Request()
 
@@ -19,30 +19,30 @@ class ClientReadPacket(Node):
 
         self.request.size = int(sys.argv[1])
         
-        self.call = self.client_read_packet.call_async(self.request)
+        self.call = self.client.call_async(self.request)
 
 def main(args=None):
 
     rclpy.init(args=args)
 
-    client_read_packet = ClientReadPacket()
-    client_read_packet.send_request()
+    client = ClientReadPacket()
+    client.send_request()
 
     while rclpy.ok():
 
-        rclpy.spin_once(client_read_packet)
+        rclpy.spin_once(client)
 
-        if client_read_packet.call.done():
+        if client.call.done():
             try:
-                response = client_read_packet.call.result()
+                response = client.call.result()
             except Exception as e:
-                client_read_packet.get_logger().info(f'read_packet call failed: {e}')
+                client.get_logger().info(f'read_packet call failed: {e}')
             else:
-                client_read_packet.get_logger().info(f'Successfully made the read_packet call with status: {response.packet_list}')
+                client.get_logger().info(f'Successfully made the read_packet call with status: {response.packet_list}')
 
             break
     
-    client_read_packet.destroy_node()
+    client.destroy_node()
     rclpy.shutdown()
 
 

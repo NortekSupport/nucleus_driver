@@ -10,8 +10,8 @@ class ClientConnectTcp(Node):
 
         super().__init__('client_connect_tcp')
 
-        self.client_connect_tcp = self.create_client(ConnectTcp, 'connect_tcp')
-        while not self.client_connect_tcp.wait_for_service(timeout_sec=1.0):
+        self.client = self.create_client(ConnectTcp, 'connect_tcp')
+        while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('connect tcp service not available. Waiting...')
         self.request = ConnectTcp.Request()
 
@@ -19,30 +19,30 @@ class ClientConnectTcp(Node):
         self.request.host = str(sys.argv[1])
         self.request.password = str(sys.argv[2])
 
-        self.call = self.client_connect_tcp.call_async(self.request)
+        self.call = self.client.call_async(self.request)
 
 def main(args=None):
 
     rclpy.init(args=args)
 
-    client_connect_tcp = ClientConnectTcp()
-    client_connect_tcp.send_request()
+    client = ClientConnectTcp()
+    client.send_request()
 
     while rclpy.ok():
 
-        rclpy.spin_once(client_connect_tcp)
+        rclpy.spin_once(client)
 
-        if client_connect_tcp.call.done():
+        if client.call.done():
             try:
-                response = client_connect_tcp.call.result()
+                response = client.call.result()
             except Exception as e:
-                client_connect_tcp.get_logger().info(f'connect tcp call failed: {e}')
+                client.get_logger().info(f'connect tcp call failed: {e}')
             else:
-                client_connect_tcp.get_logger().info(f'Successfully made the connect tcp call with status: {response.status}')
+                client.get_logger().info(f'Successfully made the connect tcp call with status: {response.status}')
 
             break
     
-    client_connect_tcp.destroy_node()
+    client.destroy_node()
     rclpy.shutdown()
 
 
