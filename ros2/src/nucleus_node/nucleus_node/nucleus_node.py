@@ -147,7 +147,9 @@ class NucleusNode(Node):
             reply = self.nucleus_driver.send_command(command=command)
             
             try:
-                response.reply = reply[0].decode()
+                for entry in reply:
+                    response.reply += entry.decode()
+                
                 self.get_logger().info(f'stop reply: {response.reply}')
             except Exception as e:
                 response.reply = f'Failed to decode response from start command: {e}'

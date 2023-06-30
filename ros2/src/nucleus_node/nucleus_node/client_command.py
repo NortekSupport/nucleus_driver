@@ -21,6 +21,7 @@ class ClientCommand(Node):
 
         self.call = self.client.call_async(self.request)
 
+
 def main(args=None):
 
     rclpy.init(args=args)
@@ -44,7 +45,8 @@ def main(args=None):
     
     client.destroy_node()
     rclpy.shutdown()
-
+    
+    return response
 
 if __name__ == '__main__':
     main()

@@ -10,37 +10,37 @@ class ClientDisconnect(Node):
 
         super().__init__('client_disconnect')
 
-        self.client_disconnect = self.create_client(Disconnect, 'disconnect')
-        while not self.client_disconnect.wait_for_service(timeout_sec=1.0):
+        self.client = self.create_client(Disconnect, 'disconnect')
+        while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('disconnect service not available. Waiting...')
         self.request = Disconnect.Request()
 
     def send_request(self):
 
-        self.call = self.client_disconnect.call_async(self.request)
+        self.call = self.client.call_async(self.request)
 
 def main(args=None):
 
     rclpy.init(args=args)
 
-    client_disconnect = ClientDisconnect()
-    client_disconnect.send_request()
+    client = ClientDisconnect()
+    client.send_request()
 
     while rclpy.ok():
 
-        rclpy.spin_once(client_disconnect)
+        rclpy.spin_once(client)
 
-        if client_disconnect.call.done():
+        if client.call.done():
             try:
-                response = client_disconnect.call.result()
+                response = client.call.result()
             except Exception as e:
-                client_disconnect.get_logger().info(f'disconnect call failed: {e}')
+                client.get_logger().info(f'disconnect call failed: {e}')
             else:
-                client_disconnect.get_logger().info(f'Successfully made the disconnect call with status: {response.status}')
+                client.get_logger().info(f'Successfully made the disconnect call with status: {response.status}')
 
             break
     
-    client_disconnect.destroy_node()
+    client.destroy_node()
     rclpy.shutdown()
 
 
