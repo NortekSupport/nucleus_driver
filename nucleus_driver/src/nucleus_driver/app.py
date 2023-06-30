@@ -208,7 +208,10 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
-        self.nucleus_driver.send_command(command)
+        reply = self.nucleus_driver.send_command(command)
+
+        for entry in reply:
+            self.nucleus_driver.messages.write_message(entry.decode(), skip_newline=True)
 
     flash_firmware_parser = Cmd2ArgumentParser(description='Flash firmware')
     flash_firmware_parser.add_argument('path', help='Set flash file. Extension must be in [.bin, .ldr, .zip]', completer=cmd2.Cmd.path_complete)
