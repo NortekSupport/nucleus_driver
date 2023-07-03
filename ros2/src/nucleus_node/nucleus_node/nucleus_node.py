@@ -1,7 +1,8 @@
 import rclpy
 from rclpy.node import Node
 
-from interfaces.srv import ConnectTcp, ConnectSerial, Disconnect, Start, Stop, ReadPacket
+from interfaces.srv import ConnectTcp, ConnectSerial, Disconnect, Start, Stop, ReadPacket, Command
+from interfaces.msg import Ahrs
 
 import json
 
@@ -21,16 +22,15 @@ class NucleusNode(Node):
         self.start_service = self.create_service(Start, 'start', self.start_callback)
         self.stop_service = self.create_service(Stop, 'stop', self.stop_callback)
         self.read_packet_service = self.create_service(ReadPacket, 'read_packet', self.read_packet_callback)
+        self.command_service = self.create_service(Command, 'command', self.command_callback)
+
+        self.ahrs_publisher = self.create_publisher(Ahrs, 'ahrs', 100)
+        self.packet_timer = self.create_timer(0.01, self.packet_callback)
 
     def connect_tcp_callback(self, request, response):
 
-        if request.password != '':
-            password = request.password
-        else:
-            password = None
-
         self.nucleus_driver.set_tcp_configuration(host=request.host)
-        status = self.nucleus_driver.connect(connection_type='tcp', password=password)
+        status = self.nucleus_driver.connect(connection_type='tcp', password=request.password)
 
         if status:
             self.get_logger().info(f'Connected through TCP with host: {request.host}')
@@ -150,11 +150,30 @@ class NucleusNode(Node):
                 for entry in reply:
                     response.reply += entry.decode()
                 
-                self.get_logger().info(f'stop reply: {response.reply}')
+                self.get_logger().info(f'command reply: {response.reply}')
             except Exception as e:
                 response.reply = f'Failed to decode response from start command: {e}'
 
         return response
+
+    def packet_callback(self):
+
+        packet = self.nucleus_driver.read_packet()
+
+        if packet is None:
+            return
+        
+        if packet['id'] == 0xd2:
+
+            ahrs_packet = Ahrs()
+
+            ahrs_packet.roll = packet['ahrsData.roll']
+            ahrs_packet.pitch = packet['ahrsData.pitch']
+            ahrs_packet.heading = packet['ahrsData.heading']
+
+            self.ahrs_publisher.publish(ahrs_packet)
+
+
 
 
 def main():

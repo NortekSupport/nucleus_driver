@@ -39,14 +39,14 @@ def main(args=None):
             except Exception as e:
                 client.get_logger().info(f'command call failed: {e}')
             else:
-                client.get_logger().info(f'Successfully made the command call with status: {response.reply}')
+                client.get_logger().info(f'Successfully made the command call with reply: {response.reply}')
 
             break
     
     client.destroy_node()
     rclpy.shutdown()
     
-    return response
+    #return response
 
 if __name__ == '__main__':
     main()

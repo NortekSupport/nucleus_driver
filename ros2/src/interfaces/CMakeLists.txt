@@ -32,6 +32,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Start.srv"
   "srv/Stop.srv"
   "srv/ReadPacket.srv"
+  "srv/Command.srv"
+  "msg/Ahrs.msg"
 )
 
 ament_package()
