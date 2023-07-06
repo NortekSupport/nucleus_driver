@@ -33,7 +33,15 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Stop.srv"
   "srv/ReadPacket.srv"
   "srv/Command.srv"
-  "msg/Ahrs.msg"
+  
+  "msg/AHRS.msg"
+  "msg/Altimeter.msg"
+  "msg/BottomTrack.msg"
+  "msg/CurrentProfile.msg"
+  "msg/FieldCalibration.msg"
+  "msg/IMU.msg"
+  "msg/INS.msg"
+  "msg/Mag.msg"
 )
 
 ament_package()

@@ -21,14 +21,6 @@ setup(
     entry_points={
         'console_scripts': [
             'nucleus_node = nucleus_node.nucleus_node:main',
-            'connect_tcp_old = nucleus_node.client_connect_tcp:main',
-            'connect_serial_old = nucleus_node.client_connect_serial:main',
-            'disconnect_old = nucleus_node.client_disconnect:main',
-            'start_old = nucleus_node.client_start:main',
-            'stop_old = nucleus_node.client_stop:main',
-            'read_packet_old = nucleus_node.client_read_packet:main',
-            'command_old = nucleus_node.client_command:main',
-            'ahrs_packets_old = nucleus_node.subscriber_ahrs_packets:main',
 
             'connect_tcp = clients.connect_tcp:main',
             'connect_serial = clients.connect_serial:main',
@@ -39,6 +31,7 @@ setup(
             'command = clients.command:main',
 
             'ahrs_packets = subscribers.ahrs_packets:main',
+            'ins_packets = subscribers.ins_packets:main',
         ],
     },
 )

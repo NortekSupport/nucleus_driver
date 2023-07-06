@@ -1,6 +1,7 @@
 import sys
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import SingleThreadedExecutor
 
 from interfaces.srv import ConnectSerial
 
@@ -18,29 +19,23 @@ class ClientConnectSerial(Node):
 
         self.request = ConnectSerial.Request()
 
-    def send_request(self, serial_port: str):
+    def send_request(self, serial_port: str, timeout_sec=None):
 
         self.request.serial_port = serial_port
 
         self.call = self.client.call_async(self.request)
-        rclpy.spin_until_future_complete(self, self.call)
-        
+
+        if self.executor is not None:
+            self.executor.spin_until_future_complete(self.call, timeout_sec=timeout_sec)
+        else:
+            self.get_logger().warning('This client is not added to an executor. Establishing a temporary SingleThreadedExecutor for this call')
+            executor = SingleThreadedExecutor()
+            executor.add_node(self)
+            executor.spin_until_future_complete(self.call, timeout_sec=timeout_sec)
+            executor.shutdown()
+
         return self.call.result()
 
-
-def call(serial_port: str) -> bool:
-
-    rclpy.init()
-
-    client = ClientConnectSerial()
-    response = client.send_request(serial_port=serial_port)
-
-    client.get_logger().info(f'Successfully made the connect serial call with status: {response.status}')
-
-    client.destroy_node()
-    rclpy.shutdown()
-
-    return response
 
 def main():
 
@@ -53,9 +48,21 @@ def main():
         print(f'Invalid argument for serial_port: {e}')
         return
     
-    response = call(serial_port=serial_port)
+    rclpy.init()
 
-    print(f'call response: {response.status}')
+    client = ClientConnectSerial()
+
+    executor = SingleThreadedExecutor()
+    executor.add_node(client)
+
+    response = client.send_request(serial_port=serial_port)
+
+    client.get_logger().info(f'{response.status}')
+
+    executor.shutdown()
+
+    client.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

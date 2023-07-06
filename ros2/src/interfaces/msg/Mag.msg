@@ -1,0 +1,12 @@
+bool posix_time
+uint32 timestamp
+uint32 microseconds
+
+bool is_compensated_for_hard_iron
+bool dvl_active
+bool dvl_acoustics_active
+bool dvl_transmitter_active
+
+float32 magnetometer_x
+float32 magnetometer_y
+float32 magnetometer_z

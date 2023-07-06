@@ -1,6 +1,7 @@
 import sys
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import SingleThreadedExecutor
 
 from interfaces.srv import ConnectTcp
 
@@ -17,30 +18,24 @@ class ClientConnectTcp(Node):
 
         self.request = ConnectTcp.Request()
 
-    def send_request(self, host: str, password: str = None):
+    def send_request(self, host: str, password: str = None, timeout_sec=None):
         
         self.request.host = host
         self.request.password = password  
 
         self.call = self.client.call_async(self.request)
-        rclpy.spin_until_future_complete(self, self.call)
         
+        if self.executor is not None:
+            self.executor.spin_until_future_complete(self.call, timeout_sec=timeout_sec)
+        else:
+            self.get_logger().warning('This client is not added to an executor. Establishing a temporary SingleThreadedExecutor for this call')
+            executor = SingleThreadedExecutor()
+            executor.add_node(self)
+            executor.spin_until_future_complete(self.call, timeout_sec=timeout_sec)
+            executor.shutdown()
+
         return self.call.result()
 
-
-def call(host: str, password: str) -> bool:
-
-    rclpy.init()
-
-    client = ClientConnectTcp()
-    response = client.send_request(host=host, password=password)
-
-    client.get_logger().info(f'Successfully made the connect tcp call with status: {response.status}')
-
-    client.destroy_node()
-    rclpy.shutdown()
-
-    return response
 
 def main():
 
@@ -62,11 +57,21 @@ def main():
         print(f'Invalid argument for password: {e}')
         return
     
-    # password may be None
+    rclpy.init()
 
-    response = call(host=host, password=password)
+    client = ClientConnectTcp()
 
-    print(f'call response: {response.status}')
+    executor = SingleThreadedExecutor()
+    executor.add_node(client)
+
+    response = client.send_request(host=host, password=password)
+
+    client.get_logger().info(f'Successfully made the connect tcp call with status: {response.status}')
+
+    executor.shutdown()
+
+    client.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

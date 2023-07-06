@@ -1,0 +1,15 @@
+bool posix_time
+uint32 timestamp
+uint32 microseconds
+
+bool altimeter_distance_valid
+bool altimeter_quality_valid
+bool pressure_valid
+bool temperature_valid
+
+uint32 serial_number
+float32 sound_speed
+float32 temperature
+float32 pressure
+float32 altimeter_distance
+uint16 altimeter_quality

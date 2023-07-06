@@ -1,6 +1,7 @@
 import sys
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import SingleThreadedExecutor
 
 from interfaces.srv import Command
 
@@ -17,29 +18,22 @@ class ClientCommand(Node):
 
         self.request = Command.Request()
 
-    def send_request(self, command):
+    def send_request(self, command, timeout_sec=None):
         
         self.request.command = command
 
         self.call = self.client.call_async(self.request)
-        rclpy.spin_until_future_complete(self, self.call)
         
+        if self.executor is not None:
+            self.executor.spin_until_future_complete(self.call, timeout_sec=timeout_sec)
+        else:
+            self.get_logger().warning('This client is not added to an executor. Establishing a temporary SingleThreadedExecutor for this call')
+            executor = SingleThreadedExecutor()
+            executor.add_node(self)
+            executor.spin_until_future_complete(self.call, timeout_sec=timeout_sec)
+            executor.shutdown()
+
         return self.call.result()
-
-
-def call(command: str) -> object:
-
-    rclpy.init()
-
-    client = ClientCommand()
-    response = client.send_request(command=command)
-
-    client.get_logger().info(f'Successfully made the command call with reply: {response.reply}')
-
-    client.destroy_node()
-    rclpy.shutdown()
-
-    return response
 
 def main():
 
@@ -51,10 +45,22 @@ def main():
     except Exception as e:
         print(f'Invalid argument: {e}')
         return
-    
-    response = call(command=command)
 
-    print(f'call response: {response.reply}')
+    rclpy.init()
+
+    client = ClientCommand()
+
+    executor = SingleThreadedExecutor()
+    executor.add_node(client)
+
+    response = client.send_request(command=command)
+
+    client.get_logger().info(f'{response.reply}')
+
+    executor.shutdown()
+
+    client.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

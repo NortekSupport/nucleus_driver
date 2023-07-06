@@ -1,6 +1,7 @@
 import sys
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import SingleThreadedExecutor
 
 from interfaces.srv import Stop
 
@@ -17,33 +18,39 @@ class ClientStop(Node):
 
         self.request = Stop.Request()
 
-    def send_request(self):
+    def send_request(self, timeout_sec=None):
 
         self.call = self.client.call_async(self.request)
-        rclpy.spin_until_future_complete(self, self.call)
         
+        if self.executor is not None:
+            self.executor.spin_until_future_complete(self.call, timeout_sec=timeout_sec)
+        else:
+            self.get_logger().warning('This client is not added to an executor. Establishing a temporary SingleThreadedExecutor for this call')
+            executor = SingleThreadedExecutor()
+            executor.add_node(self)
+            executor.spin_until_future_complete(self.call, timeout_sec=timeout_sec)
+            executor.shutdown()
+
         return self.call.result()
 
-def call() -> bool:
+
+def main():
 
     rclpy.init()
 
     client = ClientStop()
+
+    executor = SingleThreadedExecutor()
+    executor.add_node(client)
+
     response = client.send_request()
 
     client.get_logger().info(f'Successfully made the stop call with status: {response.reply}')
 
+    executor.shutdown()
+
     client.destroy_node()
     rclpy.shutdown()
-
-    return response
-
-def main():
-
-    response = call()
-
-    print(f'call response: {response.reply}')
-
 
 if __name__ == '__main__':
     main()

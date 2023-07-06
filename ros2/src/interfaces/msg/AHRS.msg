@@ -1,0 +1,26 @@
+bool posix_time
+uint32 timestamp
+uint32 microseconds
+
+uint32 serial_number
+uint8 operation_mode
+float32 fom_ahrs
+float32 fom_fc1
+float32 roll
+float32 pitch
+float32 heading
+float32 quaternion_w
+float32 quaternion_x
+float32 quaternion_y
+float32 quaternion_z
+float32 rotation_matrix_0
+float32 rotation_matrix_1
+float32 rotation_matrix_2
+float32 rotation_matrix_3
+float32 rotation_matrix_4
+float32 rotation_matrix_5
+float32 rotation_matrix_6
+float32 rotation_matrix_7
+float32 rotation_matrix_8
+float32 declination
+float32 depth
