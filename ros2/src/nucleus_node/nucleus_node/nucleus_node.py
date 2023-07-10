@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 
-from interfaces.srv import ConnectTcp, ConnectSerial, Disconnect, Start, Stop, ReadPacket, Command
+from interfaces.srv import ConnectTcp, ConnectSerial, Disconnect, Start, Stop, StartFieldCalibration, Command
 from interfaces.msg import AHRS, Altimeter, BottomTrack, CurrentProfile, FieldCalibration, IMU, INS, Mag
 
 import json
@@ -11,18 +11,17 @@ from nucleus_driver import NucleusDriver
 
 class NucleusNode(Node):
 
-    def __init__(self):  # , nucleus_driver):
+    def __init__(self):
         super().__init__("nucleus_node")
-
-        #self.nucleus_driver = nucleus_driver
+        
         self.nucleus_driver = NucleusDriver()
 
         self.connect_tcp_service = self.create_service(ConnectTcp, 'connect_tcp', self.connect_tcp_callback)
         self.connect_serial_service = self.create_service(ConnectSerial, 'connect_serial', self.connect_serial_callback)
         self.disconnect_service = self.create_service(Disconnect, 'disconnect', self.disconnect_callback)
         self.start_service = self.create_service(Start, 'start', self.start_callback)
+        self.start_service = self.create_service(StartFieldCalibration, 'field_calibration', self.start_field_calibration_callback)
         self.stop_service = self.create_service(Stop, 'stop', self.stop_callback)
-        self.read_packet_service = self.create_service(ReadPacket, 'read_packet', self.read_packet_callback)
         self.command_service = self.create_service(Command, 'command', self.command_callback)
 
         self.ahrs_publisher = self.create_publisher(AHRS, 'ahrs', 100)
@@ -35,6 +34,8 @@ class NucleusNode(Node):
         self.ins_publisher = self.create_publisher(INS, 'ins', 100)
         self.mag_publisher = self.create_publisher(Mag, 'mag', 100)
         self.packet_timer = self.create_timer(0.01, self.packet_callback)
+
+        self.get_logger().info(f'Nucleus Node initiated')
 
     def connect_tcp_callback(self, request, response):
 
@@ -91,6 +92,23 @@ class NucleusNode(Node):
                 self.get_logger().info(f'start reply: {response.reply}')
             except Exception as e:
                 response.reply = f'Failed to decode response from start command: {e}'
+
+        return response
+    
+    def start_field_calibration_callback(self, request, response):
+
+        if not self.nucleus_driver.connection.get_connection_status():
+            self.get_logger().info(f'Nucleus is not connected')
+            response.reply = f'Nucleus is not connected'
+
+        else:
+            reply = self.nucleus_driver.start_fieldcal()
+            
+            try:
+                response.reply = reply[0].decode()
+                self.get_logger().info(f'start field calibration reply: {response.reply}')
+            except Exception as e:
+                response.reply = f'Failed to decode response from start field calibration command: {e}'
 
         return response
     
@@ -281,7 +299,7 @@ class NucleusNode(Node):
             imu_packet.is_valid = packet['status.isValid']
             imu_packet.has_data_path_overrun = packet['status.hasDataPathOverrun']
             imu_packet.has_flash_update_failure = packet['status.hasFlashUpdateFailure']
-            imu_packet.has_spi_com_eror = packet['status.hasSpiComError']
+            imu_packet.has_spi_com_error = packet['status.hasSpiComError']
             imu_packet.has_low_voltage = packet['status.hasLowVoltage']
             imu_packet.has_sensor_failure = packet['status.hasSensorFailure']
             imu_packet.has_memory_failure = packet['status.hasMemoryFailure']
@@ -301,7 +319,7 @@ class NucleusNode(Node):
 
         if packet['id'] == 0x87:
 
-            mag_packet = IMU()
+            mag_packet = Mag()
             
             mag_packet.posix_time = packet['flags.posixTime']
             mag_packet.timestamp = packet['timeStamp']
@@ -342,7 +360,7 @@ class NucleusNode(Node):
             bottom_track_packet.y_fom_valid = packet['status.yFomValid']
             bottom_track_packet.z_fom_valid = packet['status.zFomValid']
 
-            bottom_track_packet.serialNumber = packet['serialNumber']
+            bottom_track_packet.serial_number = packet['serialNumber']
             bottom_track_packet.sound_speed = packet['soundSpeed']
             bottom_track_packet.temperature = packet['temperature']
             bottom_track_packet.pressure = packet['pressure']
@@ -362,8 +380,8 @@ class NucleusNode(Node):
             bottom_track_packet.time_vel_beam_2 = packet['timeVelBeam2']
             bottom_track_packet.time_vel_beam_3 = packet['timeVelBeam3']
             bottom_track_packet.velocity_x = packet['velocityX']
-            bottom_track_packet.velocity_y = packet['velocityy']
-            bottom_track_packet.velocity_z = packet['velocityz']
+            bottom_track_packet.velocity_y = packet['velocityY']
+            bottom_track_packet.velocity_z = packet['velocityZ']
             bottom_track_packet.fom_x = packet['fomX']
             bottom_track_packet.fom_y = packet['fomY']
             bottom_track_packet.fom_z = packet['fomX']
@@ -467,13 +485,9 @@ class NucleusNode(Node):
 
 def main():
 
-    print('Hi from nucleus_driver.')
-
-    #nucleus_driver = NucleusDriver()
-
     rclpy.init()
 
-    nucleus_node = NucleusNode() #nucleus_driver=nucleus_driver)
+    nucleus_node = NucleusNode()
 
     rclpy.spin(nucleus_node)
 

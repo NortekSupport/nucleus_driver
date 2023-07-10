@@ -5,7 +5,7 @@ uint32 microseconds
 bool is_valid
 bool has_data_path_overrun
 bool has_flash_update_failure
-bool has_spi_com_eror
+bool has_spi_com_error
 bool has_low_voltage
 bool has_sensor_failure
 bool has_memory_failure

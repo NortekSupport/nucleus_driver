@@ -30,8 +30,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ConnectTcp.srv"
   "srv/Disconnect.srv"
   "srv/Start.srv"
+  "srv/StartFieldCalibration.srv"
   "srv/Stop.srv"
-  "srv/ReadPacket.srv"
   "srv/Command.srv"
   
   "msg/AHRS.msg"
