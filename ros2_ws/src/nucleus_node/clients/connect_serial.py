@@ -3,25 +3,28 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 
-from interfaces.srv import StartFieldCalibration
+from interfaces.srv import ConnectSerial
 
-class ClientFieldCalibration(Node):
 
-    def __init__(self):
+class ClientConnectSerial(Node):
 
-        super().__init__('client_field_calibration')
+    def __init__(self, srv_name='connect_serial'):
 
-        self.client = self.create_client(StartFieldCalibration, 'field_calibration')
+        super().__init__('client_connect_serial')
+
+        self.client = self.create_client(ConnectSerial, srv_name=srv_name)
 
         while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('field_calibration service not available. Waiting...')
+            self.get_logger().info('connect serial service not available. Waiting...')
 
-        self.request = StartFieldCalibration.Request()
+        self.request = ConnectSerial.Request()
 
-    def send_request(self, timeout_sec=None):
+    def send_request(self, serial_port: str, timeout_sec=None):
+
+        self.request.serial_port = serial_port
 
         self.call = self.client.call_async(self.request)
-        
+
         if self.executor is not None:
             self.executor.spin_until_future_complete(self.call, timeout_sec=timeout_sec)
         else:
@@ -32,20 +35,29 @@ class ClientFieldCalibration(Node):
             executor.shutdown()
 
         return self.call.result()
-    
+
 
 def main():
 
+    try:
+        serial_port = str(sys.argv[1])
+    except IndexError:
+        print(f'Argument "serial_port" must be specified')
+        return
+    except Exception as e:
+        print(f'Invalid argument for serial_port: {e}')
+        return
+    
     rclpy.init()
 
-    client = ClientFieldCalibration()
+    client = ClientConnectSerial()
 
     executor = SingleThreadedExecutor()
     executor.add_node(client)
 
-    response = client.send_request()
+    response = client.send_request(serial_port=serial_port)
 
-    client.get_logger().info(f'Successfully made the field_calibration call with status: {response.reply}')
+    client.get_logger().info(f'{response.status}')
 
     executor.shutdown()
 

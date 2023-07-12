@@ -52,7 +52,7 @@ class TestNucleusNode:
         rclpy.shutdown()
 
     @pytest.fixture(scope='module', autouse=True)
-    def run_nucleus_node(self, init_rclpy):
+    def run_nucleus_node(self, init_rclpy, nucleus_driver_connection):
 
         nucleus_node = NucleusNode()
 
@@ -114,22 +114,35 @@ class TestNucleusNode:
 
         subscriber_thread.join(1)
 
-    @pytest.mark.dependency(name='connect_tcp')
-    def test_client_connect_tcp(self, run_clients):
+    @pytest.mark.dependency(name='connect')
+    def test_client_connect(self, run_clients, nucleus_driver_connection):
 
-        client = ClientConnectTcp()
+        if nucleus_driver_connection == ' tcp ':
+            client = ClientConnectTcp()
+        elif nucleus_driver_connection == ' serial ':
+            client = ClientConnectSerial()
+        else:
+            raise Exception('Unknown connection type')
         
         executor = SingleThreadedExecutor()
         executor.add_node(client)
-        
-        response = client.send_request(host=HOSTNAME, password='nortek', timeout_sec=1)
+        '''
+        if nucleus_driver_connection == ' tcp ':
+            response = client.send_request(host=HOSTNAME, password='nortek', timeout_sec=1)
+        elif nucleus_driver_connection == ' serial ':
+            response = client.send_request(serial_port=SERIAL_PORT, timeout_sec=1)
+        '''
+        if nucleus_driver_connection == ' tcp ':
+            response = client.send_request(host=pytest.hostname, password='nortek', timeout_sec=1)
+        elif nucleus_driver_connection == ' serial ':
+            response = client.send_request(serial_port=pytest.serial_port, timeout_sec=1)
 
         executor.shutdown()
         client.destroy_node()
 
         assert response.status is True
-
-    @pytest.mark.dependency(name='test_command_setup_measurement', depends=['connect_tcp'])
+    
+    @pytest.mark.dependency(name='test_command_setup_measurement', depends=['connect'])
     def test_command_setup_measurement(self, run_clients):
 
         client = ClientCommand()
@@ -161,7 +174,7 @@ class TestNucleusNode:
         assert 'OK' in response_setimu.reply
         assert 'OK' in response_setmag.reply
 
-    @pytest.mark.dependency(name='start_measurement', depends=['connect_tcp', 'test_command_setup_measurement'])
+    @pytest.mark.dependency(name='start_measurement', depends=['connect', 'test_command_setup_measurement'])
     def test_client_start_measurement(self, run_clients):
 
         client = ClientStart()
@@ -176,7 +189,7 @@ class TestNucleusNode:
 
         assert 'OK' in response.reply
 
-    @pytest.mark.dependency(name='stop_measurement', depends=['connect_tcp', 'test_command_setup_measurement', 'start_measurement'])
+    @pytest.mark.dependency(name='stop_measurement', depends=['connect', 'test_command_setup_measurement', 'start_measurement'])
     def test_client_stop_measurement(self, run_clients):
 
         time.sleep(3) # allow for 1 second of measurement. Move to fixture?
@@ -194,37 +207,7 @@ class TestNucleusNode:
 
         assert 'OK' in response.reply
 
-    @pytest.mark.dependency(name='disconnect_tcp', depends=['connect_tcp', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement'])
-    def test_client_disconnect_tcp(self, run_clients):
-
-        client = ClientDisconnect()
-        
-        executor = SingleThreadedExecutor()
-        executor.add_node(client)
-
-        response = client.send_request(timeout_sec=1)
-        
-        executor.shutdown()
-        client.destroy_node()
-
-        assert response.status is True
-
-    @pytest.mark.dependency(name='connect_serial')
-    def test_client_connect_serial(self, run_clients):
-
-        client = ClientConnectSerial()
-        
-        executor = SingleThreadedExecutor()
-        executor.add_node(client)
-        
-        response = client.send_request(serial_port=SERIAL_PORT, timeout_sec=1)
-
-        executor.shutdown()
-        client.destroy_node()
-
-        assert response.status is True
-
-    @pytest.mark.dependency(name='test_command_setup_field_calibration', depends=['connect_serial'])
+    @pytest.mark.dependency(name='test_command_setup_field_calibration', depends=['connect'])
     def test_command_setup_field_calibration(self, run_clients):
 
         client = ClientCommand()
@@ -256,7 +239,7 @@ class TestNucleusNode:
         assert 'OK' in response_setimu.reply
         assert 'OK' in response_setmag.reply
     
-    @pytest.mark.dependency(name='start_field_calibration', depends=['connect_serial', 'test_command_setup_field_calibration'])
+    @pytest.mark.dependency(name='start_field_calibration', depends=['connect', 'test_command_setup_field_calibration'])
     def test_client_start_field_calibration(self, run_clients):
 
         client = ClientFieldCalibration()
@@ -264,14 +247,14 @@ class TestNucleusNode:
         executor = SingleThreadedExecutor()
         executor.add_node(client)
 
-        response = client.send_request(timeout_sec=1)
+        response = client.send_request(timeout_sec=2)
         
         executor.shutdown()
         client.destroy_node()
 
         assert 'OK' in response.reply
 
-    @pytest.mark.dependency(name='stop_field_calibration', depends=['connect_serial', 'test_command_setup_field_calibration', 'start_field_calibration'])
+    @pytest.mark.dependency(name='stop_field_calibration', depends=['connect', 'test_command_setup_field_calibration', 'start_field_calibration'])
     def test_client_stop_field_calibration(self, run_clients):
 
         time.sleep(3) # allow for 1 second of measurement. Move to fixture?
@@ -289,8 +272,8 @@ class TestNucleusNode:
 
         assert 'OK' in response.reply
 
-    @pytest.mark.dependency(name='disconnect_serial', depends=['connect_serial', 'test_command_setup_field_calibration', 'start_field_calibration', 'stop_field_calibration'])
-    def test_client_disconnect_serial(self, run_clients):
+    @pytest.mark.dependency(name='disconnect', depends=['connect', 'test_command_setup_field_calibration', 'start_field_calibration', 'stop_field_calibration'])
+    def test_client_disconnect(self, run_clients):
 
         client = ClientDisconnect()
         
@@ -304,7 +287,7 @@ class TestNucleusNode:
 
         assert response.status is True
 
-    @pytest.mark.dependency(name='ahrs_subscriber', depends=['connect_tcp', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect_tcp'])
+    @pytest.mark.dependency(name='ahrs_subscriber', depends=['connect', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect'])
     def test_ahrs_subscriber(self, run_clients):
 
         assert not self.ahrs_queue.empty()
@@ -340,7 +323,7 @@ class TestNucleusNode:
             assert isinstance(data.declination, float)
             assert isinstance(data.depth, float)
 
-    @pytest.mark.dependency(name='altimeter_subscriber', depends=['connect_tcp', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect_tcp'])
+    @pytest.mark.dependency(name='altimeter_subscriber', depends=['connect', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect'])
     def test_altimeter_subscriber(self, run_clients):
 
         assert not self.altimeter_queue.empty()
@@ -365,7 +348,7 @@ class TestNucleusNode:
             assert isinstance(data.altimeter_distance, float)
             assert isinstance(data.altimeter_quality, int)
 
-    @pytest.mark.dependency(name='bottom_track_subscriber', depends=['connect_tcp', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect_tcp'])
+    @pytest.mark.dependency(name='bottom_track_subscriber', depends=['connect', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect'])
     def test_bottom_track_subscriber(self, run_clients):
 
         assert not self.bottom_track_queue.empty()
@@ -422,7 +405,7 @@ class TestNucleusNode:
             assert isinstance(data.dt_xyz, float)
             assert isinstance(data.time_vel_xyz, float)
 
-    @pytest.mark.dependency(name='water_track_subscriber', depends=['connect_tcp', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect_tcp'])
+    @pytest.mark.dependency(name='water_track_subscriber', depends=['connect', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect'])
     def test_water_track_subscriber(self, run_clients):
 
         assert not self.water_track_queue.empty()
@@ -479,7 +462,7 @@ class TestNucleusNode:
             assert isinstance(data.dt_xyz, float)
             assert isinstance(data.time_vel_xyz, float)
     
-    @pytest.mark.dependency(name='current_profile_subscriber', depends=['connect_tcp', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect_tcp'])
+    @pytest.mark.dependency(name='current_profile_subscriber', depends=['connect', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect'])
     def test_current_profile_subscriber(self, run_clients):
 
         assert not self.current_profile_queue.empty()
@@ -505,7 +488,7 @@ class TestNucleusNode:
             assert isinstance(data.amplitude_data, array)
             assert isinstance(data.correlation_data, array)
     
-    @pytest.mark.dependency(name='ins_subscriber', depends=['connect_tcp', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect_tcp'])
+    @pytest.mark.dependency(name='ins_subscriber', depends=['connect', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect'])
     def test_ins_subscriber(self, run_clients):
 
         assert not self.ins_queue.empty()
@@ -563,7 +546,7 @@ class TestNucleusNode:
             assert isinstance(data.turn_rate_y, float)
             assert isinstance(data.turn_rate_z, float)
     
-    @pytest.mark.dependency(name='imu_subscriber', depends=['connect_serial', 'test_command_setup_field_calibration', 'start_field_calibration', 'stop_field_calibration', 'disconnect_serial'])
+    @pytest.mark.dependency(name='imu_subscriber', depends=['connect', 'test_command_setup_field_calibration', 'start_field_calibration', 'stop_field_calibration', 'disconnect'])
     def test_imu_subscriber(self, run_clients):
 
         assert not self.imu_queue.empty()
@@ -595,7 +578,7 @@ class TestNucleusNode:
             assert isinstance(data.gyro_z, float)
             assert isinstance(data.temperature, float)
     
-    @pytest.mark.dependency(name='mag_subscriber', depends=['connect_serial', 'test_command_setup_field_calibration', 'start_field_calibration', 'stop_field_calibration', 'disconnect_serial'])
+    @pytest.mark.dependency(name='mag_subscriber', depends=['connect', 'test_command_setup_field_calibration', 'start_field_calibration', 'stop_field_calibration', 'disconnect'])
     def test_mag_subscriber(self, run_clients):
 
         assert not self.mag_queue.empty()
@@ -617,7 +600,7 @@ class TestNucleusNode:
             assert isinstance(data.magnetometer_y, float)
             assert isinstance(data.magnetometer_z, float)
 
-    @pytest.mark.dependency(name='field_calibration_subscriber', depends=['connect_serial', 'test_command_setup_field_calibration', 'start_field_calibration', 'stop_field_calibration', 'disconnect_serial'])
+    @pytest.mark.dependency(name='field_calibration_subscriber', depends=['connect', 'test_command_setup_field_calibration', 'start_field_calibration', 'stop_field_calibration', 'disconnect'])
     def test_field_calibration_subscriber(self, run_clients):
 
         assert not self.field_calibration_queue.empty()

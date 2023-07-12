@@ -3,25 +3,24 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 
-from interfaces.srv import ConnectTcp
+from interfaces.srv import Command
 
-class ClientConnectTcp(Node):
+class ClientCommand(Node):
 
-    def __init__(self):
+    def __init__(self, srv_name='command'):
 
-        super().__init__('client_connect_tcp')
+        super().__init__('client_command')
 
-        self.client = self.create_client(ConnectTcp, 'connect_tcp')
+        self.client = self.create_client(Command, srv_name=srv_name)
 
         while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('connect tcp service not available. Waiting...')
+            self.get_logger().info('command service not available. Waiting...')
 
-        self.request = ConnectTcp.Request()
+        self.request = Command.Request()
 
-    def send_request(self, host: str, password: str = None, timeout_sec=None):
+    def send_request(self, command, timeout_sec=None):
         
-        self.request.host = host
-        self.request.password = password  
+        self.request.command = command
 
         self.call = self.client.call_async(self.request)
         
@@ -36,37 +35,27 @@ class ClientConnectTcp(Node):
 
         return self.call.result()
 
-
 def main():
 
     try:
-        host = str(sys.argv[1])
+        command=str(sys.argv[1])
     except IndexError:
-        print(f'First argument "host" must be specified')
+        print(f'Argument "command" must be specified')
         return
     except Exception as e:
-        print(f'Invalid argument for host: {e}')
+        print(f'Invalid argument: {e}')
         return
 
-    try:
-        password = str(sys.argv[2])
-    except IndexError:
-        print(f'Second argument "password" must be specified')
-        return
-    except Exception as e:
-        print(f'Invalid argument for password: {e}')
-        return
-    
     rclpy.init()
 
-    client = ClientConnectTcp()
+    client = ClientCommand()
 
     executor = SingleThreadedExecutor()
     executor.add_node(client)
 
-    response = client.send_request(host=host, password=password)
+    response = client.send_request(command=command)
 
-    client.get_logger().info(f'Successfully made the connect tcp call with status: {response.status}')
+    client.get_logger().info(f'{response.reply}')
 
     executor.shutdown()
 

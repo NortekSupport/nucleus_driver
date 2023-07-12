@@ -7,12 +7,11 @@ from interfaces.msg import INS
 
 class SubscriberInsPackets(Node):
 
-    def __init__(self, callback_function):
+    def __init__(self, callback_function, topic='ins', qos_profile=100):
 
         super().__init__('subscriber_ins_packets')
 
-        self.callback_function = callback_function
-        self.subscription = self.create_subscription(INS, 'ins', self.callback_function, 100)
+        self.subscription = self.create_subscription(INS, topic=topic, callback=callback_function, qos_profile=qos_profile)
 
     def subscribe(self):
 

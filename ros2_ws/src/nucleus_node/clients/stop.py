@@ -3,20 +3,20 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 
-from interfaces.srv import Disconnect
+from interfaces.srv import Stop
 
-class ClientDisconnect(Node):
+class ClientStop(Node):
 
-    def __init__(self):
+    def __init__(self, srv_name='stop'):
 
-        super().__init__('client_disconnect')
+        super().__init__('client_stop')
 
-        self.client = self.create_client(Disconnect, 'disconnect')
+        self.client = self.create_client(Stop, srv_name=srv_name)
 
         while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('disconnect service not available. Waiting...')
-        
-        self.request = Disconnect.Request()
+            self.get_logger().info('stop service not available. Waiting...')
+
+        self.request = Stop.Request()
 
     def send_request(self, timeout_sec=None):
 
@@ -33,19 +33,19 @@ class ClientDisconnect(Node):
 
         return self.call.result()
 
- 
+
 def main():
 
     rclpy.init()
 
-    client = ClientDisconnect()
+    client = ClientStop()
 
     executor = SingleThreadedExecutor()
     executor.add_node(client)
 
     response = client.send_request()
 
-    client.get_logger().info(f'Successfully made the disconnect serial call with status: {response.status}')
+    client.get_logger().info(f'Successfully made the stop call with status: {response.reply}')
 
     executor.shutdown()
 

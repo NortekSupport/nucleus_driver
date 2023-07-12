@@ -7,12 +7,11 @@ from interfaces.msg import Mag
 
 class SubscriberMagPackets(Node):
 
-    def __init__(self, callback_function):
+    def __init__(self, callback_function, topic='mag', qos_profile=100):
 
         super().__init__('subscriber_mag_packets')
 
-        self.callback_function = callback_function
-        self.subscription = self.create_subscription(Mag, 'mag', self.callback_function, 100)
+        self.subscription = self.create_subscription(Mag, topic=topic, callback=callback_function, qos_profile=qos_profile)
 
     def subscribe(self):
 

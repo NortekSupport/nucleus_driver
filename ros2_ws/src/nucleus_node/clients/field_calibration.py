@@ -3,20 +3,21 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 
-from interfaces.srv import Stop
+from interfaces.srv import StartFieldCalibration
 
-class ClientStop(Node):
 
-    def __init__(self):
+class ClientFieldCalibration(Node):
 
-        super().__init__('client_stop')
+    def __init__(self, srv_name='field_calibration'):
 
-        self.client = self.create_client(Stop, 'stop')
+        super().__init__('client_field_calibration')
+
+        self.client = self.create_client(StartFieldCalibration, srv_name=srv_name)
 
         while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('stop service not available. Waiting...')
+            self.get_logger().info('field_calibration service not available. Waiting...')
 
-        self.request = Stop.Request()
+        self.request = StartFieldCalibration.Request()
 
     def send_request(self, timeout_sec=None):
 
@@ -32,20 +33,20 @@ class ClientStop(Node):
             executor.shutdown()
 
         return self.call.result()
-
+    
 
 def main():
 
     rclpy.init()
 
-    client = ClientStop()
+    client = ClientFieldCalibration()
 
     executor = SingleThreadedExecutor()
     executor.add_node(client)
 
     response = client.send_request()
 
-    client.get_logger().info(f'Successfully made the stop call with status: {response.reply}')
+    client.get_logger().info(f'Successfully made the field_calibration call with status: {response.reply}')
 
     executor.shutdown()
 

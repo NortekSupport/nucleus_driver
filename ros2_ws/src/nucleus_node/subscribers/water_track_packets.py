@@ -7,12 +7,11 @@ from interfaces.msg import BottomTrack
 
 class SubscriberWaterTrackPackets(Node):
 
-    def __init__(self, callback_function):
+    def __init__(self, callback_function, topic='water_track', qos_profile=100):
 
         super().__init__('subscriber_water_track_packets')
 
-        self.callback_function = callback_function
-        self.subscription = self.create_subscription(BottomTrack, 'water_track', self.callback_function, 100)
+        self.subscription = self.create_subscription(BottomTrack, topic=topic, callback=callback_function, qos_profile=qos_profile)
 
     def subscribe(self):
 

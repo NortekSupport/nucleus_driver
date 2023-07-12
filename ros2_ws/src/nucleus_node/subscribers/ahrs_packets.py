@@ -7,12 +7,11 @@ from interfaces.msg import AHRS
 
 class SubscriberAhrsPackets(Node):
 
-    def __init__(self, callback_function):
+    def __init__(self, callback_function, topic='ahrs', qos_profile=100):
 
         super().__init__('subscriber_ahrs_packets')
 
-        self.callback_function = callback_function
-        self.subscription = self.create_subscription(AHRS, 'ahrs', self.callback_function, 100)
+        self.subscription = self.create_subscription(AHRS, topic=topic, callback=callback_function, qos_profile=qos_profile)
 
     def subscribe(self):
 
@@ -50,7 +49,7 @@ def main(args=None):
 
     executor = SingleThreadedExecutor()
     executor.add_node(subscriber)
-
+    
     subscriber.subscribe()
 
     executor.shutdown()
