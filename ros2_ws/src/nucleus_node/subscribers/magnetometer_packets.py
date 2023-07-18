@@ -2,16 +2,16 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 
-from interfaces.msg import Mag
+from interfaces.msg import Magnetometer
 
 
-class SubscriberMagPackets(Node):
+class SubscriberMagnetometerPackets(Node):
 
-    def __init__(self, callback_function, topic='mag', qos_profile=100):
+    def __init__(self, callback_function, qos_profile=100):
 
-        super().__init__('subscriber_mag_packets')
+        super().__init__('subscriber_magnetometer_packets')
 
-        self.subscription = self.create_subscription(Mag, topic=topic, callback=callback_function, qos_profile=qos_profile)
+        self.subscription = self.create_subscription(Magnetometer, topic='nucleus_node/magnetometer_packets', callback=callback_function, qos_profile=qos_profile)
 
     def subscribe(self):
 
@@ -45,7 +45,7 @@ def main(args=None):
             
     rclpy.init(args=args)
 
-    subscriber = SubscriberMagPackets(callback_function=mag_packet_callback)
+    subscriber = SubscriberMagnetometerPackets(callback_function=mag_packet_callback)
 
     executor = SingleThreadedExecutor()
     executor.add_node(subscriber)

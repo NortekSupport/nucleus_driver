@@ -8,11 +8,11 @@ from interfaces.srv import ConnectTcp
 
 class ClientConnectTcp(Node):
 
-    def __init__(self, srv_name='connect_tcp'):
+    def __init__(self):
 
         super().__init__('client_connect_tcp')
 
-        self.client = self.create_client(ConnectTcp, srv_name=srv_name)
+        self.client = self.create_client(ConnectTcp, srv_name='nucleus_node/connect_tcp')
 
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('connect tcp service not available. Waiting...')

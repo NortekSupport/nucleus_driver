@@ -8,11 +8,11 @@ from interfaces.srv import StartFieldCalibration
 
 class ClientFieldCalibration(Node):
 
-    def __init__(self, srv_name='field_calibration'):
+    def __init__(self):
 
         super().__init__('client_field_calibration')
 
-        self.client = self.create_client(StartFieldCalibration, srv_name=srv_name)
+        self.client = self.create_client(StartFieldCalibration, srv_name='nucleus_node/field_calibration')
 
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('field_calibration service not available. Waiting...')

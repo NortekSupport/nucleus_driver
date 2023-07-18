@@ -23,11 +23,8 @@ from subscribers.current_profile_packets import SubscriberCurrentProfilePackets
 from subscribers.field_calibration_packets import SubscriberFieldCalibrationPackets
 from subscribers.imu_packets import SubscriberImuPackets
 from subscribers.ins_packets import SubscriberInsPackets
-from subscribers.mag_packets import SubscriberMagPackets
+from subscribers.magnetometer_packets import SubscriberMagnetometerPackets
 from subscribers.water_track_packets import SubscriberWaterTrackPackets
-
-SERIAL_PORT = '/dev/ttyUSB0'
-HOSTNAME = 'NORTEK-300004.local'
 
 
 class TestNucleusNode:
@@ -80,7 +77,7 @@ class TestNucleusNode:
         field_calibration_subscriber = SubscriberFieldCalibrationPackets(callback_function=self.field_calibration_queue.put)
         imu_subscriber = SubscriberImuPackets(callback_function=self.imu_queue.put)
         ins_subscriber = SubscriberInsPackets(callback_function=self.ins_queue.put)
-        mag_subscriber = SubscriberMagPackets(callback_function=self.mag_queue.put)
+        mag_subscriber = SubscriberMagnetometerPackets(callback_function=self.mag_queue.put)
         water_track_subscriber = SubscriberWaterTrackPackets(callback_function=self.water_track_queue.put)
 
         executor = MultiThreadedExecutor()
@@ -126,12 +123,7 @@ class TestNucleusNode:
         
         executor = SingleThreadedExecutor()
         executor.add_node(client)
-        '''
-        if nucleus_driver_connection == ' tcp ':
-            response = client.send_request(host=HOSTNAME, password='nortek', timeout_sec=1)
-        elif nucleus_driver_connection == ' serial ':
-            response = client.send_request(serial_port=SERIAL_PORT, timeout_sec=1)
-        '''
+
         if nucleus_driver_connection == ' tcp ':
             response = client.send_request(host=pytest.hostname, password='nortek', timeout_sec=1)
         elif nucleus_driver_connection == ' serial ':

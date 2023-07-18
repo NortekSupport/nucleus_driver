@@ -8,11 +8,11 @@ from interfaces.srv import Start
 
 class ClientStart(Node):
 
-    def __init__(self, srv_name='start'):
+    def __init__(self):
 
         super().__init__('client_start')
 
-        self.client = self.create_client(Start, srv_name=srv_name)
+        self.client = self.create_client(Start, srv_name='nucleus_node/start')
 
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('start service not available. Waiting...')

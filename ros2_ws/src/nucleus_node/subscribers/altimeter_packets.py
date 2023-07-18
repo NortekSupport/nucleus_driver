@@ -7,11 +7,11 @@ from interfaces.msg import Altimeter
 
 class SubscriberAltimeterPackets(Node):
 
-    def __init__(self, callback_function, topic='altimeter', qos_profile=100):
+    def __init__(self, callback_function, qos_profile=100):
 
         super().__init__('subscriber_altimeter_packets')
 
-        self.subscription = self.create_subscription(Altimeter, topic=topic, callback=callback_function, qos_profile=qos_profile)
+        self.subscription = self.create_subscription(Altimeter, topic='nucleus_node/altimeter_packets', callback=callback_function, qos_profile=qos_profile)
 
     def subscribe(self):
 

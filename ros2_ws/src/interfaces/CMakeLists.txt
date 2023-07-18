@@ -41,7 +41,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/FieldCalibration.msg"
   "msg/IMU.msg"
   "msg/INS.msg"
-  "msg/Mag.msg"
+  "msg/Magnetometer.msg"
 )
 
 ament_package()

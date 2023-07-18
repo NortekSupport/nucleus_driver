@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from interfaces.srv import ConnectTcp, ConnectSerial, Disconnect, Start, Stop, StartFieldCalibration, Command
-from interfaces.msg import AHRS, Altimeter, BottomTrack, CurrentProfile, FieldCalibration, IMU, INS, Mag
+from interfaces.msg import AHRS, Altimeter, BottomTrack, CurrentProfile, FieldCalibration, IMU, INS, Magnetometer
 
 import json
 
@@ -16,23 +16,23 @@ class NucleusNode(Node):
         
         self.nucleus_driver = NucleusDriver()
 
-        self.connect_tcp_service = self.create_service(ConnectTcp, 'connect_tcp', self.connect_tcp_callback)
-        self.connect_serial_service = self.create_service(ConnectSerial, 'connect_serial', self.connect_serial_callback)
-        self.disconnect_service = self.create_service(Disconnect, 'disconnect', self.disconnect_callback)
-        self.start_service = self.create_service(Start, 'start', self.start_callback)
-        self.start_service = self.create_service(StartFieldCalibration, 'field_calibration', self.start_field_calibration_callback)
-        self.stop_service = self.create_service(Stop, 'stop', self.stop_callback)
-        self.command_service = self.create_service(Command, 'command', self.command_callback)
+        self.connect_tcp_service = self.create_service(ConnectTcp, 'nucleus_node/connect_tcp', self.connect_tcp_callback)
+        self.connect_serial_service = self.create_service(ConnectSerial, 'nucleus_node/connect_serial', self.connect_serial_callback)
+        self.disconnect_service = self.create_service(Disconnect, 'nucleus_node/disconnect', self.disconnect_callback)
+        self.start_service = self.create_service(Start, 'nucleus_node/start', self.start_callback)
+        self.start_service = self.create_service(StartFieldCalibration, 'nucleus_node/field_calibration', self.start_field_calibration_callback)
+        self.stop_service = self.create_service(Stop, 'nucleus_node/stop', self.stop_callback)
+        self.command_service = self.create_service(Command, 'nucleus_node/command', self.command_callback)
 
-        self.ahrs_publisher = self.create_publisher(AHRS, 'ahrs', 100)
-        self.altimeter_publisher = self.create_publisher(Altimeter, 'altimeter', 100)
-        self.bottom_track_publisher = self.create_publisher(BottomTrack, 'bottom_track', 100)
-        self.water_track_publisher = self.create_publisher(BottomTrack, 'water_track', 100)
-        self.current_profile_publisher = self.create_publisher(CurrentProfile, 'current_profile', 100)
-        self.field_calibration_publisher = self.create_publisher(FieldCalibration, 'field_calibration', 100)
-        self.imu_publisher = self.create_publisher(IMU, 'imu', 100)
-        self.ins_publisher = self.create_publisher(INS, 'ins', 100)
-        self.mag_publisher = self.create_publisher(Mag, 'mag', 100)
+        self.ahrs_publisher = self.create_publisher(AHRS, 'nucleus_node/ahrs_packets', 100)
+        self.altimeter_publisher = self.create_publisher(Altimeter, 'nucleus_node/altimeter_packets', 100)
+        self.bottom_track_publisher = self.create_publisher(BottomTrack, 'nucleus_node/bottom_track_packets', 100)
+        self.water_track_publisher = self.create_publisher(BottomTrack, 'nucleus_node/water_track_packets', 100)
+        self.current_profile_publisher = self.create_publisher(CurrentProfile, 'nucleus_node/current_profile_packets', 100)
+        self.field_calibration_publisher = self.create_publisher(FieldCalibration, 'nucleus_node/field_calibration_packets', 100)
+        self.imu_publisher = self.create_publisher(IMU, 'nucleus_node/imu_packets', 100)
+        self.ins_publisher = self.create_publisher(INS, 'nucleus_node/ins_packets', 100)
+        self.mag_publisher = self.create_publisher(Magnetometer, 'nucleus_node/magnetometer_packets', 100)
         self.packet_timer = self.create_timer(0.01, self.packet_callback)
 
         self.get_logger().info(f'Nucleus Node initiated')
@@ -173,13 +173,15 @@ class NucleusNode(Node):
 
             reply = self.nucleus_driver.send_command(command=command)
             
+            print(f'REPLY: {reply}')
+
             try:
                 for entry in reply:
                     response.reply += entry.decode()
                 
                 self.get_logger().info(f'command reply: {response.reply}')
             except Exception as e:
-                response.reply = f'Failed to decode response from start command: {e}'
+                response.reply = f'Failed to decode response from command: {e}'
 
         return response
 
@@ -319,7 +321,7 @@ class NucleusNode(Node):
 
         if packet['id'] == 0x87:
 
-            mag_packet = Mag()
+            mag_packet = Magnetometer()
             
             mag_packet.posix_time = packet['flags.posixTime']
             mag_packet.timestamp = packet['timeStamp']

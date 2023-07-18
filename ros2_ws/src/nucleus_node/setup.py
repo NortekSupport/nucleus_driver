@@ -37,7 +37,7 @@ setup(
             'field_calibration_packets = subscribers.field_calibration_packets:main',
             'imu_packets = subscribers.imu_packets:main',
             'ins_packets = subscribers.ins_packets:main',
-            'mag_packets = subscribers.mag_packets:main',
+            'magnetometer_packets = subscribers.magnetometer_packets:main',
             'water_track_packets = subscribers.water_track_packets:main',
         ],
     },

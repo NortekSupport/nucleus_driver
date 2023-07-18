@@ -7,11 +7,11 @@ from interfaces.srv import Stop
 
 class ClientStop(Node):
 
-    def __init__(self, srv_name='stop'):
+    def __init__(self):
 
         super().__init__('client_stop')
 
-        self.client = self.create_client(Stop, srv_name=srv_name)
+        self.client = self.create_client(Stop, srv_name='nucleus_node/stop')
 
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('stop service not available. Waiting...')

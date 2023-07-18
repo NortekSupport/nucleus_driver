@@ -8,11 +8,11 @@ from interfaces.srv import ConnectSerial
 
 class ClientConnectSerial(Node):
 
-    def __init__(self, srv_name='connect_serial'):
+    def __init__(self):
 
         super().__init__('client_connect_serial')
 
-        self.client = self.create_client(ConnectSerial, srv_name=srv_name)
+        self.client = self.create_client(ConnectSerial, srv_name='nucleus_node/connect_serial')
 
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('connect serial service not available. Waiting...')

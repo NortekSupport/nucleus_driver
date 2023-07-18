@@ -7,11 +7,11 @@ from interfaces.srv import Command
 
 class ClientCommand(Node):
 
-    def __init__(self, srv_name='command'):
+    def __init__(self):
 
         super().__init__('client_command')
 
-        self.client = self.create_client(Command, srv_name=srv_name)
+        self.client = self.create_client(Command, srv_name='nucleus_node/command')
 
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('command service not available. Waiting...')

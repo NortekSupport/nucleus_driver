@@ -1,0 +1,60 @@
+#FROM python:3.-slim-bullseye
+
+ARG IMAGE=ros:humble
+#ARG WORKSPACE=/home/nucleus/ros2_ws
+ARG WORKSPACE=/opt/ros/ros2_ws
+
+FROM $IMAGE AS build
+ARG WORKSPACE
+
+RUN apt-get update && apt-get -y upgrade
+RUN apt-get install python3-pip -y
+
+
+#RUN useradd --create-home nucleus
+#USER nucleus
+
+
+
+#RUN python3 -m pip install --upgrade pip
+
+COPY requirements.txt /tmp/
+#RUN python3
+RUN python3 -m pip install --user -r /tmp/requirements.txt
+
+COPY /src ${WORKSPACE}/src
+
+
+#RUN apt-get update && apt-get -y upgrade
+
+#RUN useradd --create-home nucleus
+#USER nucleus
+
+#ENV PATH="/home/pi/.local/bin:${PATH}"
+
+#RUN pip install --upgrade pip
+
+#COPY requirements.txt /tmp/
+#RUN pip install --user -r /tmp/requirements.txt
+
+#COPY --chown=nucleus:nucleus /src /home/nucleus/ros2_ws/src
+
+#WORKDIR /home/nucleus/ros2_ws
+WORKDIR ${WORKSPACE}
+
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
+
+#RUN colcon build
+
+RUN . install/setup.sh
+
+EXPOSE 80/tcp
+
+#ARG PORT=5000
+
+#ENV FLASK_APP=src/nucleus_extension/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
+#ENV FLASK_RUN_PORT=${PORT}
+
+ENTRYPOINT [ "/ros_entrypoint.sh" ]
+CMD ["ros2", "run", "nucleus_node", "nucleus_node"]
+#CMD ["ros2", "node", "list"]

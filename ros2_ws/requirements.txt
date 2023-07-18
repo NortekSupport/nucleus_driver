@@ -1,1 +1,1 @@
-nucleus_driver>=1.4.7
+nucleus_driver>=1.5.4
