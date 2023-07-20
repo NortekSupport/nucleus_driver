@@ -9,7 +9,7 @@ class SubscriberWaterTrackPackets(Node):
 
     def __init__(self, callback_function, qos_profile=100):
 
-        super().__init__('subscriber_water_track_packets')
+        super().__init__('water_track_packets')
 
         self.subscription = self.create_subscription(BottomTrack, topic='nucleus_node/water_track_packets', callback=callback_function, qos_profile=qos_profile)
 

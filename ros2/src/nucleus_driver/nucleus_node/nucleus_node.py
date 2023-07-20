@@ -31,9 +31,8 @@ class NucleusNode(Node):
         self.current_profile_publisher = self.create_publisher(CurrentProfile, 'nucleus_node/current_profile_packets', 100)
         self.field_calibration_publisher = self.create_publisher(FieldCalibration, 'nucleus_node/field_calibration_packets', 100)
         self.imu_publisher = self.create_publisher(IMU, 'nucleus_node/imu_packets', 100)
-        self.ins_publisher = self.create_publisher(INS, 'nucleus_node/ins_packets', 100)
         self.mag_publisher = self.create_publisher(Magnetometer, 'nucleus_node/magnetometer_packets', 100)
-        self.packet_timer = self.create_timer(0.01, self.packet_callback)
+        self.packet_timer = self.create_timer(0.001, self.packet_callback)
 
         self.get_logger().info(f'Nucleus Node initiated')
 
@@ -129,39 +128,6 @@ class NucleusNode(Node):
 
         return response
 
-    def read_packet_callback(self, request, response):
-
-        if not self.nucleus_driver.connection.get_connection_status():
-            self.get_logger().info(f'Nucleus is not connected')
-            #response.reply = f'Nucleus is not connected'
-
-        self.get_logger().info(f'request.size: {request.size}')
-
-        if int(request.size) > 1:
-            size = request.size
-
-        else:
-            size = 1
-
-        packet_list = list()
-
-        self.get_logger().info(f'size: {size}')
-
-        for _ in range(size):
-            
-            self.get_logger().info(f'reading packet')
-
-            packet = self.nucleus_driver.read_packet()
-
-            if packet is None:
-                break
-
-            packet_list.append(packet)
-
-        response.packet_list = json.dumps(packet_list)
-
-        return response
-    
     def command_callback(self, request, response):
 
         if not self.nucleus_driver.connection.get_connection_status():
@@ -229,66 +195,6 @@ class NucleusNode(Node):
             ahrs_packet.depth = packet['depth']
 
             self.ahrs_publisher.publish(ahrs_packet)
-
-        if packet['id'] == 0xdc:
-
-            ins_packet = INS()
-            
-            ins_packet.posix_time = packet['flags.posixTime']
-            ins_packet.timestamp = packet['timeStamp']
-            ins_packet.microseconds = packet['microSeconds']
-
-            ins_packet.serial_number = packet['serialNumber']
-            ins_packet.operation_mode = packet['operationMode']
-
-            ins_packet.fom_ahrs = packet['fomAhrs']
-            ins_packet.fom_fc1 = packet['fomFc1']
-
-            ins_packet.roll = packet['ahrsData.roll']
-            ins_packet.pitch = packet['ahrsData.pitch']
-            ins_packet.heading = packet['ahrsData.heading']
-
-            ins_packet.quaternion_w = packet['ahrsData.quaternionW']
-            ins_packet.quaternion_x = packet['ahrsData.quaternionX']
-            ins_packet.quaternion_y = packet['ahrsData.quaternionY']
-            ins_packet.quaternion_z = packet['ahrsData.quaternionZ']
-
-            ins_packet.rotation_matrix_0 = packet['ahrsData.rotationMatrix_0']
-            ins_packet.rotation_matrix_1 = packet['ahrsData.rotationMatrix_1']
-            ins_packet.rotation_matrix_2 = packet['ahrsData.rotationMatrix_2']
-            ins_packet.rotation_matrix_3 = packet['ahrsData.rotationMatrix_3']
-            ins_packet.rotation_matrix_4 = packet['ahrsData.rotationMatrix_4']
-            ins_packet.rotation_matrix_5 = packet['ahrsData.rotationMatrix_5']
-            ins_packet.rotation_matrix_6 = packet['ahrsData.rotationMatrix_6']
-            ins_packet.rotation_matrix_7 = packet['ahrsData.rotationMatrix_7']
-            ins_packet.rotation_matrix_0 = packet['ahrsData.rotationMatrix_0']
-
-            ins_packet.declination = packet['declination']
-            ins_packet.depth = packet['depth']
-
-            ins_packet.fom_ins = packet['fomIns']
-            ins_packet.lat_long_is_valid = packet['statusIns.latLonIsValid']
-            ins_packet.course_over_ground = packet['courseOverGround']
-            ins_packet.temperature = packet['temperature']
-            ins_packet.pressure = packet['pressure']
-            ins_packet.altitude = packet['altitude']
-            ins_packet.latitude = packet['latitude']
-            ins_packet.longitude = packet['longitude']
-            ins_packet.position_frame_x = packet['positionFrameX']
-            ins_packet.position_frame_y = packet['positionFrameY']
-            ins_packet.position_frame_z = packet['positionFrameZ']
-            ins_packet.velocity_ned_x = packet['velocityNedX']
-            ins_packet.velocity_ned_y = packet['velocityNedY']
-            ins_packet.velocity_ned_z = packet['velocityNedZ']
-            ins_packet.velocity_nucleus_x = packet['velocityNucleusX']
-            ins_packet.velocity_nucleus_y = packet['velocityNucleusY']
-            ins_packet.velocity_nucleus_z = packet['velocityNucleusZ']
-            ins_packet.speed_over_ground = packet['speedOverGround']
-            ins_packet.turn_rate_x = packet['turnRateX']
-            ins_packet.turn_rate_y = packet['turnRateY']
-            ins_packet.turn_rate_z = packet['turnRateZ']
-
-            self.ins_publisher.publish(ins_packet)
 
         if packet['id'] == 0x82:
 

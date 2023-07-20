@@ -10,7 +10,7 @@ class ClientStart(Node):
 
     def __init__(self):
 
-        super().__init__('client_start')
+        super().__init__('start')
 
         self.client = self.create_client(Start, srv_name='nucleus_node/start')
 

@@ -9,7 +9,7 @@ class SubscriberImuPackets(Node):
 
     def __init__(self, callback_function, qos_profile=100):
 
-        super().__init__('subscriber_imu_packets')
+        super().__init__('imu_packets')
 
         self.subscription = self.create_subscription(IMU, topic='nucleus_node/imu_packets', callback=callback_function, qos_profile=qos_profile)
 

@@ -9,7 +9,7 @@ class SubscriberCurrentProfilePackets(Node):
 
     def __init__(self, callback_function, qos_profile=100):
 
-        super().__init__('subscriber_current_profile_packets')
+        super().__init__('current_profile_packets')
 
         self.subscription = self.create_subscription(CurrentProfile, topic='nucleus_node/current_profile_packets', callback=callback_function, qos_profile=qos_profile)
 

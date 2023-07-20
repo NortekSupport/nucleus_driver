@@ -9,7 +9,7 @@ class SubscriberBottomTrackPackets(Node):
 
     def __init__(self, callback_function, qos_profile=100):
 
-        super().__init__('subscriber_bottom_track_packets')
+        super().__init__('bottom_track_packets')
 
         self.subscription = self.create_subscription(BottomTrack, topic='nucleus_node/bottom_track_packets', callback=callback_function, qos_profile=qos_profile)
 

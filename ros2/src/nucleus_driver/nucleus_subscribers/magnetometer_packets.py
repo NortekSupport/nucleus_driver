@@ -9,7 +9,7 @@ class SubscriberMagnetometerPackets(Node):
 
     def __init__(self, callback_function, qos_profile=100):
 
-        super().__init__('subscriber_magnetometer_packets')
+        super().__init__('magnetometer_packets')
 
         self.subscription = self.create_subscription(Magnetometer, topic='nucleus_node/magnetometer_packets', callback=callback_function, qos_profile=qos_profile)
 

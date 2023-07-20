@@ -9,7 +9,7 @@ class SubscriberFieldCalibrationPackets(Node):
 
     def __init__(self, callback_function, qos_profile=100):
 
-        super().__init__('subscriber_field_calibration_packets')
+        super().__init__('field_calibration_packets')
 
         self.subscription = self.create_subscription(FieldCalibration, topic='nucleus_node/field_calibration_packets', callback=callback_function, qos_profile=qos_profile)
 

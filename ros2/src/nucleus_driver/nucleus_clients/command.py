@@ -3,23 +3,24 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 
-from interfaces.srv import StartFieldCalibration
+from interfaces.srv import Command
 
-
-class ClientFieldCalibration(Node):
+class ClientCommand(Node):
 
     def __init__(self):
 
-        super().__init__('client_field_calibration')
+        super().__init__('command')
 
-        self.client = self.create_client(StartFieldCalibration, srv_name='nucleus_node/field_calibration')
+        self.client = self.create_client(Command, srv_name='nucleus_node/command')
 
         while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('field_calibration service not available. Waiting...')
+            self.get_logger().info('command service not available. Waiting...')
 
-        self.request = StartFieldCalibration.Request()
+        self.request = Command.Request()
 
-    def send_request(self, timeout_sec=None):
+    def send_request(self, command, timeout_sec=None):
+        
+        self.request.command = command
 
         self.call = self.client.call_async(self.request)
         
@@ -33,20 +34,28 @@ class ClientFieldCalibration(Node):
             executor.shutdown()
 
         return self.call.result()
-    
 
 def main():
 
+    try:
+        command=str(sys.argv[1])
+    except IndexError:
+        print(f'Argument "command" must be specified')
+        return
+    except Exception as e:
+        print(f'Invalid argument: {e}')
+        return
+
     rclpy.init()
 
-    client = ClientFieldCalibration()
+    client = ClientCommand()
 
     executor = SingleThreadedExecutor()
     executor.add_node(client)
 
-    response = client.send_request()
+    response = client.send_request(command=command)
 
-    client.get_logger().info(f'Successfully made the field_calibration call with status: {response.reply}')
+    client.get_logger().info(f'{response.reply}')
 
     executor.shutdown()
 

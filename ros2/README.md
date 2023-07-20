@@ -157,7 +157,7 @@ pytest test_nucleus_node.py
 ## docker build
 
 ```
-cd 
+cd path/to/nucleus_driver/ros2_ws/
 sudo docker build . -t nucleus_node
 ```
 

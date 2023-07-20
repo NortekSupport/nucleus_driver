@@ -3,24 +3,23 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 
-from interfaces.srv import Command
+from interfaces.srv import Disconnect
 
-class ClientCommand(Node):
+
+class ClientDisconnect(Node):
 
     def __init__(self):
 
-        super().__init__('client_command')
+        super().__init__('disconnect')
 
-        self.client = self.create_client(Command, srv_name='nucleus_node/command')
+        self.client = self.create_client(Disconnect, srv_name='nucleus_node/disconnect')
 
         while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('command service not available. Waiting...')
-
-        self.request = Command.Request()
-
-    def send_request(self, command, timeout_sec=None):
+            self.get_logger().info('disconnect service not available. Waiting...')
         
-        self.request.command = command
+        self.request = Disconnect.Request()
+
+    def send_request(self, timeout_sec=None):
 
         self.call = self.client.call_async(self.request)
         
@@ -35,27 +34,19 @@ class ClientCommand(Node):
 
         return self.call.result()
 
+ 
 def main():
-
-    try:
-        command=str(sys.argv[1])
-    except IndexError:
-        print(f'Argument "command" must be specified')
-        return
-    except Exception as e:
-        print(f'Invalid argument: {e}')
-        return
 
     rclpy.init()
 
-    client = ClientCommand()
+    client = ClientDisconnect()
 
     executor = SingleThreadedExecutor()
     executor.add_node(client)
 
-    response = client.send_request(command=command)
+    response = client.send_request()
 
-    client.get_logger().info(f'{response.reply}')
+    client.get_logger().info(f'Successfully made the disconnect serial call with status: {response.status}')
 
     executor.shutdown()
 

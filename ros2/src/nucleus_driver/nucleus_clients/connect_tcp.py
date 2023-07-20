@@ -3,28 +3,29 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 
-from interfaces.srv import ConnectSerial
+from interfaces.srv import ConnectTcp
 
 
-class ClientConnectSerial(Node):
+class ClientConnectTcp(Node):
 
     def __init__(self):
 
-        super().__init__('client_connect_serial')
+        super().__init__('connect_tcp')
 
-        self.client = self.create_client(ConnectSerial, srv_name='nucleus_node/connect_serial')
+        self.client = self.create_client(ConnectTcp, srv_name='nucleus_node/connect_tcp')
 
         while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('connect serial service not available. Waiting...')
+            self.get_logger().info('connect tcp service not available. Waiting...')
 
-        self.request = ConnectSerial.Request()
+        self.request = ConnectTcp.Request()
 
-    def send_request(self, serial_port: str, timeout_sec=None):
-
-        self.request.serial_port = serial_port
+    def send_request(self, host: str, password: str = None, timeout_sec=None):
+        
+        self.request.host = host
+        self.request.password = password  
 
         self.call = self.client.call_async(self.request)
-
+        
         if self.executor is not None:
             self.executor.spin_until_future_complete(self.call, timeout_sec=timeout_sec)
         else:
@@ -40,24 +41,33 @@ class ClientConnectSerial(Node):
 def main():
 
     try:
-        serial_port = str(sys.argv[1])
+        host = str(sys.argv[1])
     except IndexError:
-        print(f'Argument "serial_port" must be specified')
+        print(f'First argument "host" must be specified')
         return
     except Exception as e:
-        print(f'Invalid argument for serial_port: {e}')
+        print(f'Invalid argument for host: {e}')
+        return
+
+    try:
+        password = str(sys.argv[2])
+    except IndexError:
+        print(f'Second argument "password" must be specified')
+        return
+    except Exception as e:
+        print(f'Invalid argument for password: {e}')
         return
     
     rclpy.init()
 
-    client = ClientConnectSerial()
+    client = ClientConnectTcp()
 
     executor = SingleThreadedExecutor()
     executor.add_node(client)
 
-    response = client.send_request(serial_port=serial_port)
+    response = client.send_request(host=host, password=password)
 
-    client.get_logger().info(f'{response.status}')
+    client.get_logger().info(f'Successfully made the connect tcp call with status: {response.status}')
 
     executor.shutdown()
 
