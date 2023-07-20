@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from interfaces.srv import ConnectTcp, ConnectSerial, Disconnect, Start, Stop, StartFieldCalibration, Command
-from interfaces.msg import AHRS, Altimeter, BottomTrack, CurrentProfile, FieldCalibration, IMU, INS, Magnetometer
+from interfaces.msg import AHRS, Altimeter, BottomTrack, CurrentProfile, FieldCalibration, IMU, Magnetometer
 
 import json
 
