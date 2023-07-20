@@ -271,7 +271,8 @@ class Parser:
 
         elif 0xa5 in binary_packet[1:]:
             start_index = next(i + 1 for i, x in enumerate(binary_packet[1:]) if x == 0xa5)
-            ascii_packet.extend(binary_packet[:start_index])
+            # Check if gibberishb contains \r\n, thus determining that it is indeed an ascii packet
+            ascii_packet.extend(binary_packet[:start_index]) # skip this? pr write to condition
             binary_packet = binary_packet[start_index:]
             reading_packet = True
 
@@ -666,6 +667,7 @@ class Parser:
         for value in data:
             if value == 0xa5 and not self.reading_packet:
                 self.reading_packet = True
+                # write ascii to condition?
                 self.ascii_packet = list()
 
             if self.reading_packet:
