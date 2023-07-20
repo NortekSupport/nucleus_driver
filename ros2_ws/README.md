@@ -98,6 +98,7 @@ ros2 run nucleus_node disconnect
 There are also a subscriber module for every topic that nucleus_node supports. These can also be run in the terminal like the clients and the callback function in the subscribers will simply print out some of the received data from the relevant packet. The ahrs packets subscriber can be invoked in the terminal with the following command
 
 ```
+cd path/to/nucleus_driver/ros2_ws/
 ros2 run nucleus_node ahrs_packets
 ```
 
@@ -151,9 +152,45 @@ pytest test_nucleus_node.py
 
 
 
+# Docker
 
+## docker build
 
+```
+cd 
+sudo docker build . -t nucleus_node
+```
 
+## docker run
+
+The docker image can run nucleus_node with the following command 
+
+```
+docker run --name=Nucleus-Node -it nucleus_node bash -c "ros2 run nucleus_node nucleus_node"
+```
+
+If the docker container needs to communicate with other devices on the network as its host computer, add the following argument to allow the container to use the hosts network
+
+```
+--net=host
+```
+
+In order for the docker container to have access to a serial connection to the Nucleus device, one of two arguments has to be added in the run command. To specifically map the serial port into the container the following argument can be added
+
+```
+# this maps from the host machine, to the container: --device=/from/host:/to/container
+--device=/dev/ttyUSB0:/dev/ttyUSB0
+```
+
+This only maps the specified serial port to the container, and is considered safer than the the following alternative
+
+```
+--privileged
+```
+
+TODO: DOCUMENT --PRIVILEGED
+
+which gives the container access to all the serial ports on the host. This is practical when the serial port is unknown when executing the container or when the serial port is likely to change. 
 
 
 
