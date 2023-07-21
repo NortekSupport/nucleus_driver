@@ -204,11 +204,7 @@ The docker image can run nucleus_node with the following command
 docker run --name=Nucleus-Node -it nucleus_driver_ros2 bash -c "ros2 run nucleus_driver_ros2 nucleus_node"
 ```
 
-If the docker container needs to communicate with other devices on the network as its host computer, add the following argument to allow the container to use the hosts network
-
-```
---net=host
-```
+### Serial connection
 
 In order for the docker container to have access to a serial connection to the Nucleus device, one of the two following arguments has to be added in the run command. To specifically map the serial port into the container the following argument can be added
 
@@ -225,6 +221,8 @@ The previous argument maps only the specified serial port to the container, and 
 
 which gives the container access to all the serial ports on the host. This is practical when the serial port is unknown when executing the container or when the serial port is likely to change. 
 
+### TCP connection
+If the docker container needs to connect to the Nucleus device through TCP, it is necessary to use the actual IP address of the Nucleus device and not its hostname.
 
 
 # Troubleshooting

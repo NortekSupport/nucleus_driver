@@ -4,8 +4,6 @@ from rclpy.node import Node
 from interfaces.srv import ConnectTcp, ConnectSerial, Disconnect, Start, Stop, StartFieldCalibration, Command
 from interfaces.msg import AHRS, Altimeter, BottomTrack, CurrentProfile, FieldCalibration, IMU, Magnetometer
 
-import json
-
 from nucleus_driver import NucleusDriver
 
 

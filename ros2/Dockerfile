@@ -1,14 +1,13 @@
 ARG ROS_DISTRO=humble
 ARG WORKSPACE=/ros2
 
+
 FROM osrf/ros:${ROS_DISTRO}-desktop as base
+ARG WORKSPACE
+WORKDIR ${WORKSPACE}
 ENV ROS_DISTRO=${ROS_DISTRO}
 SHELL ["/bin/bash", "-c"]
 
-RUN mkdir -p ${WORKSPACE}/src
-
-ARG WORKSPACE
-WORKDIR ${WORKSPACE}
 COPY requirements.txt .
 RUN apt-get update -y \
  && apt-get upgrade -y \
@@ -19,8 +18,8 @@ RUN apt-get update -y \
 FROM base as overlay
 ARG WORKSPACE
 WORKDIR ${WORKSPACE}
-COPY ./src/ ./src/
 
+COPY ./src/ ./src/
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
  && colcon build
 
@@ -28,6 +27,7 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
 FROM overlay as run_time
 ARG WORKSPACE
 WORKDIR ${WORKSPACE}
+
 COPY ./config/fastrtps-profile.xml ${WORKSPACE}/config/fastrtps-profile.xml
 ENV FASTRTPS_DEFAULT_PROFILES_FILE=${WORKSPACE}/config/fastrtps-profile.xml
 

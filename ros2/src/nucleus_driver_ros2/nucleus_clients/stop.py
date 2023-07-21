@@ -5,6 +5,7 @@ from rclpy.executors import SingleThreadedExecutor
 
 from interfaces.srv import Stop
 
+
 class ClientStop(Node):
 
     def __init__(self):
