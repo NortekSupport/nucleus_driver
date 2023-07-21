@@ -15,8 +15,8 @@ setup(
     zip_safe=True,
     maintainer='martin',
     maintainer_email='martin.johansen@nortekgroup.com',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='This is a ros2 packege that builds on the Nucleus Driver. The pacakge consists of the nucleus_node which maps the functionality of the nucleus driver to a ros2 interface allowing communication to a Nucleus device over a ros2 environment',
+    license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

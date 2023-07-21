@@ -3,9 +3,9 @@
 <package format="3">
   <name>interfaces</name>
   <version>0.0.1</version>
-  <description>TODO: Package description</description>
+  <description>interface for the nucleus_driver_ros2 pacakge</description>
   <maintainer email="martin.johansen@nortekgroup.com">martin</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

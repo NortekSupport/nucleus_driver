@@ -3,9 +3,9 @@
 <package format="3">
   <name>nucleus_driver_ros2</name>
   <version>0.0.1</version>
-  <description>TODO: Package description</description>
+  <description>This is a ros2 packege that builds on the Nucleus Driver. The pacakge consists of the nucleus_node which maps the functionality of the nucleus driver to a ros2 interface allowing communication to a Nucleus device over a ros2 environment</description>
   <maintainer email="martin.johansen@nortekgroup.com">martin</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
