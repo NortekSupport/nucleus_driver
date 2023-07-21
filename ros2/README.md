@@ -1,20 +1,29 @@
-# Introduction
+# ros2 BETA
 
-Made for ros2 humble
+The nucleus_driver_ros2 package contains the node nucleus_node which is based on the nucleus driver. nucleus_node consists of several services and publishers that maps functionality from the nucleus driver to a ros2 interface. nucleus_node should be running on a system where it has access to a Nucleus device either through a serial or TCP connection, and it will allow for communication with the Nucleus through the ros2 environment.
 
-# Installation
+The nucleus_driver_ros2 package also consists of several client and subscriber modules to be used with the nucleus_node and could serve as a useful tools to communicate with the nucleus_node and to ease the integration of the Nucleus into your ros2 environment.
+
+Supported functionality consists of establishing connection to the Nucleus, starting and stopping measurement, sending commands to the Nucleus, and receive packages from the Nucleus during runtime.
+
+The ros2 package is developed for ros2 humble and it is currently in its beta phase
+
+# Prerequisites
 
 It is assumed that ros2 humble is already installed. Installation guide can be found here: https://docs.ros.org/en/humble/Installation.html
 
-Clone this repo to your preferred directory with the following command:
+# Installation
+
+Clone the Nucleus driver repo to your preferred directory with the following command:
+
 ```
 git clone git@github.com:nortekgroup/nucleus_driver.git
 ```
 
-Navigate to the ROS2 workspace folder ros2_ws
+Navigate to the ROS2 workspace folder `ros2`
 
 ```
-cd path/to/nucleus_driver/ros2_ws
+cd path/to/nucleus_driver/ros2
 ```
 
 **Optional:** Create a virtual environment for installed modules. Refer to troubleshooting section for potential issues.
@@ -30,7 +39,13 @@ Install requirements
 pip3 install -r requirements
 ```
 
-Build ros2 Nucleus node with colcon. Refer to troubleshooting section for potential issues
+Source ros2 base layer
+
+```
+source /opt/ros/humble/setup.bash
+```
+
+Build ros2 Nucleus driver with colcon. Refer to troubleshooting section for potential issues
 
 ```
 colcon build
@@ -38,17 +53,23 @@ colcon build
 
 # Using the ros2 nodes
 
-In any new terminal that should run a node, source the installation
+In any new terminal that should run a node, first source the base layer
 
 ```
-cd path/to/nucleus_driver/ros2_ws/
+source /opt/ros/humble/setup.bash
+```
+
+Then, source the installation
+
+```
+cd path/to/nucleus_driver/ros2/
 source install/setup.bash
 ```
 
 The main node is the nucleus_node which is a wrapper around the nucleus_driver module. This node handles the communication with the Nucleus device and should have access to the Nucleus through either serial or TCP. This node can be executed with the following command
 
 ```
-ros2 run nucleus_node nucleus_node
+ros2 run nucleus_driver_ros2 nucleus_node
 ```
 
 The nucleus_node supports a range of different services and topics. The services allows for connecting and disconnect from a device, running measurements, and sending command. The list of services are
@@ -57,11 +78,9 @@ The nucleus_node supports a range of different services and topics. The services
 /nucleus_node/connect_serial [interfaces/srv/ConnectSerial]
 /nucleus_node/connect_tcp [interfaces/srv/ConnectTcp]
 /nucleus_node/disconnect [interfaces/srv/Disconnect]
-
 /nucleus_node/start [interfaces/srv/Start]
 /nucleus_node/field_calibration [interfaces/srv/StartFieldCalibration]
 /nucleus_node/stop [interfaces/srv/Stop]
-
 /nucleus_node/command [interfaces/srv/Command]
 ```
 
@@ -74,7 +93,6 @@ The topics are various packet types that will be sent from the Nucleus during ru
 /nucleus_node/current_profile_packets [interfaces/msg/CurrentProfile]
 /nucleus_node/field_calibration_packets [interfaces/msg/FieldCalibration]
 /nucleus_node/imu_packets [interfaces/msg/IMU]
-/nucleus_node/ins_packets [interfaces/msg/INS]
 /nucleus_node/magnetometer_packets [interfaces/msg/Magnetometer]
 /nucleus_node/water_track_packets [interfaces/msg/BottomTrack]
 ```
@@ -83,39 +101,40 @@ The topics are various packet types that will be sent from the Nucleus during ru
 
 There are also client modules for every service that the nucleus_node supports. This allows the user to control the Nucleus device through nucleus_node by invoking these clients. 
 
-Assuming nucleus_node is running in another instance, the following commands will connect to the Nucleus device, turn on the AHRS output stream, start and stop the device, and then disconnect from the Nucleus device.
+Assuming nucleus_node is running in another instance, the following commands will connect to the Nucleus device through serial, turn on the AHRS output stream on the device, start and stop the device, and then disconnect from the Nucleus device.
 
 ```
-ros2 run nucleus_node connect_serial /dev/ttyUSB0
-ros2 run nucleus_node command 'SETAHRS,DS="ON"'
-ros2 run nucleus_node start
-ros2 run nucleus_node stop
-ros2 run nucleus_node disconnect
+ros2 run nucleus_driver_ros2 connect_serial /dev/ttyUSB0
+ros2 run nucleus_driver_ros2 command 'SETAHRS,DS="ON"'
+ros2 run nucleus_driver_ros2 start
+ros2 run nucleus_driver_ros2 stop
+ros2 run nucleus_driver_ros2 disconnect
 ```
+
+**N.B.** Note that if a command requires the use of double quotation marks in it command string, the entire command string should be within single quotation marks as seen with the command `'SETAHRS,DS="ON"'` in the previous example.
 
 ## Subscribers
 
 There are also a subscriber module for every topic that nucleus_node supports. These can also be run in the terminal like the clients and the callback function in the subscribers will simply print out some of the received data from the relevant packet. The ahrs packets subscriber can be invoked in the terminal with the following command
 
 ```
-cd path/to/nucleus_driver/ros2_ws/
-ros2 run nucleus_node ahrs_packets
+ros2 run nucleus_driver_ros2 ahrs_packets
 ```
 
-Assuming this subscriber was running when during the client command in the previous example, the subscriber would yield the following output
+Assuming the nucleus_node is running and the Nucleus device is both running and configured to send AHRS packets, this subscriber would yield an  output like this
 
 ```
-[INFO] [1689323189.142425896] [subscriber_ahrs_packets]: roll: 0.6595 | pitch: -0.128 | heading: 61.314 | quat w: 0.8602 | quat x: 0.0055 | quat y: 0.0020 | quat z: 0.5099
-[INFO] [1689323189.243115454] [subscriber_ahrs_packets]: roll: 0.5820 | pitch: -0.142 | heading: 61.341 | quat w: 0.8601 | quat x: 0.0050 | quat y: 0.0015 | quat z: 0.5101
-[INFO] [1689323189.374060632] [subscriber_ahrs_packets]: roll: 0.5014 | pitch: -0.150 | heading: 61.340 | quat w: 0.8601 | quat x: 0.0044 | quat y: 0.0011 | quat z: 0.5101
-[INFO] [1689323189.513965824] [subscriber_ahrs_packets]: roll: 0.4361 | pitch: -0.162 | heading: 61.328 | quat w: 0.8602 | quat x: 0.0040 | quat y: 0.0007 | quat z: 0.5100
-[INFO] [1689323189.693899847] [subscriber_ahrs_packets]: roll: 0.3640 | pitch: -0.179 | heading: 61.263 | quat w: 0.8605 | quat x: 0.0035 | quat y: 0.0003 | quat z: 0.5095
+[INFO] [1689323189.142425896] [ahrs_packets]: roll: 0.6595 | pitch: -0.128 | heading: 61.314
+[INFO] [1689323189.243115454] [ahrs_packets]: roll: 0.5820 | pitch: -0.142 | heading: 61.341
+[INFO] [1689323189.374060632] [ahrs_packets]: roll: 0.5014 | pitch: -0.150 | heading: 61.340
+[INFO] [1689323189.513965824] [ahrs_packets]: roll: 0.4361 | pitch: -0.162 | heading: 61.328
+[INFO] [1689323189.693899847] [ahrs_packets]: roll: 0.3640 | pitch: -0.179 | heading: 61.263
 
 ```
 
 # Example code
 
-The clients and subscribers are designed to be imported into a python module. The example code in ros2_ws/examples demonstrates how the clients and subscribers could be used for integration.
+The clients and subscribers are designed to be imported into a python module. The example code in `ros2/examples` demonstrates how the clients and subscribers could be used for integration.
 
 To use the example script the nucleus_node has to be running in an separate instance, and the script should be executed with either of the following commands
 
@@ -130,35 +149,51 @@ If both serial and tcp connection is specified through the arguments, a serial c
 
 # PyTest
 
-pytest will configure Nucleus device!
+The test module will test the functionality of the ros2 nucleus driver. To run the tests, install the requirements.
 
-run nucleus_node seperatly? in order to support the node running somewhere else on the system, i.e. in a docker container?
+```
+cd path/to/nucleus_driver/ros2/src/nucleus_driver_ros2/test
+pip3 install -r requirements.txt
+```
 
+Configure the `test_setup.json` file to fit the configuration of your Nucleus device. For the testing to be performed either hostname or serial_port must be defined. If neither are defined, no tests will be executed. If only one is defined, the tests will be performed with that connection. If both are defined, all tests will be performed on both connections.
 
-modify test_setup.json file
+In `test_setup.json`, password refers to the password needed to perform a TCP connection to you Nucleus device, if not specified, pytest will use the default password which is "nortek".
+
 ```
 {
-    "hostname": "NORTEK-300004.local",
+    "hostname": "NORTEK-xxxxxx.local",
+    "password": "nortek",
     "serial_port": "/dev/ttyUSB0"
 }
 ```
 
+Source nucleus_driver_ros2
 
 ```
-pytest test_nucleus_node.py
+cd path/to/nucleus_driver/ros2
+source install/setup.bash
 ```
 
-# Example
+run tests
 
+```
+cd path/to/nucleus_driver/ros2/src/nucleus_driver_ros2/test
+pytest test_nucleus_driver_ros2.py
+```
+
+**N.B.** Pytest will configure the Nucleus device as part of its testing!
 
 
 # Docker
 
 ## docker build
 
+Build the docker image 
+
 ```
-cd path/to/nucleus_driver/ros2_ws/
-sudo docker build . -t nucleus_node
+cd path/to/nucleus_driver/ros2/
+sudo docker build . -t nucleus_driver_ros2
 ```
 
 ## docker run
@@ -166,7 +201,7 @@ sudo docker build . -t nucleus_node
 The docker image can run nucleus_node with the following command 
 
 ```
-docker run --name=Nucleus-Node -it nucleus_node bash -c "ros2 run nucleus_node nucleus_node"
+docker run --name=Nucleus-Node -it nucleus_driver_ros2 bash -c "ros2 run nucleus_driver_ros2 nucleus_node"
 ```
 
 If the docker container needs to communicate with other devices on the network as its host computer, add the following argument to allow the container to use the hosts network
@@ -175,20 +210,18 @@ If the docker container needs to communicate with other devices on the network a
 --net=host
 ```
 
-In order for the docker container to have access to a serial connection to the Nucleus device, one of two arguments has to be added in the run command. To specifically map the serial port into the container the following argument can be added
+In order for the docker container to have access to a serial connection to the Nucleus device, one of the two following arguments has to be added in the run command. To specifically map the serial port into the container the following argument can be added
 
 ```
-# this maps from the host machine, to the container: --device=/from/host:/to/container
+# this maps a port from the host machine to the container: --device=/from/host:/to/container
 --device=/dev/ttyUSB0:/dev/ttyUSB0
 ```
 
-This only maps the specified serial port to the container, and is considered safer than the the following alternative
+The previous argument maps only the specified serial port to the container, and is considered safer than the the following alternative
 
 ```
 --privileged
 ```
-
-TODO: DOCUMENT --PRIVILEGED
 
 which gives the container access to all the serial ports on the host. This is practical when the serial port is unknown when executing the container or when the serial port is likely to change. 
 
@@ -214,7 +247,7 @@ pip3 install empy
 pip3 install lark
 ```
 
-## The command `ros2 run nucleus_node nucleus_node` fails
+## The command `ros2 run nucleus_driver_ros2 nucleus_node` fails
 
 During execution of the nucleus node the following error occurs
 
@@ -224,7 +257,9 @@ ModuleNotFoundError: No module named 'nucleus_driver'
 
 This indicates that the requirements for the installation is not satisfied. This could be related to a known issue where ros2 is not able to find modules in virtual environments. 
 
-A workaround is to add the virtual environment to PYTHONPATH.
+The easiest fix is to not use virtual environments and install the modules system wide.
+
+Alternatively, a workaround is to add the virtual environment to PYTHONPATH.
 
 This path can be found by running the following command:
 
@@ -235,13 +270,11 @@ pip3 show nucleus-driver | grep Location
 which should yield something similar to this:
 
 ```
-Location: /path/to/nucleus_driver/ros2_ws/venv/lib/python3.10/site-packages
+Location: /path/to/nucleus_driver/ros2/venv/lib/python3.10/site-packages
 ```
 
 This path can then be added to PYTHONPATH with the follofing command
 
 ```
-export PYTHONPATH=$PYTHONPATH:/path/to/nucleus_driver/ros2_ws/venv/lib/python3.10/site-packages
+export PYTHONPATH=$PYTHONPATH:/path/to/nucleus_driver/ros2/venv/lib/python3.10/site-packages
 ```
-
-An alternative is to not use a virtual environment and install the required modules system wide.

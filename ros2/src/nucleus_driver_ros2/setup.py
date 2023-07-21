@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'nucleus_driver_ros'
+package_name = 'nucleus_driver_ros2'
 
 setup(
     name=package_name,

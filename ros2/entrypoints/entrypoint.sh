@@ -4,10 +4,7 @@
 source /opt/ros/${ROS_DISTRO}/setup.bash
  
 # Source the overlay workspace, if built
-if [ -f /ros2_ws/install/setup.bash ]
-then
-  source /ros2_ws/install/setup.bash
-fi
+source /ros2/install/setup.bash
  
 # Execute the command passed into this entrypoint
 exec "$@"

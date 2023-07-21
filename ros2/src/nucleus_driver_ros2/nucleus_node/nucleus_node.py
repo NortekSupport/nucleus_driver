@@ -138,8 +138,6 @@ class NucleusNode(Node):
             command = request.command
 
             reply = self.nucleus_driver.send_command(command=command)
-            
-            print(f'REPLY: {reply}')
 
             try:
                 for entry in reply:

@@ -1,5 +1,5 @@
 ARG ROS_DISTRO=humble
-ARG WORKSPACE=/ros2_ws
+ARG WORKSPACE=/ros2
 
 FROM osrf/ros:${ROS_DISTRO}-desktop as base
 ENV ROS_DISTRO=${ROS_DISTRO}
@@ -23,6 +23,7 @@ COPY ./src/ ./src/
 
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
  && colcon build
+
 
 FROM overlay as run_time
 ARG WORKSPACE

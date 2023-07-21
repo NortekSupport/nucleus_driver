@@ -7,24 +7,24 @@ import time
 from queue import Queue
 from array import array
 
-from nucleus_node import NucleusNode
-from clients.command import ClientCommand
-from clients.connect_serial import ClientConnectSerial
-from clients.connect_tcp import ClientConnectTcp
-from clients.disconnect import ClientDisconnect
-from clients.start import ClientStart
-from clients.field_calibration import ClientFieldCalibration
-from clients.stop import ClientStop
+from nucleus_node.nucleus_node import NucleusNode
 
-from subscribers.ahrs_packets import SubscriberAhrsPackets
-from subscribers.altimeter_packets import SubscriberAltimeterPackets
-from subscribers.bottom_track_packets import SubscriberBottomTrackPackets
-from subscribers.current_profile_packets import SubscriberCurrentProfilePackets
-from subscribers.field_calibration_packets import SubscriberFieldCalibrationPackets
-from subscribers.imu_packets import SubscriberImuPackets
-from subscribers.ins_packets import SubscriberInsPackets
-from subscribers.magnetometer_packets import SubscriberMagnetometerPackets
-from subscribers.water_track_packets import SubscriberWaterTrackPackets
+from nucleus_clients.command import ClientCommand
+from nucleus_clients.connect_serial import ClientConnectSerial
+from nucleus_clients.connect_tcp import ClientConnectTcp
+from nucleus_clients.disconnect import ClientDisconnect
+from nucleus_clients.start import ClientStart
+from nucleus_clients.field_calibration import ClientFieldCalibration
+from nucleus_clients.stop import ClientStop
+
+from nucleus_subscribers.ahrs_packets import SubscriberAhrsPackets
+from nucleus_subscribers.altimeter_packets import SubscriberAltimeterPackets
+from nucleus_subscribers.bottom_track_packets import SubscriberBottomTrackPackets
+from nucleus_subscribers.current_profile_packets import SubscriberCurrentProfilePackets
+from nucleus_subscribers.field_calibration_packets import SubscriberFieldCalibrationPackets
+from nucleus_subscribers.imu_packets import SubscriberImuPackets
+from nucleus_subscribers.magnetometer_packets import SubscriberMagnetometerPackets
+from nucleus_subscribers.water_track_packets import SubscriberWaterTrackPackets
 
 
 class TestNucleusNode:
@@ -35,7 +35,6 @@ class TestNucleusNode:
     current_profile_queue = Queue()
     field_calibration_queue = Queue()
     imu_queue = Queue()
-    ins_queue = Queue()
     mag_queue = Queue()
     water_track_queue = Queue()
 
@@ -76,7 +75,6 @@ class TestNucleusNode:
         current_profile_subscriber = SubscriberCurrentProfilePackets(callback_function=self.current_profile_queue.put)
         field_calibration_subscriber = SubscriberFieldCalibrationPackets(callback_function=self.field_calibration_queue.put)
         imu_subscriber = SubscriberImuPackets(callback_function=self.imu_queue.put)
-        ins_subscriber = SubscriberInsPackets(callback_function=self.ins_queue.put)
         mag_subscriber = SubscriberMagnetometerPackets(callback_function=self.mag_queue.put)
         water_track_subscriber = SubscriberWaterTrackPackets(callback_function=self.water_track_queue.put)
 
@@ -87,7 +85,6 @@ class TestNucleusNode:
         executor.add_node(current_profile_subscriber)
         executor.add_node(field_calibration_subscriber)
         executor.add_node(imu_subscriber)
-        executor.add_node(ins_subscriber)
         executor.add_node(ahrs_subscriber)
         executor.add_node(mag_subscriber)
         executor.add_node(water_track_subscriber)
@@ -105,7 +102,6 @@ class TestNucleusNode:
         current_profile_subscriber.destroy_node()
         field_calibration_subscriber.destroy_node()
         imu_subscriber.destroy_node()
-        ins_subscriber.destroy_node()
         mag_subscriber.destroy_node()
         water_track_subscriber.destroy_node()
 
@@ -124,8 +120,12 @@ class TestNucleusNode:
         executor = SingleThreadedExecutor()
         executor.add_node(client)
 
+        password = 'nortek'
+        if pytest.password != '':
+            password = pytest.password
+
         if nucleus_driver_connection == ' tcp ':
-            response = client.send_request(host=pytest.hostname, password='nortek', timeout_sec=1)
+            response = client.send_request(host=pytest.hostname, password=password, timeout_sec=1)
         elif nucleus_driver_connection == ' serial ':
             response = client.send_request(serial_port=pytest.serial_port, timeout_sec=1)
 
@@ -143,8 +143,6 @@ class TestNucleusNode:
         executor.add_node(client)
 
         response_setahrs = client.send_request(command='SETAHRS,FREQ=10,DS="ON"', timeout_sec=1)
-        response_setnav = client.send_request(command='SETNAV,FREQ=10,DS="ON"', timeout_sec=1)
-        response_setinst = client.send_request(command='SETINST,TYPE="NAV"', timeout_sec=1)
         response_setbt = client.send_request(command='SETBT,WT="ON",DS="ON"', timeout_sec=1)
         response_setalti = client.send_request(command='SETALTI,DS="ON"s', timeout_sec=1)
         response_setcurprof = client.send_request(command='SETCURPROF,DS="ON"', timeout_sec=1)
@@ -157,8 +155,6 @@ class TestNucleusNode:
         client.destroy_node()
 
         assert 'OK' in response_setahrs.reply
-        assert 'OK' in response_setnav.reply
-        assert 'OK' in response_setinst.reply
         assert 'OK' in response_setbt.reply
         assert 'OK' in response_setalti.reply
         assert 'OK' in response_setcurprof.reply
@@ -208,8 +204,6 @@ class TestNucleusNode:
         executor.add_node(client)
 
         response_setahrs = client.send_request(command='SETAHRS,FREQ=10,DS="OFF"', timeout_sec=1)
-        response_setnav = client.send_request(command='SETNAV,FREQ=10,DS="OFF"', timeout_sec=1)
-        response_setinst = client.send_request(command='SETINST,TYPE="SENSORS"', timeout_sec=1)
         response_setbt = client.send_request(command='SETBT,WT="ON",DS="OFF"', timeout_sec=1)
         response_setalti = client.send_request(command='SETALTI,DS="OFF"', timeout_sec=1)
         response_setcurprof = client.send_request(command='SETCURPROF,DS="OFF"', timeout_sec=1)
@@ -222,8 +216,6 @@ class TestNucleusNode:
         client.destroy_node()
 
         assert 'OK' in response_setahrs.reply
-        assert 'OK' in response_setnav.reply
-        assert 'OK' in response_setinst.reply
         assert 'OK' in response_setbt.reply
         assert 'OK' in response_setalti.reply
         assert 'OK' in response_setcurprof.reply
@@ -480,64 +472,7 @@ class TestNucleusNode:
             assert isinstance(data.amplitude_data, array)
             assert isinstance(data.correlation_data, array)
     
-    @pytest.mark.dependency(name='ins_subscriber', depends=['connect', 'test_command_setup_measurement', 'start_measurement', 'stop_measurement', 'disconnect'])
-    def test_ins_subscriber(self, run_clients):
-
-        assert not self.ins_queue.empty()
         
-        while not self.ins_queue.empty():
-
-            data = self.ins_queue.get()
-
-            assert isinstance(data.posix_time, bool)
-            assert isinstance(data.timestamp, int)
-            assert isinstance(data.microseconds, int)
-
-            assert isinstance(data.serial_number, int)
-            assert isinstance(data.operation_mode, int)
-            assert isinstance(data.fom_ahrs, float)
-            assert isinstance(data.fom_fc1, float)
-            assert isinstance(data.roll, float)
-            assert isinstance(data.pitch, float)
-            assert isinstance(data.heading, float)
-            assert isinstance(data.quaternion_w, float)
-            assert isinstance(data.quaternion_x, float)
-            assert isinstance(data.quaternion_y, float)
-            assert isinstance(data.quaternion_z, float)
-            assert isinstance(data.rotation_matrix_0, float)
-            assert isinstance(data.rotation_matrix_1, float)
-            assert isinstance(data.rotation_matrix_2, float)
-            assert isinstance(data.rotation_matrix_3, float)
-            assert isinstance(data.rotation_matrix_4, float)
-            assert isinstance(data.rotation_matrix_5, float)
-            assert isinstance(data.rotation_matrix_6, float)
-            assert isinstance(data.rotation_matrix_7, float)
-            assert isinstance(data.rotation_matrix_8, float)
-            assert isinstance(data.declination, float)
-            assert isinstance(data.depth, float)
-
-            assert isinstance(data.fom_ins, float)
-            assert isinstance(data.lat_long_is_valid, bool)
-            assert isinstance(data.course_over_ground, float)
-            assert isinstance(data.temperature, float)
-            assert isinstance(data.pressure, float)
-            assert isinstance(data.altitude, float)
-            assert isinstance(data.latitude, float)
-            assert isinstance(data.longitude, float)
-            assert isinstance(data.position_frame_x, float)
-            assert isinstance(data.position_frame_y, float)
-            assert isinstance(data.position_frame_z, float)
-            assert isinstance(data.velocity_ned_x, float)
-            assert isinstance(data.velocity_ned_y, float)
-            assert isinstance(data.velocity_ned_z, float)
-            assert isinstance(data.velocity_nucleus_x, float)
-            assert isinstance(data.velocity_nucleus_y, float)
-            assert isinstance(data.velocity_nucleus_z, float)
-            assert isinstance(data.speed_over_ground, float)
-            assert isinstance(data.turn_rate_x, float)
-            assert isinstance(data.turn_rate_y, float)
-            assert isinstance(data.turn_rate_z, float)
-    
     @pytest.mark.dependency(name='imu_subscriber', depends=['connect', 'test_command_setup_field_calibration', 'start_field_calibration', 'stop_field_calibration', 'disconnect'])
     def test_imu_subscriber(self, run_clients):
 
