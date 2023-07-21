@@ -649,7 +649,7 @@ class RovLink(Thread):
     def run(self):
         
         self.load_settings()
-
+        '''
         self.wait_for_cableguy()
 
         if self._cable_guy:
@@ -657,9 +657,21 @@ class RovLink(Thread):
         if self._nucleus_connected:
             self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
             self.setup_nucleus()
+        '''
+        
+        self._cable_guy = True  # TODO: This is a workaround for unreliable cableguy check
 
+        self.connect_nucleus()  # TODO: Check if Nucleus is running instead of stopping
+        if self._nucleus_connected:
+            self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
+            self.setup_nucleus()
+
+        '''
         if self._cable_guy:
             self.wait_for_heartbeat()
+        '''
+
+        self.wait_for_heartbeat()
 
         if self._heartbeat:
             self.read_config_parameters_startup()
@@ -674,11 +686,17 @@ class RovLink(Thread):
 
         while self.thread_running:
 
-            if not self._cable_guy or not self._nucleus_connected or not self._dvl_enabled or not self._heartbeat or not self._config:
-
-                if not self._cable_guy:
-                    logging.warning(f"{self.timestamp()} Cable guy not available")
+            #if not self._cable_guy or not self._nucleus_connected or not self._dvl_enabled or not self._heartbeat or not self._config:
+            if not self._nucleus_connected or not self._dvl_enabled or not self._heartbeat or not self._config:
                 
+                '''
+                if not self._cable_guy:
+                    
+                    logging.warning(f"{self.timestamp()} Cable guy not available")
+
+                    self.wait_for_cableguy()
+                '''
+
                 if not self._nucleus_connected or not self._dvl_enabled:
 
                     if not self._nucleus_connected:
@@ -699,8 +717,19 @@ class RovLink(Thread):
                 if not self._heartbeat:
                     logging.warning(f"{self.timestamp()} Can't detect heartbeat")
 
+                    '''
+                    if self._cable_guy:
+                        self.wait_for_heartbeat()
+                    '''
+
+                    self.wait_for_heartbeat()
+
                 if not self._config:
                     logging.warning(f"{self.timestamp()} ROV has incorrect configuration for velocity data input")
+                    
+                    if self._heartbeat:
+                        self.read_config_parameters_startup()
+                        self.read_pid_parameters()
 
                 time.sleep(1)
 

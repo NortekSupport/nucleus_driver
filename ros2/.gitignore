@@ -1,0 +1,4 @@
+build/
+install/
+log/
+**/test_setup.json

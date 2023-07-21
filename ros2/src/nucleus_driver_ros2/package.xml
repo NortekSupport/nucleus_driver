@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>nucleus_driver_ros2</name>
+  <version>0.0.1</version>
+  <description>This is a ros2 packege that builds on the Nucleus Driver. The pacakge consists of the nucleus_node which maps the functionality of the nucleus driver to a ros2 interface allowing communication to a Nucleus device over a ros2 environment</description>
+  <maintainer email="martin.johansen@nortekgroup.com">martin</maintainer>
+  <license>MIT</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+  
+  <exec_depend>interfaces</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

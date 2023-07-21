@@ -1,0 +1,22 @@
+bool posix_time
+uint32 timestamp
+uint32 microseconds
+
+bool is_valid
+bool has_data_path_overrun
+bool has_flash_update_failure
+bool has_spi_com_error
+bool has_low_voltage
+bool has_sensor_failure
+bool has_memory_failure
+bool has_gyro_1_failure
+bool has_gyro_2_failure
+bool has_accelerometer_failure
+
+float32 accelerometer_x
+float32 accelerometer_y
+float32 accelerometer_z
+float32 gyro_x
+float32 gyro_y
+float32 gyro_z
+float32 temperature
