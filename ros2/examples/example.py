@@ -9,9 +9,6 @@ from argparse import ArgumentParser
 
 logging.basicConfig(level=logging.INFO)
 
-sys.path.append('../src/nucleus_clients')
-sys.path.append('../src/nucleus_subscribers')
-
 from nucleus_clients.command import ClientCommand
 from nucleus_clients.connect_serial import ClientConnectSerial
 from nucleus_clients.connect_tcp import ClientConnectTcp

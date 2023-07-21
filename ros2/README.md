@@ -132,59 +132,6 @@ Assuming the nucleus_node is running and the Nucleus device is both running and 
 
 ```
 
-# Example code
-
-The clients and subscribers are designed to be imported into a python module. The example code in `ros2/examples` demonstrates how the clients and subscribers could be used for integration.
-
-To use the example script the nucleus_node has to be running in an separate instance, and the script should be executed with either of the following commands
-
-```
-python3 example.py -s /dev/ttyUSB0
-python3 example.py -n NORTEK-xxxxxx.local -p nortek
-```
-
-where -s is the serial port where the Nucleus is connect, -n is the hostname of the Nucleus, and -p is the password required for TCP connection. the values of these arguments must be adapted to the corresponding values of your system. The x'es in hostname refer to the serial number of the Nucleus device.
-
-If both serial and tcp connection is specified through the arguments, a serial connection will be performed.
-
-# PyTest
-
-The test module will test the functionality of the ros2 nucleus driver. To run the tests, install the requirements.
-
-```
-cd path/to/nucleus_driver/ros2/src/nucleus_driver_ros2/test
-pip3 install -r requirements.txt
-```
-
-Configure the `test_setup.json` file to fit the configuration of your Nucleus device. For the testing to be performed either hostname or serial_port must be defined. If neither are defined, no tests will be executed. If only one is defined, the tests will be performed with that connection. If both are defined, all tests will be performed on both connections.
-
-In `test_setup.json`, password refers to the password needed to perform a TCP connection to you Nucleus device, if not specified, pytest will use the default password which is "nortek".
-
-```
-{
-    "hostname": "NORTEK-xxxxxx.local",
-    "password": "nortek",
-    "serial_port": "/dev/ttyUSB0"
-}
-```
-
-Source nucleus_driver_ros2
-
-```
-cd path/to/nucleus_driver/ros2
-source install/setup.bash
-```
-
-run tests
-
-```
-cd path/to/nucleus_driver/ros2/src/nucleus_driver_ros2/test
-pytest test_nucleus_driver_ros2.py
-```
-
-**N.B.** Pytest will configure the Nucleus device as part of its testing!
-
-
 # Docker
 
 ## docker build
