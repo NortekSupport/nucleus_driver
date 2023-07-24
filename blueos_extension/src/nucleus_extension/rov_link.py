@@ -210,10 +210,14 @@ class RovLink(Thread):
             param_value_pre_timestamp = None
             try:
                 param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+                print(param_value_pre.status_code)
+
                 param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
 
             except Exception as e:
-                logging.warning(f'[{self.timestamp()}] Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
+                logging.warning(f'[{self.timestamp()}] Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ - error: {e}')
+                logging.warning(f'[{self.timestamp()}] Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ - packet: {param_value_pre}')
 
             return param_value_pre_timestamp
 
