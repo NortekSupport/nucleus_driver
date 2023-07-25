@@ -211,7 +211,7 @@ class RovLink(Thread):
             try:
                 param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
-                logging.info(f'param_value: {param_value_pre}')
+                logging.info(f'param_value: {param_value_pre.json()}')
                 logging.info(f'param_value.status_code: {param_value_pre.status_code}')
 
                 param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
@@ -329,8 +329,13 @@ class RovLink(Thread):
         def get_param_value_timestamp():
 
             param_value_pre_timestamp = None
+            
             try:
                 param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+
+                logging.info(f'param_value: {param_value_pre.json()}')
+                logging.info(f'param_value.status_code: {param_value_pre.status_code}')
+                
                 param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
 
             except Exception as e:
