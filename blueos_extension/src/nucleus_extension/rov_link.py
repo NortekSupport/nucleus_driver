@@ -8,8 +8,8 @@ from datetime import datetime
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
-#MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
-MAVLINK2REST_URL = "http://host.docker.internal/mavlink2rest"
+MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
+#MAVLINK2REST_URL = "http://host.docker.internal/mavlink2rest"
 
 class RovLink(Thread):
 
@@ -211,7 +211,7 @@ class RovLink(Thread):
             try:
                 param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
-                print(param_value_pre.status_code)
+                logging.info(f'param_value: {param_value_pre.status_code}')
 
                 param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
 
