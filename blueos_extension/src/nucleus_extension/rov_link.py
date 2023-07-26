@@ -327,10 +327,11 @@ class RovLink(Thread):
         session.mount('http://', adapter)
         
         #param_request_read = session.post(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE", json=data)
-        param_request_read = session.post(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE", data=data)
-     
-        return param_request_read
+        #param_request_read = session.post(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE", data=data)
+        param_request_read = session.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
+        return param_request_read
+    
     def set_parameter(self, parameter_id, parameter_value, parameter_type):
 
         def get_param_value_timestamp():
@@ -795,7 +796,7 @@ class RovLink(Thread):
             status_code = response.status_code
 
             if not str(status_code).startswith('2'):
-                logging.warning(f'[{self.timestamp()}] get_parameter did not respond with status code 2xx. Actual status code: {status_code}')
+                logging.warning(f'{self.timestamp()} get_parameter did not respond with status code 2xx. Actual status code: {status_code}')
                 status = False
                 continue
 
@@ -824,7 +825,7 @@ class RovLink(Thread):
             self.config_parameters[parameter] = param_value
 
             if not self.EXPECTED_CONFIG_PARAMETERS[parameter] - 0.1 <= param_value <= self.EXPECTED_CONFIG_PARAMETERS[parameter] + 0.1:
-                logging.warning(f'[{self.timestamp()}] Incorrect value for parameter {parameter}. Expected value: {self.EXPECTED_CONFIG_PARAMETERS[parameter]}.\tReceived value: {response.json()["message"]["param_value"]}.')
+                logging.warning(f'{self.timestamp()} Incorrect value for parameter {parameter}. Expected value: {self.EXPECTED_CONFIG_PARAMETERS[parameter]}.\tReceived value: {response.json()["message"]["param_value"]}.')
                 correct_values = False
 
         return correct_values
