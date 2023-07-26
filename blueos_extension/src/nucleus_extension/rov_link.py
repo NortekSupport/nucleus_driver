@@ -247,12 +247,12 @@ class RovLink(Thread):
 
         return param_value
     '''
-    def _get_param_value(self, retries=3):
+    def _get_param_value(self, retries: int = 3):
 
         
         session = requests.Session()
         #retry = Retry(total=retries, backoff_factor=1, status_forcelist=[502])
-        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[404])
+        retry = Retry(total=int(retries), backoff_factor=1, status_forcelist=[404])
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
         
