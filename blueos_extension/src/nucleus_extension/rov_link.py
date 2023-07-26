@@ -255,7 +255,7 @@ class RovLink(Thread):
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
         
-        param_value = session.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
+        param_value = session.get(MAVLINK2REST_URL + "/mavlinkS/vehicles/1/components/1/messages/PARAM_VALUE")
 
         #logging.info(f'param_value: {param_value.json()}')
         #logging.info(f'param_value.status_code: {param_value.status_code}')
@@ -326,8 +326,6 @@ class RovLink(Thread):
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
         
-        #param_request_read = session.post(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE", json=data)
-        #param_request_read = session.post(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE", data=data)
         param_request_read = session.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
         return param_request_read
@@ -453,176 +451,10 @@ class RovLink(Thread):
 
         return parameter
 
-    '''
-    def get_parameter(self, parameter_id):
-        
-        def get_param_value_timestamp():
 
-            param_value_pre_timestamp = None
-            
-            try:
-                param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-
-                logging.info(f'param_value: {param_value_pre.json()}')
-                logging.info(f'param_value.status_code: {param_value_pre.status_code}')
-                
-                if not str(param_value_pre.status_code).startswith('2'):
-                    param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
-                else:
-                    logging.warning(f'{self.timestamp()} Unable to obtain timestamp from PARAM_VALUE before PARAM_REQUEST_READ as its return status_code did not start with 2 - status code: {param_value_pre.status_code}')
-
-            except Exception as e:
-                logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
-
-            return param_value_pre_timestamp
-        
-        def get_from_mavlink(param_value_pre_timestamp):
-
-            def post():
-
-                data = {
-                    'header': {
-                        'system_id': 255,
-                        'component_id': 0,
-                        'sequence': 0},
-                    'message': {
-                        'type': "PARAM_REQUEST_READ",
-                        'param_index': -1,
-                        'target_system': 1,
-                        'target_component': 1,
-                        'param_id': ["\u0000" for _ in range(16)]
-                    }
-                }
-
-                for index, char in enumerate(parameter_id):
-                    data['message']['param_id'][index] = char
-
-                return requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
-
-            def get():
-
-                for _ in range(3):
-
-                    try:
-                        time.sleep(0.02)  # It typically takes this amount of time for PARAM_VALUE to change
-
-                        param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-
-                        param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
-
-                        if param_value_pre_timestamp is None or param_value_pre_timestamp != param_value_timestamp:
-                            break
-
-                    except Exception as e:
-                        logging.warning(f'[{self.timestamp()}] Failed to obtain PARAM_VALUE for parameter {parameter_id}: {e}')
-                        continue
-
-                return param_value
-
-            post_response = post()
-
-            if post_response.status_code != 200:
-                logging.warning(f'[{self.timestamp()}] PARAM_REQUEST_READ command did not respond with 200: {post_response.status_code}')
-                return post_response
-
-            get_response = get()
-
-            if get_response.status_code != 200:
-                logging.warning(f'[{self.timestamp()}] PARAM_VALUE command did not respond with 200: {get_response.status_code}')
-
-            return get_response
-
-        def check_parameter(param_value):
-
-            def check_parameter_id():
-
-                # Extract PARAM_VALUE id (name)
-                response_parameter_id = ''
-                for char in param_value.json()['message']['param_id']:
-                    if char == '\u0000':
-                        break
-
-                    response_parameter_id += char
-
-                # Check if obtained PARAM_ID is the same as requested
-                if response_parameter_id != parameter_id:
-                    return False
-
-                return True
-
-            parameter_id_status = check_parameter_id()
-
-            if not parameter_id_status:
-                param_value.status_code = 210
-
-            return param_value
-
-        timestamp = self._get_param_value_timestamp()
-
-        parameter = get_from_mavlink(param_value_pre_timestamp=timestamp)
-
-        if parameter.status_code != 200:
-            return parameter
-
-        parameter = check_parameter(parameter)
-
-        return parameter
-    '''
-
-
-    '''
-    def get_parameter(self, parameter_id):
-        
-        param_value_timestamp = None
-
-        for _ in range(3):
-            param_value_pre = self._get_param_value(self)
-
-            if param_value_pre is not None and str(param_value_pre.status_code).startswith('2'):
-                param_value_timestamp_pre = param_value_pre.json()["status"]["time"]["last_update"]
-                break
-
-        else:
-            return None  # TODO: return what?
-        
-        for _ in range(3):
-            param_request_read = self._post_param_request_read(parameter_id=parameter_id)
-
-            if param_request_read is not None and str(param_request_read.status_code).startswith('2'):
-                break
-        
-        else:
-            return None
-        
-        for _ in range(3):
-
-            time.sleep(0.02)  # it typically takes this amount of time for PARAM_VALUE to update
-
-            param_value = self._get_param_value(self)
-
-            if param_value is not None and str(param_value.status_code).startswith('2'):
-                param_value_timestamp = param_value.json()["status"]["time"]["last_update"]
-
-                if param_value_timestamp_pre != param_value_timestamp:
-                    break
-
-        else:
-            return None  # TODO: return what?
-
-        response_parameter_id = ''
-        for char in param_value.json()['message']['param_id']:
-            if char == '\u0000':
-                break
-
-        if response_parameter_id != parameter_id:
-            return None
-
-        return param_value
-    '''
 
     def get_parameter(self, parameter_id):
         
-
         param_value_pre = self._get_param_value(self)
 
         if not str(param_value_pre.status_code).startswith('2'):
@@ -632,21 +464,17 @@ class RovLink(Thread):
         param_request_read = self._post_param_request_read(parameter_id=parameter_id)
 
         if not str(param_request_read.status_code).startswith('2'):
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_request_read.status_code}')
-            #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_request_read.status_code}\r\npacket: {param_request_read.json()}')
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_request_read.status_code}\r\npacket: {param_request_read.json()}')
             return param_request_read
         
         for _ in range(3):
             time.sleep(0.05)  # it typically takes this amount of time for PARAM_VALUE to update
-            logging.info(f'GETTING PARAM_REQUEST_READ for parameter: {parameter_id}')
             param_value = self._get_param_value(self)
 
             if not str(param_value.status_code).startswith('2'):
-                logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value.status_code}')
-                #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}\r\npacket: {param_value.json()}')
+                logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}\r\npacket: {param_value.json()}')
                 return param_value
             
-            logging.info(f'PARAM_REQUEST_READ status code: {param_value.status_code}')
             if str(param_value.status_code).startswith('2') and param_value_pre.json()["status"]["time"]["last_update"] != param_value.json()["status"]["time"]["last_update"]:
                 break
 
