@@ -636,16 +636,20 @@ class RovLink(Thread):
             #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_request_read.status_code}\r\npacket: {param_request_read.json()}')
             return param_request_read
         
-        time.sleep(0.02)  # it typically takes this amount of time for PARAM_VALUE to update
+        for _ in range(3):
+            time.sleep(0.02)  # it typically takes this amount of time for PARAM_VALUE to update
 
-        param_value = self._get_param_value(self)
+            param_value = self._get_param_value(self)
 
-        if not str(param_value.status_code).startswith('2'):
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value.status_code}')
-            #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}\r\npacket: {param_value.json()}')
-            return param_value
-        
-        if param_value_pre.json()["status"]["time"]["last_update"] == param_value.json()["status"]["time"]["last_update"]:
+            if not str(param_value.status_code).startswith('2'):
+                logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value.status_code}')
+                #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}\r\npacket: {param_value.json()}')
+                return param_value
+            
+            if str(param_value.status_code).startswith('2') and param_value_pre.json()["status"]["time"]["last_update"] != param_value.json()["status"]["time"]["last_update"]:
+                break
+
+        else:
             logging.warning(f'{self.timestamp()} Same timestamp for PARAM_VALUE before and after PARAM_REQUEST_READ for parameter "{parameter_id}, indicating that the value was not updated')
             logging.warning(f'{self.timestamp()} param_value_pre: {param_value_pre.json()["status"]["time"]["last_update"]} \t param_value: {param_value.json()["status"]["time"]["last_update"]}')
             param_value.status_code = 418
