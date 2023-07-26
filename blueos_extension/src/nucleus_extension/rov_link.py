@@ -638,7 +638,7 @@ class RovLink(Thread):
         
         for _ in range(3):
             time.sleep(0.02)  # it typically takes this amount of time for PARAM_VALUE to update
-            logging.info(f'GETTING PARAM_REQUEST_READ')
+            logging.info(f'GETTING PARAM_REQUEST_READ for parameter: {parameter_id}')
             param_value = self._get_param_value(self)
 
             if not str(param_value.status_code).startswith('2'):
