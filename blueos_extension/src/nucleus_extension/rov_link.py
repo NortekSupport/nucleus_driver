@@ -252,7 +252,7 @@ class RovLink(Thread):
         
         session = requests.Session()
         #retry = Retry(total=retries, backoff_factor=1, status_forcelist=[502])
-        retry = Retry(total=int(retries), backoff_factor=1, status_forcelist=[404])
+        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[404])
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
         
@@ -456,7 +456,7 @@ class RovLink(Thread):
 
     def get_parameter(self, parameter_id):
         
-        param_value_pre = self._get_param_value(self)
+        param_value_pre = self._get_param_value()
 
         if not str(param_value_pre.status_code).startswith('2'):
             logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value_pre.status_code}')
@@ -471,7 +471,7 @@ class RovLink(Thread):
         
         for _ in range(3):
             time.sleep(0.05)  # it typically takes this amount of time for PARAM_VALUE to update
-            param_value = self._get_param_value(self)
+            param_value = self._get_param_value()
 
             if not str(param_value.status_code).startswith('2'):
                 logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}\r\npacket: {param_value.json()}')
