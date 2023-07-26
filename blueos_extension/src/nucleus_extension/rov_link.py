@@ -458,7 +458,8 @@ class RovLink(Thread):
         param_value_pre = self._get_param_value(self)
 
         if not str(param_value_pre.status_code).startswith('2'):
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value_pre.status_code}\tpacket: {param_value_pre.json()}')
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value_pre.status_code}')
+            #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value_pre.status_code}\tpacket: {param_value_pre.json()}')
             return param_value_pre
             
         param_request_read = self._post_param_request_read(parameter_id=parameter_id)
