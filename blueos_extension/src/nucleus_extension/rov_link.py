@@ -302,7 +302,7 @@ class RovLink(Thread):
 
     def _post_param_request_read(self, parameter_id, retries=3):
 
-        param_request_read = None
+        #param_request_read = None
 
         data = {
             'header': {
@@ -639,7 +639,8 @@ class RovLink(Thread):
         param_value = self._get_param_value(self)
 
         if not str(param_value.status_code).startswith('2'):
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}\r\npacket: {param_value.json()}')
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}')
+            #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}\r\npacket: {param_value.json()}')
             return param_value
         
         if param_value_pre.json()["status"]["time"]["last_update"] == param_value.json()["status"]["time"]["last_update"]:
