@@ -326,8 +326,8 @@ class RovLink(Thread):
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
         
-        param_request_read = session.post(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE", json=data)
-        #param_request_read = session.post(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE", data=data)
+        #param_request_read = session.post(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE", json=data)
+        param_request_read = session.post(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE", data=data)
      
         return param_request_read
 
@@ -625,13 +625,13 @@ class RovLink(Thread):
         param_value_pre = self._get_param_value(self)
 
         if not str(param_value_pre.status_code).startswith('2'):
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value_pre.status_code}\r\npacket: {param_value_pre.json()}')
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value_pre.status_code}\tpacket: {param_value_pre.json()}')
             return param_value_pre
             
         param_request_read = self._post_param_request_read(parameter_id=parameter_id)
 
         if not str(param_request_read.status_code).startswith('2'):
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_request_read.status_code}')
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_request_read.status_code}')
             #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_request_read.status_code}\r\npacket: {param_request_read.json()}')
             return param_request_read
         
@@ -640,7 +640,7 @@ class RovLink(Thread):
         param_value = self._get_param_value(self)
 
         if not str(param_value.status_code).startswith('2'):
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}')
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value.status_code}')
             #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}\r\npacket: {param_value.json()}')
             return param_value
         
