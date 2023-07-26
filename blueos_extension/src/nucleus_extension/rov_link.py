@@ -647,6 +647,7 @@ class RovLink(Thread):
         
         if param_value_pre.json()["status"]["time"]["last_update"] == param_value.json()["status"]["time"]["last_update"]:
             logging.warning(f'{self.timestamp()} Same timestamp for PARAM_VALUE before and after PARAM_REQUEST_READ for parameter "{parameter_id}, indicating that the value was not updated')
+            logging.warning(f'{self.timestamp()} param_value_pre: {param_value_pre.json()["status"]["time"]["last_update"]} \t param_value: {param_value.json()["status"]["time"]["last_update"]}')
             param_value.status_code = 418
             return param_value
 
