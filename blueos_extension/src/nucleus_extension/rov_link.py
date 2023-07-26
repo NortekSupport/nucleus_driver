@@ -251,22 +251,11 @@ class RovLink(Thread):
 
         
         session = requests.Session()
-        #retry = Retry(total=retries, backoff_factor=1, status_forcelist=[502])
         retry = Retry(total=retries, backoff_factor=0.2, status_forcelist=[404], raise_on_status=False)
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
         
-        param_value = session.get(MAVLINK2REST_URL + "/mavlinkS/vehicles/1/components/1/messages/PARAM_VALUE")
-
-        #logging.info(f'param_value: {param_value.json()}')
-        #logging.info(f'param_value.status_code: {param_value.status_code}')
-        
-        #if not str(get_param_value.status_code).startswith('2'):
-        #    param_value = get_param_value
-
-        #else:
-        #    logging.warning(f'{self.timestamp()} PARAM_REQUEST_READ status_code did not start with 2 - status code: {param_value.status_code}')
-
+        param_value = session.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
         return param_value
 
