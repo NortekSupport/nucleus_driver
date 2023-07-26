@@ -252,7 +252,7 @@ class RovLink(Thread):
         
         session = requests.Session()
         #retry = Retry(total=retries, backoff_factor=1, status_forcelist=[502])
-        retry = Retry(total=retries, backoff_factor=0.1, status_forcelist=[404], raise_on_status=False)
+        retry = Retry(total=retries, backoff_factor=0.2, status_forcelist=[404], raise_on_status=False)
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
         
