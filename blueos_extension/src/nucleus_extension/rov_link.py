@@ -637,7 +637,7 @@ class RovLink(Thread):
             return param_request_read
         
         for _ in range(3):
-            time.sleep(0.03)  # it typically takes this amount of time for PARAM_VALUE to update
+            time.sleep(0.05)  # it typically takes this amount of time for PARAM_VALUE to update
             logging.info(f'GETTING PARAM_REQUEST_READ for parameter: {parameter_id}')
             param_value = self._get_param_value(self)
 
