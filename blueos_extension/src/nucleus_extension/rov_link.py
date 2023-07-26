@@ -631,7 +631,8 @@ class RovLink(Thread):
         param_request_read = self._post_param_request_read(parameter_id=parameter_id)
 
         if not str(param_request_read.status_code).startswith('2'):
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_request_read.status_code}\r\npacket: {param_request_read.json()}')
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_request_read.status_code}')
+            #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_request_read.status_code}\r\npacket: {param_request_read.json()}')
             return param_request_read
         
         time.sleep(0.02)  # it typically takes this amount of time for PARAM_VALUE to update
