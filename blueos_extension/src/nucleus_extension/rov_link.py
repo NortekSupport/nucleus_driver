@@ -247,7 +247,7 @@ class RovLink(Thread):
 
         return param_value
     '''
-    def _get_param_value(self, retries: int = 3):
+    def _get_param_value(self, retries: int = 5):
 
         
         session = requests.Session()
