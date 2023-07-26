@@ -646,6 +646,7 @@ class RovLink(Thread):
                 #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}\r\npacket: {param_value.json()}')
                 return param_value
             
+            logging.info(f'PARAM_REQUEST_READ status code: {param_value.status_code}')
             if str(param_value.status_code).startswith('2') and param_value_pre.json()["status"]["time"]["last_update"] != param_value.json()["status"]["time"]["last_update"]:
                 break
 
