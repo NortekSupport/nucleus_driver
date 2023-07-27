@@ -66,7 +66,7 @@ class RovLink(Thread):
         self.orientation_current = None
         self.orientation_previous = None
 
-        self.hostname = '---'
+        self.hostname = None
         self.nucleus_id = None
         self.nucleus_firmware = None
 
@@ -577,6 +577,14 @@ class RovLink(Thread):
         
         logging.error('CONNECT NUCLEUS STARTED')
 
+        if self.hostname is None:
+            self.status['nucleus_connected'] = 'No hostname'
+            
+            logging.error('CONNECT NUCLEUS ENDED')
+
+            return self._nucleus_connected
+        
+
         self.status['nucleus_connected'] = 'Connecting...'
 
         if self.nucleus_driver.connection.get_connection_status() and self.nucleus_driver.get_connection_type == 'serial':
@@ -603,12 +611,6 @@ class RovLink(Thread):
         logging.info(f'{self.timestamp()} Nucleus firmware:  {self.nucleus_firmware}')
 
         self.status['nucleus_connected'] = 'OK'
-
-        #self.nucleus_driver.parser.start()
-
-        #self.check_nucleus_running()  # This check must be before self._nucleus_connected = True
-
-        #logging.error(f'___NUCLEUS RUNNING: {self._nucleus_running}')
 
         self._nucleus_connected = True
 
@@ -640,43 +642,7 @@ class RovLink(Thread):
             logging.error('SETUP NUCLEUS ENDED')
             self._dvl_enabled = True
 
-        
-    '''
-    def wait_for_heartbeat(self):
-        """
-        Waits for a valid heartbeat to Mavlink2Rest
-        """
 
-        vehicle = 1
-        component = 1
-
-        vehicle_path = f"/vehicles/{vehicle}/components/{component}/messages"
-
-        logging.info(f'{self.timestamp()} waiting for vehicle heartbeat...')
-
-        self.status['heartbeat'] = 'Listening...'
-
-        session = requests.Session()
-        retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502], raise_on_status=False)
-        adapter = HTTPAdapter(max_retries=retry)
-        session.mount('http://', adapter)
-
-        response = session.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT')
-
-        if response.status_code == 200 and response.json()["message"]["type"] == "HEARTBEAT":
-            logging.info(f'{self.timestamp()} Heartbeat detected')
-            self.status['heartbeat'] = 'OK'
-
-            self._heartbeat = True
-
-        else:
-            logging.warning(f'{self.timestamp()} Failed to ddetect heartbeat')
-            self.status['heartbeat'] = 'Failed'
-
-            self._heartbeat = False
-
-        return self._heartbeat
-    '''
     def check_heartbeat(self):
         
         logging.error('CHECK HEARTBEAT STARTED')
@@ -901,8 +867,6 @@ class RovLink(Thread):
         self.read_parameters_thread = Thread(target=read_parameters)
         self.read_parameters_thread.start()
 
-
-
     def handle_packet(self):
 
         packet = self.nucleus_driver.read_packet()
@@ -976,16 +940,14 @@ class RovLink(Thread):
             
             self.check_requirements()
 
-            if self._nucleus_running:
+            if self._nucleus_running is True:
                 self.handle_packet()
             else:
                 time.sleep(0.05)
 
         self.stop_nucleus()
 
-        
-
-    def run_old(self):
+    
         
         self.load_settings()
         '''
