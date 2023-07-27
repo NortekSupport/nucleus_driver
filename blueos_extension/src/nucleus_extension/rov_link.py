@@ -632,13 +632,15 @@ class RovLink(Thread):
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETBT,WT="OFF",DS="ON": {reply}')
 
             self.status['dvl_enabled'] = 'Failed'
+            logging.error('SETUP NUCLEUS ENDED')
             self._dvl_enabled = False
 
         else:
             self.status['dvl_enabled'] = 'OK'
+            logging.error('SETUP NUCLEUS ENDED')
             self._dvl_enabled = True
 
-        logging.error('SETUP NUCLEUS ENDED')
+        
     '''
     def wait_for_heartbeat(self):
         """
@@ -697,15 +699,16 @@ class RovLink(Thread):
             logging.info(f'{self.timestamp()} Heartbeat detected')
             self.status['heartbeat'] = 'OK'
 
+            logging.error('CHECK HEARTBEAT ENDED')
             self._heartbeat = True
 
         else:
             logging.warning(f'{self.timestamp()} Failed to detect heartbeat')
             self.status['heartbeat'] = 'Failed'
 
+            logging.error('CHECK HEARTBEAT ENDED')
             self._heartbeat = False
 
-        logging.error('CHECK HEARTBEAT ENDED')
 
         return self._heartbeat
 
@@ -772,43 +775,13 @@ class RovLink(Thread):
         else:
              self.status['controller_parameters'] = 'Failed'
 
+        logging.error('READ CONFIG PARAMETERS ENDED')
+
         self._config = correct_values
 
-        logging.error('READ CONFIG PARAMETERS ENDED')
 
         return self._config
 
-    '''
-    def check_nucleus_running(self):
-
-        #qsize_pre = self.nucleus_driver.parser.packet_queue.qsize()
-
-        #logging.error(f'QSIZE_PRE: {qsize_pre}')
-
-        #time.sleep(1)
-
-        qsize = self.nucleus_driver.parser.packet_queue.qsize()
-        
-        logging.error(f'QSIZE: {qsize}')
-
-        init_time = datetime.now()
-
-        for _ in range(10):
-            time.sleep(0.1)
-            qsize_post = self.nucleus_driver.parser.packet_queue.qsize()
-
-            timestamp = (datetime.now() - init_time).total_seconds()
-
-            logging.error(f'{[str(timestamp)]} QSIZE_POST: {qsize}')
-
-            if qsize != qsize_post:
-                self._nucleus_running = True
-                break
-            
-
-        else:
-            self._nucleus_running = False
-    '''
         
     def start_nucleus(self):
         
@@ -818,25 +791,37 @@ class RovLink(Thread):
 
         if b'OK\r\n' in self.nucleus_driver.start_measurement():
             logging.info(f'{self.timestamp()} Nucleus successfully started!')
+            logging.error('START NUCLEUS ENDED')
             self._nucleus_running = True
+            
 
         else:
             logging.warning(f'{self.timestamp()} Failed to start Nucleus!')
             
 
-        logging.error('START NUCLEUS ENDED')
+            logging.error('START NUCLEUS ENDED')
 
 
     def stop_nucleus(self):
+
+        logging.error('STOP NUCLEUS STARTED')
 
         stop_reply = self.nucleus_driver.stop()
 
         if b'OK\r\n' in stop_reply:
             logging.info(f'{self.timestamp()} Nucleus stopped!')
+
+
+            logging.error('STOP NUCLEUS ENDED')
+
             self._nucleus_running = False
 
         elif b'ERROR\r\n' in stop_reply:
             logging.info(f'{self.timestamp()} Nucleus was already stopped!')
+
+
+            logging.error('STOP NUCLEUS ENDED')
+
             self._nucleus_running = False
 
         else:
@@ -874,17 +859,6 @@ class RovLink(Thread):
             self.vision_position_delta_packet_counter['packets_failed'] += 1
             logging.warning(f'{self.timestamp()} VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
     
-    '''
-    def _create_threads(self):
-
-        self.check_cable_guy_thread = Thread(target=self.check_cable_guy)
-        self.connect_nucleus_thread = Thread(target=self.connect_nucleus)
-        self.check_heartbeat_thread = Thread(target=self.check_heartbeat)
-        self.setup_nucleus_thread = Thread(target=self.setup_nucleus)
-        self.read_config_parameters_startup_thread = Thread(target=self.read_config_parameters_startup)
-        self.read_pid_parameters_thread = Thread(target=self.read_pid_parameters)
-        self.start_nucleus_thread = Thread(target=self.start_nucleus)
-    '''
 
     def check_requirements(self):
 
@@ -927,11 +901,6 @@ class RovLink(Thread):
         self.read_parameters_thread = Thread(target=read_parameters)
         self.read_parameters_thread.start()
 
-        #self.read_config_parameters_startup_thread = Thread(target=self.read_config_parameters_startup)
-        #self.read_config_parameters_startup_thread.start()
-
-        #self.read_pid_parameters_thread = Thread(target=self.read_pid_parameters)
-        #self.read_pid_parameters_thread.start()
 
 
     def handle_packet(self):
