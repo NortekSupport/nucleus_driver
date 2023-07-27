@@ -771,7 +771,7 @@ class RovLink(Thread):
 
         qsize = self.nucleus_driver.parser.packet_queue.qsize
 
-        time.sleep(0.2)
+        time.sleep(1)
 
         if qsize != self.nucleus_driver.parser.packet_queue.qsize:
             self._nucleus_running = True
