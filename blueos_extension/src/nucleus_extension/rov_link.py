@@ -579,14 +579,21 @@ class RovLink(Thread):
 
         self.status['nucleus_connected'] = 'Connecting...'
 
-        self.nucleus_driver.set_tcp_configuration(host=self.hostname)
-        if not self.nucleus_driver.connect(connection_type='tcp'):
-            logging.warning(f'{self.timestamp()} Failed to connect to Nucleus')
-            self.status['nucleus_connected'] = 'Failed'
+        if self.nucleus_driver.connection.get_connection_status() and self.nucleus_driver.get_connection_type == 'serial':
+            self.nucleus_driver.disconnect()
 
-            self._nucleus_connected = False
+        if self.nucleus_driver.connection.get_connection_status() and self.nucleus_driver.get_connection_type == 'tcp':
+            logging.warning(f'{self.timestamp()} Nucleus already connected')
 
-            return self._nucleus_connected
+        else:
+            self.nucleus_driver.set_tcp_configuration(host=self.hostname)
+            if not self.nucleus_driver.connect(connection_type='tcp'):
+                logging.warning(f'{self.timestamp()} Failed to connect to Nucleus')
+                self.status['nucleus_connected'] = 'Failed'
+
+                self._nucleus_connected = False
+
+                return self._nucleus_connected
 
         self.nucleus_id = self.nucleus_driver.connection.nucleus_id
         self.nucleus_firmware = self.nucleus_driver.connection.firmware_version
@@ -603,7 +610,7 @@ class RovLink(Thread):
 
         #logging.error(f'___NUCLEUS RUNNING: {self._nucleus_running}')
 
-        #self._nucleus_connected = True
+        self._nucleus_connected = True
 
         logging.error('CONNECT NUCLEUS ENDED')
 
