@@ -8,6 +8,7 @@ from datetime import datetime
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
+
 MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
 #MAVLINK2REST_URL = "http://host.docker.internal/mavlink2rest"
 
@@ -46,6 +47,8 @@ class RovLink(Thread):
 
         self.thread = Thread()
         self.thread_running = True
+
+        self._create_threads()
 
         self.timestamp_previous = None
         self.orientation_current = None
@@ -522,8 +525,44 @@ class RovLink(Thread):
 
         return self._cable_guy
 
+    def check_cable_guy(self) -> bool:
+        
+        logging.error('CHECK CABLE GUY STARTED')
+
+        logging.info(f'{self.timestamp()} Discovering cable guy')
+
+        self.status['cable_guy'] = 'Discovering...'
+
+        session = requests.Session()
+        #retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
+        retry = Retry(total=5, backoff_factor=1, status_forcelist=[502])
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+
+        response = session.get('http://host.docker.internal/cable-guy/v1.0/ethernet')
+
+        if str(response.status_code).startswith('2') and response.json()[0]['info']['connected'] is True:
+            logging.info(f'{self.timestamp()} Cable guy online!')
+            self.status['cable_guy'] = 'OK'
+
+            self._cable_guy = True
+
+        else:
+            logging.warning(f'{self.timestamp()} Failed to discover cable guy!')
+            self.status['cable_guy'] = 'Failed'
+
+            self._cable_guy = False
+
+        logging.error('CHECK CABLE GUY ENDED')
+
+        return self._cable_guy
+
+
+
     def connect_nucleus(self):
         
+        logging.error('CONNECT NUCLEUS STARTED')
+
         self.status['nucleus_connected'] = 'Connecting...'
 
         self.nucleus_driver.set_tcp_configuration(host=self.hostname)
@@ -546,9 +585,13 @@ class RovLink(Thread):
 
         self._nucleus_connected = True
 
+        logging.error('CONNECT NUCLEUS ENDED')
+
         return self._nucleus_connected
 
     def setup_nucleus(self):
+
+        logging.error('SETUP NUCLEUS STARTED')
 
         logging.info(f'{self.timestamp()} setting up nucleus')
 
@@ -575,6 +618,8 @@ class RovLink(Thread):
         reply = self.nucleus_driver.commands.set_cur_prof(ds="OFF")  # TODO: OFF
         if b'OK\r\n' not in reply:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETCURPROF,DS="OFF": {reply}')
+
+        logging.error('SETUP NUCLEUS ENDED')
 
     def wait_for_heartbeat(self):
         """
@@ -611,8 +656,45 @@ class RovLink(Thread):
 
         return self._heartbeat
 
+    def check_heartbeat(self):
+        
+        logging.error('CHECK HEARTBEAT STARTED')
+
+        vehicle_path = f"vehicles/1/components/1/messages"
+
+        logging.info(f'{self.timestamp()} Checking vehicle heartbeat...')
+
+        self.status['heartbeat'] = 'Listening...'
+
+        session = requests.Session()
+        retry = Retry(connect=5, backoff_factor=1, status_forcelist=[502])
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+
+        #response = session.get(MAVLINK2REST_URL + "/mavlink" + vehicle_path + '/HEARTBEAT')
+        response = session.get(f'{MAVLINK2REST_URL}/mavlink/{vehicle_path}/HEARTBEAT')
+
+        if str(response.status_code).startswith('2') and response.json()["message"]["type"] == "HEARTBEAT":
+            logging.info(f'{self.timestamp()} Heartbeat detected')
+            self.status['heartbeat'] = 'OK'
+
+            self._heartbeat = True
+
+        else:
+            logging.warning(f'{self.timestamp()} Failed to detect heartbeat')
+            self.status['heartbeat'] = 'Failed'
+
+            self._heartbeat = False
+
+        logging.error('CHECK HEARTBEAT ENDED')
+
+        return self._heartbeat
+
+
     def read_pid_parameters(self):
         
+        logging.error('READ PARAMETERS STARTED')
+
         status = True 
 
         for parameter in self.PID_PARAMETERS:
@@ -628,6 +710,9 @@ class RovLink(Thread):
             param_value = response.json()['message']['param_value']
 
             self.pid_parameters[parameter] = round(float(param_value), 3)
+
+
+        logging.error('READ PARAMETERS ENDED')
 
         return status
     
@@ -657,6 +742,11 @@ class RovLink(Thread):
 
     def read_config_parameters_startup(self):
         
+        logging.error('READ CONFIG PARAMETERS STARTED')
+
+        while self._cable_guy is False:
+            time.sleep(0.1)
+
         self.status['controller_parameters'] = 'Reading...'
 
         correct_values = self.read_config_parameters()
@@ -668,15 +758,45 @@ class RovLink(Thread):
 
         self._config = correct_values
 
-        return correct_values
+        logging.error('READ CONFIG PARAMETERS ENDED')
+
+        return self._config
 
     def start_nucleus(self):
+        
+        logging.error('START NUCLEUS STARTED')
 
+        def start_measurement():
+        
+            if b'OK\r\n' not in self.nucleus_driver.start_measurement():
+                logging.warning(f'{self.timestamp()} Failed to start Nucleus')
+            
+            else:
+                self._nucleus_running = True
+
+        qsize = self.nucleus_driver._parser.packet_queue.qsize
+
+        if qsize == 0:
+            start_measurement()
+
+        else:
+            time.sleep(0.2)
+            if qsize != self.nucleus_driver._parser.packet_queue.qsize:
+                start_measurement()
+            else:
+                self._nucleus_running = True
+
+        logging.error('START NUCLEUS ENDED')
+        
+    '''
+    def start_nucleus(self):
+        
         if b'OK\r\n' not in self.nucleus_driver.start_measurement():
             logging.warning(f'{self.timestamp()} Failed to start Nucleus')
         
         else:
             self._nucleus_running = True
+    '''
 
     def stop_nucleus(self):
 
@@ -716,7 +836,126 @@ class RovLink(Thread):
             self.vision_position_delta_packet_counter['packets_failed'] += 1
             logging.warning(f'{self.timestamp()} VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
     
+
+    def _create_threads(self):
+
+        self.check_cable_guy_thread = Thread(target=self.check_cable_guy)
+        self.connect_nucleus_thread = Thread(target=self.connect_nucleus)
+        self.check_heartbeat_thread = Thread(target=self.check_heartbeat)
+        self.setup_nucleus_thread = Thread(target=self.setup_nucleus)
+        self.read_config_parameters_startup_thread = Thread(target=self.read_config_parameters_startup)
+        self.read_pid_parameters_thread = Thread(target=self.read_pid_parameters)
+        self.start_nucleus_thread = Thread(target=self.start_nucleus)
+
+    def check_requirements(self):
+
+        if not self._cable_guy and not self.check_cable_guy_thread.is_alive():
+            self.check_cable_guy_thread.start()
+
+        if self._cable_guy and not self._nucleus_connected and not self.connect_nucleus_thread.is_alive():
+            self.connect_nucleus_thread.start()
+
+        if not self._heartbeat and not self.check_heartbeat_thread.is_alive():
+            self.check_heartbeat_thread.start()
+
+        if not self._dvl_enabled and not self._nucleus_running and self._nucleus_connected and not self.setup_nucleus_thread.is_alive():
+            self.setup_nucleus_thread.start()
+
+        if not self._nucleus_running and self._nucleus_connected and not self.start_nucleus_thread.is_alive():
+            self.start_nucleus_thread.start()
+        
+    def check_requirements_startup(self):
+
+        self.check_requirements()
+
+        self.read_config_parameters_startup_thread.start()
+
+        self.read_pid_parameters_thread.start()
+
+
+    def handle_packet(self):
+
+        packet = self.nucleus_driver.read_packet()
+
+        if packet is None:
+            time.sleep(0.005)
+            return
+
+        if packet['id'] == 0xb4:
+
+            fom_x = packet['fomX']
+            fom_y = packet['fomY']
+            fom_z = packet['fomZ']
+
+            fom = max(fom_x, fom_y, fom_z)
+
+            bad_fom = 3
+            confidence = (3 - min(fom, bad_fom)) * 100 / bad_fom  # TODO: optimize   operate from 0-3
+
+            velocity_x = packet['velocityX']
+            velocity_y = packet['velocityY']
+            velocity_z = packet['velocityZ']
+
+            timestamp = (packet['timeStamp'] + packet['microSeconds'] * 1e-6)
+
+            if self.timestamp_previous is None:
+                dt = 0
+            else:
+                dt = timestamp - self.timestamp_previous
+
+            dx = velocity_x * dt
+            dy = velocity_y * dt
+            dz = velocity_z * dt
+
+            delta_orientation = list()
+
+            if self.orientation_current is None:
+                delta_orientation = [0, 0, 0]
+
+            elif self.orientation_previous is None or self.timestamp_previous is None:
+                delta_orientation = [0, 0, 0]
+                self.orientation_previous = self.orientation_current
+
+            else:
+                for (angle_current, angle_previous) in zip(self.orientation_current, self.orientation_previous):
+                    delta_orientation.append(angle_current - angle_previous)
+
+                self.orientation_previous = self.orientation_current
+
+            self.timestamp_previous = timestamp
+
+            if self._enable_nucleus_input:
+                self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=int(confidence), dt=int(dt * 1e6))
+            else:
+                self.vision_position_delta_packet_counter['packets_skipped'] += 1
+
+        elif packet['id'] == 0xd2:
+
+            orientation = list()
+            orientation.append(self.d2r(packet['ahrsData.roll']))
+            orientation.append(self.d2r(packet['ahrsData.pitch']))
+            orientation.append(self.d2r(packet['ahrsData.heading']))
+
+            self.orientation_current = orientation
+
     def run(self):
+
+        self.check_requirements_startup()
+
+        while self.thread_running:
+            
+            self.check_requirements()
+
+            if self._nucleus_running():
+                self.handle_packet()
+            else:
+                time.sleep(0.05)
+
+        self.stop_nucleus()
+
+        
+
+    def run_old(self):
         
         self.load_settings()
         '''
