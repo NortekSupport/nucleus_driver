@@ -771,7 +771,7 @@ class RovLink(Thread):
 
         qsize_pre = self.nucleus_driver.parser.packet_queue.qsize
 
-        logging.error(f'QSIZE_PRE: {qsize}')
+        logging.error(f'QSIZE_PRE: {qsize_pre}')
 
         time.sleep(1)
 
