@@ -745,11 +745,6 @@ class RovLink(Thread):
         return correct_values
 
     def read_config_parameters_startup(self):
-        
-        logging.error('READ CONFIG PARAMETERS INITIATED')
-
-        while self._cable_guy is False:
-            time.sleep(0.1)
 
         logging.error('READ CONFIG PARAMETERS STARTED')
 
@@ -779,6 +774,31 @@ class RovLink(Thread):
         else:
             self._nucleus_running = False
 
+    def start_nucleus(self):
+        
+        logging.error('START NUCLEUS STARTED')
+
+        def start_measurement():
+            
+            logging.info(f'{self.timestamp()} Starting Nucleus')
+
+            if b'OK\r\n' not in self.nucleus_driver.start_measurement():
+                logging.warning(f'{self.timestamp()} Failed to start Nucleus!')
+            
+            else:
+                logging.info(f'{self.timestamp()} Nucleus successfully started!')
+                self._nucleus_running = True
+
+        logging.info(f'{self.timestamp()} Starting Nucleus')
+
+        self.check_nucleus_running()
+
+        if not self._nucleus_running:
+            start_measurement()
+        else:
+            logging.info(f'{self.timestamp()} Nucleus already running!')
+
+        logging.error('START NUCLEUS ENDED')
 
     '''
     def start_nucleus(self):
@@ -894,13 +914,24 @@ class RovLink(Thread):
         
     def check_requirements_startup(self):
 
+        def read_parameters():
+            
+            while not self._heartbeat:
+                time.sleep(0.1)
+
+            self.read_config_parameters_startup()
+            self.read_pid_parameters()
+        
         self.check_requirements()
 
-        self.read_config_parameters_startup_thread = Thread(target=self.read_config_parameters_startup)
-        self.read_config_parameters_startup_thread.start()
+        self.read_parameters_thread = Thread(target=read_parameters)
+        self.read_parameters_thread.start()
 
-        self.read_pid_parameters_thread = Thread(target=self.read_pid_parameters)
-        self.read_pid_parameters_thread.start()
+        #self.read_config_parameters_startup_thread = Thread(target=self.read_config_parameters_startup)
+        #self.read_config_parameters_startup_thread.start()
+
+        #self.read_pid_parameters_thread = Thread(target=self.read_pid_parameters)
+        #self.read_pid_parameters_thread.start()
 
 
     def handle_packet(self):
