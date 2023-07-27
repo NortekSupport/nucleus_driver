@@ -769,11 +769,17 @@ class RovLink(Thread):
 
     def check_nucleus_running(self):
 
-        qsize = self.nucleus_driver.parser.packet_queue.qsize
+        qsize_pre = self.nucleus_driver.parser.packet_queue.qsize
+
+        logging.error(f'QSIZE_PRE: {qsize}')
 
         time.sleep(1)
 
-        if qsize != self.nucleus_driver.parser.packet_queue.qsize:
+        qsize = self.nucleus_driver.parser.packet_queue.qsize
+        
+        logging.error(f'QSIZE: {qsize}')
+
+        if qsize_pre != qsize:
             self._nucleus_running = True
         else:
             self._nucleus_running = False
