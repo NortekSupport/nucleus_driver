@@ -505,7 +505,7 @@ class RovLink(Thread):
         self.status['cable_guy'] = 'Discovering...'
 
         session = requests.Session()
-        retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
+        retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502], raise_on_status=False)
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
 
@@ -535,7 +535,7 @@ class RovLink(Thread):
 
         session = requests.Session()
         #retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
-        retry = Retry(total=5, backoff_factor=1, status_forcelist=[502])
+        retry = Retry(total=5, backoff_factor=1, status_forcelist=[502], raise_on_status=False)
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
 
@@ -611,14 +611,6 @@ class RovLink(Thread):
             self.status['dvl_enabled'] = 'OK'
             self._dvl_enabled = True
 
-        reply = self.nucleus_driver.commands.set_alti(ds="ON")  # TODO: OFF
-        if b'OK\r\n' not in reply:
-            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETALTI,DS="OFF": {reply}')
-
-        reply = self.nucleus_driver.commands.set_cur_prof(ds="OFF")  # TODO: OFF
-        if b'OK\r\n' not in reply:
-            logging.warning(f'{self.timestamp()} Did not receive OK when sending SETCURPROF,DS="OFF": {reply}')
-
         logging.error('SETUP NUCLEUS ENDED')
 
     def wait_for_heartbeat(self):
@@ -636,7 +628,7 @@ class RovLink(Thread):
         self.status['heartbeat'] = 'Listening...'
 
         session = requests.Session()
-        retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
+        retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502], raise_on_status=False)
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
 
@@ -667,7 +659,7 @@ class RovLink(Thread):
         self.status['heartbeat'] = 'Listening...'
 
         session = requests.Session()
-        retry = Retry(connect=5, backoff_factor=1, status_forcelist=[502])
+        retry = Retry(connect=5, backoff_factor=1, status_forcelist=[502], raise_on_status=False)
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
 
@@ -742,10 +734,12 @@ class RovLink(Thread):
 
     def read_config_parameters_startup(self):
         
-        logging.error('READ CONFIG PARAMETERS STARTED')
+        logging.error('READ CONFIG PARAMETERS INITIATED')
 
         while self._cable_guy is False:
             time.sleep(0.1)
+
+        logging.error('READ CONFIG PARAMETERS STARTED')
 
         self.status['controller_parameters'] = 'Reading...'
 
@@ -946,7 +940,7 @@ class RovLink(Thread):
             
             self.check_requirements()
 
-            if self._nucleus_running():
+            if self._nucleus_running:
                 self.handle_packet()
             else:
                 time.sleep(0.05)
