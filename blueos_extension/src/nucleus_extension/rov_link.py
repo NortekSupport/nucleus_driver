@@ -595,6 +595,8 @@ class RovLink(Thread):
 
         self.status['nucleus_connected'] = 'OK'
 
+        self.nucleus_driver.parser.start()
+
         self.check_nucleus_running()  # This check must be before self._nucleus_connected = True
 
         logging.error(f'___NUCLEUS RUNNING: {self._nucleus_running}')
@@ -783,6 +785,10 @@ class RovLink(Thread):
             self._nucleus_running = True
         else:
             self._nucleus_running = False
+        
+        
+
+
 
     def start_nucleus(self):
         

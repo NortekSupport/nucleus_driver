@@ -444,7 +444,7 @@ class Connection:
         
         return data
 
-    def read(self, size=None, terminator: bytes = None, timeout: int = 1) -> bytes:
+    def read(self, size=None, terminator: bytes = None, timeout: float = 1) -> bytes:
 
         data = b''
         size_satisfied = False
