@@ -45,10 +45,18 @@ class RovLink(Thread):
 
         self.settings_path = os.path.join(os.path.expanduser("~"), ".config", "nucleus", "settings.json")
 
-        self.thread = Thread()
+        #self.thread = Thread()
         self.thread_running = True
 
-        self._create_threads()
+        #self._create_threads()
+
+        self.check_cable_guy_thread = Thread()
+        self.connect_nucleus_thread = Thread()
+        self.check_heartbeat_thread = Thread()
+        self.setup_nucleus_thread = Thread()
+        self.read_config_parameters_startup_thread = Thread()
+        self.read_pid_parameters_thread = Thread()
+        self.start_nucleus_thread = Thread()
 
         self.timestamp_previous = None
         self.orientation_current = None
@@ -844,26 +852,33 @@ class RovLink(Thread):
     def check_requirements(self):
 
         if not self._cable_guy and not self.check_cable_guy_thread.is_alive():
+            self.check_cable_guy_thread = Thread(target=self.check_cable_guy)
             self.check_cable_guy_thread.start()
 
         if self._cable_guy and not self._nucleus_connected and not self.connect_nucleus_thread.is_alive():
+            self.connect_nucleus_thread = Thread(target=self.connect_nucleus)
             self.connect_nucleus_thread.start()
 
         if not self._heartbeat and not self.check_heartbeat_thread.is_alive():
+            self.check_heartbeat_thread = Thread(target=self.check_heartbeat)
             self.check_heartbeat_thread.start()
 
         if not self._dvl_enabled and not self._nucleus_running and self._nucleus_connected and not self.setup_nucleus_thread.is_alive():
+            self.setup_nucleus_thread = Thread(target=self.setup_nucleus)
             self.setup_nucleus_thread.start()
 
         if not self._nucleus_running and self._nucleus_connected and not self.start_nucleus_thread.is_alive():
+            self.start_nucleus_thread = Thread(target=self.start_nucleus)
             self.start_nucleus_thread.start()
         
     def check_requirements_startup(self):
 
         self.check_requirements()
 
+        self.read_config_parameters_startup_thread = Thread(target=self.read_config_parameters_startup)
         self.read_config_parameters_startup_thread.start()
 
+        self.read_pid_parameters_thread = Thread(target=self.read_pid_parameters)
         self.read_pid_parameters_thread.start()
 
 
