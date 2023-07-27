@@ -59,6 +59,7 @@ class RovLink(Thread):
         self.setup_nucleus_thread = Thread()
         self.read_config_parameters_startup_thread = Thread()
         self.read_pid_parameters_thread = Thread()
+        self.stop_nucleus_thread = Thread()
         self.start_nucleus_thread = Thread()
 
         self.timestamp_previous = None
@@ -89,7 +90,8 @@ class RovLink(Thread):
         self._heartbeat = False
         self._config = False
 
-        self._nucleus_running = False
+        #self._nucleus_running = False
+        self._nucleus_running = None
 
         self._log_path = None
 
@@ -595,13 +597,13 @@ class RovLink(Thread):
 
         self.status['nucleus_connected'] = 'OK'
 
-        self.nucleus_driver.parser.start()
+        #self.nucleus_driver.parser.start()
 
-        self.check_nucleus_running()  # This check must be before self._nucleus_connected = True
+        #self.check_nucleus_running()  # This check must be before self._nucleus_connected = True
 
-        logging.error(f'___NUCLEUS RUNNING: {self._nucleus_running}')
+        #logging.error(f'___NUCLEUS RUNNING: {self._nucleus_running}')
 
-        self._nucleus_connected = True
+        #self._nucleus_connected = True
 
         logging.error('CONNECT NUCLEUS ENDED')
 
@@ -769,6 +771,7 @@ class RovLink(Thread):
 
         return self._config
 
+    '''
     def check_nucleus_running(self):
 
         #qsize_pre = self.nucleus_driver.parser.packet_queue.qsize()
@@ -798,83 +801,39 @@ class RovLink(Thread):
 
         else:
             self._nucleus_running = False
+    '''
         
-        
-
-
-
     def start_nucleus(self):
         
         logging.error('START NUCLEUS STARTED')
-
-        def start_measurement():
-            
-            logging.info(f'{self.timestamp()} Starting Nucleus')
-
-            if b'OK\r\n' not in self.nucleus_driver.start_measurement():
-                logging.warning(f'{self.timestamp()} Failed to start Nucleus!')
-            
-            else:
-                logging.info(f'{self.timestamp()} Nucleus successfully started!')
-                self._nucleus_running = True
 
         logging.info(f'{self.timestamp()} Starting Nucleus')
 
-        self.check_nucleus_running()
-
-        if not self._nucleus_running:
-            start_measurement()
-        else:
-            logging.info(f'{self.timestamp()} Nucleus already running!')
-
-        logging.error('START NUCLEUS ENDED')
-
-    '''
-    def start_nucleus(self):
-        
-        logging.error('START NUCLEUS STARTED')
-
-        def start_measurement():
-            
-            logging.info(f'{self.timestamp()} Starting Nucleus')
-
-            if b'OK\r\n' not in self.nucleus_driver.start_measurement():
-                logging.warning(f'{self.timestamp()} Failed to start Nucleus!')
-            
-            else:
-                logging.info(f'{self.timestamp()} Nucleus successfully started!')
-                self._nucleus_running = True
-
-        qsize = self.nucleus_driver.parser.packet_queue.qsize
-
-        if qsize == 0:
-            start_measurement()
-
-        else:
-            time.sleep(0.2)
-            if qsize != self.nucleus_driver.parser.packet_queue.qsize:
-                start_measurement()
-            else:
-                logging.info(f'{self.timestamp()} Nucleus already running!')
-                self._nucleus_running = True
-
-        logging.error('START NUCLEUS ENDED')
-    '''
-    '''
-    def start_nucleus(self):
-        
-        if b'OK\r\n' not in self.nucleus_driver.start_measurement():
-            logging.warning(f'{self.timestamp()} Failed to start Nucleus')
-        
-        else:
+        if b'OK\r\n' in self.nucleus_driver.start_measurement():
+            logging.info(f'{self.timestamp()} Nucleus successfully started!')
             self._nucleus_running = True
-    '''
+
+        else:
+            logging.warning(f'{self.timestamp()} Failed to start Nucleus!')
+            
+
+        logging.error('START NUCLEUS ENDED')
+
 
     def stop_nucleus(self):
 
-        if b'OK\r\n' in self.nucleus_driver.stop():
-            logging.warning(f'{self.timestamp()} Nucleus was already running. Nucleus is now stopped')
+        stop_reply = self.nucleus_driver.stop()
+
+        if b'OK\r\n' in stop_reply:
+            logging.info(f'{self.timestamp()} Nucleus stopped!')
             self._nucleus_running = False
+
+        elif b'ERROR\r\n' in stop_reply:
+            logging.info(f'{self.timestamp()} Nucleus was already stopped!')
+            self._nucleus_running = False
+
+        else:
+            logging.warning(f'{self.timestamp()} Failed to stop Nucleus!')
 
     def send_vision_position_delta(self, position_delta, angle_delta, confidence, dt):
 
@@ -908,7 +867,7 @@ class RovLink(Thread):
             self.vision_position_delta_packet_counter['packets_failed'] += 1
             logging.warning(f'{self.timestamp()} VISION_POSITION_DELTA packet did not respond with 200: {response.status_code} - {response.text}')
     
-
+    '''
     def _create_threads(self):
 
         self.check_cable_guy_thread = Thread(target=self.check_cable_guy)
@@ -918,6 +877,7 @@ class RovLink(Thread):
         self.read_config_parameters_startup_thread = Thread(target=self.read_config_parameters_startup)
         self.read_pid_parameters_thread = Thread(target=self.read_pid_parameters)
         self.start_nucleus_thread = Thread(target=self.start_nucleus)
+    '''
 
     def check_requirements(self):
 
@@ -925,19 +885,23 @@ class RovLink(Thread):
             self.check_cable_guy_thread = Thread(target=self.check_cable_guy)
             self.check_cable_guy_thread.start()
 
-        if self._cable_guy and not self._nucleus_connected and not self.connect_nucleus_thread.is_alive():
-            self.connect_nucleus_thread = Thread(target=self.connect_nucleus)
-            self.connect_nucleus_thread.start()
-
         if not self._heartbeat and not self.check_heartbeat_thread.is_alive():
             self.check_heartbeat_thread = Thread(target=self.check_heartbeat)
             self.check_heartbeat_thread.start()
 
-        if not self._dvl_enabled and not self._nucleus_running and self._nucleus_connected and not self.setup_nucleus_thread.is_alive():
+        if self._cable_guy and not self._nucleus_connected and not self.connect_nucleus_thread.is_alive():
+            self.connect_nucleus_thread = Thread(target=self.connect_nucleus)
+            self.connect_nucleus_thread.start()
+
+        if self._nucleus_running is None and self._nucleus_connected and not self.stop_nucleus_thread.is_alive()
+            self.stop_nucleus_thread = Thread(target=self.stop_nucleus)
+            self.stop_nucleus_thread.start()
+
+        if not self._nucleus_running and not self._dvl_enabled and self._nucleus_connected and not self.setup_nucleus_thread.is_alive():
             self.setup_nucleus_thread = Thread(target=self.setup_nucleus)
             self.setup_nucleus_thread.start()
 
-        if not self._nucleus_running and self._nucleus_connected and not self.start_nucleus_thread.is_alive():
+        if not self._nucleus_running and self._dvl_enabled and self._nucleus_connected and not self.start_nucleus_thread.is_alive():
             self.start_nucleus_thread = Thread(target=self.start_nucleus)
             self.start_nucleus_thread.start()
         
