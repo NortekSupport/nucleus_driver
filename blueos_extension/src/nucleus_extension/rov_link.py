@@ -781,15 +781,20 @@ class RovLink(Thread):
         
         logging.error(f'QSIZE: {qsize}')
 
+        init_time = datetime.now()
+
         for _ in range(10):
+            time.sleep(0.1)
             qsize_post = self.nucleus_driver.parser.packet_queue.qsize()
-            logging.error(f'QSIZE_POST: {qsize}')
-            
+
+            timestamp = (datetime.now() - init_time).total_seconds()
+
+            logging.error(f'{[str(timestamp)]} QSIZE_POST: {qsize}')
+
             if qsize != qsize_post:
                 self._nucleus_running = True
                 break
             
-            time.sleep(0.1)
 
         else:
             self._nucleus_running = False
