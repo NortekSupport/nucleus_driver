@@ -780,14 +780,14 @@ class RovLink(Thread):
             else:
                 self._nucleus_running = True
 
-        qsize = self.nucleus_driver._parser.packet_queue.qsize
+        qsize = self.nucleus_driver.parser.packet_queue.qsize
 
         if qsize == 0:
             start_measurement()
 
         else:
             time.sleep(0.2)
-            if qsize != self.nucleus_driver._parser.packet_queue.qsize:
+            if qsize != self.nucleus_driver.parser.packet_queue.qsize:
                 start_measurement()
             else:
                 self._nucleus_running = True
