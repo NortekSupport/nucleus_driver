@@ -624,7 +624,7 @@ class RovLink(Thread):
             self._dvl_enabled = True
 
         logging.error('SETUP NUCLEUS ENDED')
-
+    '''
     def wait_for_heartbeat(self):
         """
         Waits for a valid heartbeat to Mavlink2Rest
@@ -659,7 +659,7 @@ class RovLink(Thread):
             self._heartbeat = False
 
         return self._heartbeat
-
+    '''
     def check_heartbeat(self):
         
         logging.error('CHECK HEARTBEAT STARTED')
@@ -768,16 +768,32 @@ class RovLink(Thread):
 
         return self._config
 
+    def check_nucleus_running(self):
+
+        qsize = self.nucleus_driver.parser.packet_queue.qsize
+
+        time.sleep(0.2)
+
+        if qsize != self.nucleus_driver.parser.packet_queue.qsize:
+            self._nucleus_running = True
+        else:
+            self._nucleus_running = False
+
+
+    '''
     def start_nucleus(self):
         
         logging.error('START NUCLEUS STARTED')
 
         def start_measurement():
-        
+            
+            logging.info(f'{self.timestamp()} Starting Nucleus')
+
             if b'OK\r\n' not in self.nucleus_driver.start_measurement():
-                logging.warning(f'{self.timestamp()} Failed to start Nucleus')
+                logging.warning(f'{self.timestamp()} Failed to start Nucleus!')
             
             else:
+                logging.info(f'{self.timestamp()} Nucleus successfully started!')
                 self._nucleus_running = True
 
         qsize = self.nucleus_driver.parser.packet_queue.qsize
@@ -790,10 +806,11 @@ class RovLink(Thread):
             if qsize != self.nucleus_driver.parser.packet_queue.qsize:
                 start_measurement()
             else:
+                logging.info(f'{self.timestamp()} Nucleus already running!')
                 self._nucleus_running = True
 
         logging.error('START NUCLEUS ENDED')
-        
+    '''
     '''
     def start_nucleus(self):
         
