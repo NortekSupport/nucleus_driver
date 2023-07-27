@@ -878,11 +878,11 @@ class RovLink(Thread):
             self.stop_nucleus_thread = Thread(target=self.stop_nucleus)
             self.stop_nucleus_thread.start()
 
-        if not self._nucleus_running and not self._dvl_enabled and self._nucleus_connected and not self.setup_nucleus_thread.is_alive():
+        if self._nucleus_running is False and not self._dvl_enabled and self._nucleus_connected and not self.setup_nucleus_thread.is_alive():
             self.setup_nucleus_thread = Thread(target=self.setup_nucleus)
             self.setup_nucleus_thread.start()
 
-        if not self._nucleus_running and self._dvl_enabled and self._nucleus_connected and not self.start_nucleus_thread.is_alive():
+        if self._nucleus_running is False and self._dvl_enabled and self._nucleus_connected and not self.start_nucleus_thread.is_alive():
             self.start_nucleus_thread = Thread(target=self.start_nucleus)
             self.start_nucleus_thread.start()
         
