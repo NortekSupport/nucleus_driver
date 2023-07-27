@@ -595,9 +595,9 @@ class RovLink(Thread):
 
         self.status['nucleus_connected'] = 'OK'
 
-        self._nucleus_connected = True
+        self.check_nucleus_running()  # This check must be before self._nucleus_connected = True
 
-        self.check_nucleus_running()
+        self._nucleus_connected = True
 
         logging.error('CONNECT NUCLEUS ENDED')
 
