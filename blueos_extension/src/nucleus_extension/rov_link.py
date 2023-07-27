@@ -16,6 +16,7 @@ class RovLink(Thread):
 
     TIMEOUT = 1
 
+
     EXPECTED_CONFIG_PARAMETERS = {
         'AHRS_EKF_TYPE': 3,
         'EK2_ENABLE': 0,
@@ -543,7 +544,7 @@ class RovLink(Thread):
 
         session = requests.Session()
         #retry = Retry(connect=20, backoff_factor=1, status_forcelist=[502])
-        retry = Retry(total=2, backoff_factor=1, status_forcelist=[502], raise_on_status=False)
+        retry = Retry(connect=2, backoff_factor=1, status_forcelist=[502], raise_on_status=False)
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
 
