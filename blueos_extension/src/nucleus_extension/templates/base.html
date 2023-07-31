@@ -43,6 +43,7 @@
       $('#nucleus_configured').text(data.nucleus_configured);
 
       $('#toggle_driver').prop("checked", data.enable_nucleus_input);
+      $('#connect_disconnect_button').prop('value', data.button_text)
       /* $('#handle_logging').prop("checked", data.logging); */ /* Future support: logging */ 
 
       $('#AHRS_EKF_TYPE_current').text(data.AHRS_EKF_TYPE);

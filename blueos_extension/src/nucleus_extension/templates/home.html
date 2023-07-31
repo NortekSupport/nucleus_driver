@@ -34,26 +34,6 @@
 </fieldset>
 </div>
 
-<!-- <div>
-  <form id="set_hostname">
-    <fieldset id="parameters" style="width:18rem">
-      <p>Nucleus hostname</p>
-      <table style="text-align:center;">
-        <tr>
-          <td><label for="HOST_current">Current </label></td>
-          <td><span id="HOST_current">---</span></td>
-        </tr>
-        <tr>
-          <td><label for="HOSTNAME">New </label></td>
-          <td><input type="text" id="HOSTNAME" name="HOSTNAME" style="width:12rem"></td>
-        </tr>
-      </table>
-      <input type="submit" value="Set hostname">
-      <div><span id="result_hostname">---</span></div>
-    </fieldset>
-  </form>
-</div> -->
-
 <div>
   <form id="connect_disconnect">
     <fieldset id="parameters" style="width:18rem">
@@ -181,7 +161,7 @@ Defines the hostname used to connect to the Nucleus device. This value should ma
   }
 
   function setConnectionStatus(data) {
-    $('#connect_disconnect_button').prop('value', data.button_text)
+    $('#connect_disconnect_button').prop('value', data.connect_button_text)
     $('#result_hostname').text(data.response);
   }
 

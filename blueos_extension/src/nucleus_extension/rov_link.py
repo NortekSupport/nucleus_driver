@@ -80,6 +80,8 @@ class RovLink:
             'controller_parameters': '---'
         }
 
+        self._connect_button_text = 'Connect'
+
         self._cable_guy = False
         self._nucleus_connected = False
         self._nucleus_configured = False
@@ -457,7 +459,8 @@ class RovLink:
         logging.info(f'{self.timestamp()} Nucleus firmware:  {self.nucleus_firmware}')
 
         self.status['nucleus_connected'] = 'OK'
-
+        
+        self._connect_button_text = 'Disconnect'
         self._nucleus_connected = True
         self._nucleus_running = None
         self._nucleus_configured = False
@@ -481,6 +484,7 @@ class RovLink:
         self.status['nucleus_connected'] = 'Disconnected'
         self.status['nucleus_configured'] = '---'
 
+        self._connect_button_text = 'Connect'
         self._nucleus_connected = False
         self._nucleus_running = None
         self._nucleus_configured = False

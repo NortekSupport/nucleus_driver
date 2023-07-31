@@ -108,6 +108,7 @@ if __name__ == "flask_app":
         
         status = rov_link.status
         status.update({'enable_nucleus_input': rov_link._enable_nucleus_input})
+        status.update({'connect_button_text': rov_link._connect_button_text})
         status.update(rov_link.config_parameters)
         status.update(rov_link.pid_parameters)
         status.update(rov_link.vision_position_delta_packet_counter)
@@ -168,11 +169,11 @@ if __name__ == "flask_app":
 
         reply = dict()
         if rov_link.nucleus_driver.connection.get_connection_status():
-            reply.update({'button_text': 'Disconnect'})
+            #reply.update({'button_text': 'Disconnect'})
             reply.update({'response': f'Connected to {hostname}'})
 
         else:
-            reply.update({'button_text': 'Connect'})
+            #reply.update({'button_text': 'Connect'})
             reply.update({'response': '---'})
         
         return jsonify(reply)
