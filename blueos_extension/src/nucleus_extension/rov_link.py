@@ -823,7 +823,7 @@ class RovLink:
 
         else:
             logging.warning(f'{self.timestamp()} Failed to start Nucleus!')
-            
+             
 
             logging.error('START NUCLEUS ENDED')
 
@@ -852,6 +852,23 @@ class RovLink:
 
         else:
             logging.warning(f'{self.timestamp()} Failed to stop Nucleus!')
+
+    def restart_nucleus(self):
+
+        self.stop_nucleus()
+
+        if self._nucleus_running is True:
+            return
+        
+        self.setup_nucleus()
+
+        if self._dvl_enabled is not True:
+            return
+        
+        self.start_nucleus()
+
+
+
 
     def send_vision_position_delta(self, position_delta, angle_delta, confidence, dt):
 
@@ -900,16 +917,20 @@ class RovLink:
         #    self.connect_nucleus_thread = Thread(target=self.connect_nucleus)
         #    self.connect_nucleus_thread.start()
 
-        if self._nucleus_running is None and self._nucleus_connected and not self.stop_nucleus_thread.is_alive():
-            self.stop_nucleus_thread = Thread(target=self.stop_nucleus)
-            self.stop_nucleus_thread.start()
+        #if self._nucleus_running is None and self._nucleus_connected and not self.stop_nucleus_thread.is_alive():
+        #    self.stop_nucleus_thread = Thread(target=self.stop_nucleus)
+        #    self.stop_nucleus_thread.start()
 
-        if self._nucleus_running is False and not self._dvl_enabled and self._nucleus_connected and not self.setup_nucleus_thread.is_alive():
-            self.setup_nucleus_thread = Thread(target=self.setup_nucleus)
-            self.setup_nucleus_thread.start()
+        #if self._nucleus_running is False and not self._dvl_enabled and self._nucleus_connected and not self.setup_nucleus_thread.is_alive():
+        #    self.setup_nucleus_thread = Thread(target=self.setup_nucleus)
+        #    self.setup_nucleus_thread.start()
 
-        if self._nucleus_running is False and self._dvl_enabled and self._nucleus_connected and not self.start_nucleus_thread.is_alive():
-            self.start_nucleus_thread = Thread(target=self.start_nucleus)
+        #if self._nucleus_running is False and self._dvl_enabled and self._nucleus_connected and not self.start_nucleus_thread.is_alive():
+        #    self.start_nucleus_thread = Thread(target=self.start_nucleus)
+        #    self.start_nucleus_thread.start()
+
+        if self._nucleus_running is not True and self._dvl_enabled is not True and self._nucleus_connected and not self.start_nucleus_thread.is_alive():
+            self.start_nucleus_thread = Thread(target=self.restart_nucleus)
             self.start_nucleus_thread.start()
         
     def check_requirements_startup(self):
