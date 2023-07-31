@@ -169,11 +169,11 @@ if __name__ == "flask_app":
 
         reply = dict()
         if rov_link.nucleus_driver.connection.get_connection_status():
-            #reply.update({'button_text': 'Disconnect'})
+            reply.update({'connect_button_text': 'Disconnect'})
             reply.update({'response': f'Connected to {hostname}'})
 
         else:
-            #reply.update({'button_text': 'Connect'})
+            reply.update({'connect_button_text': 'Connect'})
             reply.update({'response': '---'})
         
         return jsonify(reply)

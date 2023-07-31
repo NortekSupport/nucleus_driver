@@ -108,11 +108,11 @@
 <p>If a check says "Failed", do the following to resolve the problem:
 <ul id="default_list">
   <li><b>Cable guy: </b>Power cycle the ROV</li>
-  <li><b>Nucleus connected: </b>Ensure that the IP address specified for Nucleus hostname is matching the static IP of the Nucleus device</li> 
-  <li><b>DVL enabled: </b>Power cycle the ROV</li>
   <li><b>Heartbeat: </b>Power cycle the ROV</li>
   <li><b>Controller parameters: </b>Set the correct controller parameters, then power cycle the ROV</li>
-</ul>
+  <li><b>Nucleus connected: </b>Ensure that the IP address specified for Nucleus hostname is matching the static IP of the Nucleus device</li> 
+  <li><b>Nucleus configured: </b>Reconnect Nucleus</li>
+  </ul>
 </p>
 
 <h2>Nucleus hostname</h2>
@@ -161,6 +161,7 @@ Defines the hostname used to connect to the Nucleus device. This value should ma
   }
 
   function setConnectionStatus(data) {
+    $('#connect_disconnect_button').prop('value', data.connect_button_text)
     $('#result_hostname').text(data.response);
   }
 

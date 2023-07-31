@@ -176,8 +176,10 @@ class RovLink:
                         }
                     )
                 )
+
+            logging.info(f'{self.timestamp()} Wrote settings to file: {self.settings_path}')
         except Exception as e:
-            logging.warning(f'[{self.timestamp()}] Failed to write settings to file: {e}')
+            logging.warning(f'{self.timestamp()} Failed to write settings to file: {e}')
     
     def set_hostname(self, hostname):
 
@@ -367,15 +369,6 @@ class RovLink:
 
         self.status['cable_guy'] = 'Discovering...'
 
-        #session = requests.Session()
-        #retry = Retry(connect=5, backoff_factor=1, status_forcelist=[502], raise_on_status=False)
-        #adapter = HTTPAdapter(max_retries=retry)
-        #session.mount('http://', adapter)
-
-        #response = session.get('http://host.docker.internal/cable-guy/v1.0/ethernet')
-        #response = session.get('http://127.0.0.1/cable-guy/v1.0/ethernet')
-        #response = session.get(f'{HOST_URL}/cable-guy/v1.0/ethernet')
-
         url = f'{HOST_URL}/cable-guy/v1.0/ethernet'
 
         response = self._get(url=url)
@@ -401,13 +394,6 @@ class RovLink:
         logging.info(f'{self.timestamp()} Checking vehicle heartbeat...')
 
         self.status['heartbeat'] = 'Listening...'
-
-        #session = requests.Session()
-        #retry = Retry(connect=5, backoff_factor=1, status_forcelist=[502], raise_on_status=False)
-        #adapter = HTTPAdapter(max_retries=retry)
-        #session.mount('http://', adapter)
-
-        #response = session.get(f'{HOST_URL}/mavlink2rest/mavlink/{vehicle_path}/HEARTBEAT')
 
         url = f'{HOST_URL}/mavlink2rest/mavlink/{vehicle_path}/HEARTBEAT'
 
@@ -495,21 +481,23 @@ class RovLink:
 
         logging.info(f'{self.timestamp()} setting up nucleus')
 
-        reply = self.nucleus_driver.commands.set_ahrs(ds="ON")
-        if b'OK\r\n' not in reply:
+        self.status['nucleus_configured'] = 'enabling...'
+
+        reply_ahrs = self.nucleus_driver.commands.set_ahrs(ds="ON")
+        if b'OK\r\n' not in reply_ahrs:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETAHRS,DS="OFF": {reply}')
 
-        self.status['nucleus_configured'] = 'enabling...'
-        reply = self.nucleus_driver.commands.set_bt(wt="ON", ds="ON")  # TODO: wt="OFF"
-        if b'OK\r\n' not in reply:
+        reply_dvl = self.nucleus_driver.commands.set_bt(wt="ON", ds="ON")  # TODO: wt="OFF"
+        if b'OK\r\n' not in reply_dvl:
             logging.warning(f'{self.timestamp()} Did not receive OK when sending SETBT,WT="OFF",DS="ON": {reply}')
 
-            self.status['nucleus_configured'] = 'Failed'
-            self._nucleus_configured = False
-
-        else:
+        if b'OK\r\n' in reply_ahrs and b'OK\r\n' in reply_dvl:
             self.status['nucleus_configured'] = 'OK'
             self._nucleus_configured = True
+        
+        else:
+            self.status['nucleus_configured'] = 'Failed'
+            self._nucleus_configured = False
 
     def read_pid_parameters(self):
 
