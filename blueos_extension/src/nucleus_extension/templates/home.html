@@ -161,8 +161,8 @@ Defines the hostname used to connect to the Nucleus device. This value should ma
   }
 
   function setConnectionStatus(data) {
+    getStatus();
     $('#result_hostname').text(data.response);
-    getStatus()
   }
 
   $('#connect_disconnect').on('submit', ConnectDisconnect);
