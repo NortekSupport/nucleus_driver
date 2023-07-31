@@ -14,7 +14,7 @@ MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
 
 
 
-class RovLink(Thread):
+class RovLink:
 
     TIMEOUT = 1
 
@@ -42,13 +42,13 @@ class RovLink(Thread):
 
     def __init__(self, driver):
 
-        Thread.__init__(self)
+        #Thread.__init__(self)
 
         self.nucleus_driver = driver
 
         self.settings_path = os.path.join(os.path.expanduser("~"), ".config", "nucleus", "settings.json")
 
-        #self.thread = Thread()
+        self.main_thread = Thread()
         self.thread_running = True
 
         #self._create_threads()
@@ -137,7 +137,7 @@ class RovLink(Thread):
     def get_enable_nucleus_input(self):
 
         return self._enable_nucleus_input
-
+    
     def load_settings(self) -> None:
             """
             Load settings from .config/nucleus/settings.json
@@ -181,7 +181,7 @@ class RovLink(Thread):
                 )
         except Exception as e:
             logging.warning(f'[{self.timestamp()}] Failed to write settings to file: {e}')
-
+    
     def set_hostname(self, hostname):
 
         self.hostname = hostname
@@ -219,53 +219,10 @@ class RovLink(Thread):
 
         return packet
     
-    '''
-    def _get_param_value_timestamp(self):
 
-        param_value_pre_timestamp = None
-            
-        try:
-            param_value_pre = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-
-            logging.info(f'param_value: {param_value_pre.json()}')
-            logging.info(f'param_value.status_code: {param_value_pre.status_code}')
-            
-            if not str(param_value_pre.status_code).startswith('2'):
-                param_value_pre_timestamp = param_value_pre.json()["status"]["time"]["last_update"]
-            else:
-                logging.warning(f'{self.timestamp()} Unable to obtain timestamp from PARAM_VALUE before PARAM_REQUEST_READ as its return status_code did not start with 2 - status code: {param_value_pre.status_code}')
-
-        except Exception as e:
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ: {e}')
-
-        return param_value_pre_timestamp
-    '''
-
-    '''
-    def _get_param_value(self):
-
-        param_value = None
-            
-        try:
-            param_value = requests.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
-
-            #logging.info(f'param_value: {param_value.json()}')
-            #logging.info(f'param_value.status_code: {param_value.status_code}')
-            
-            #if not str(get_param_value.status_code).startswith('2'):
-            #    param_value = get_param_value
-
-            #else:
-            #    logging.warning(f'{self.timestamp()} PARAM_REQUEST_READ status_code did not start with 2 - status code: {param_value.status_code}')
-
-        except Exception as e:
-            logging.warning(f'{self.timestamp()} PARAM_VALUE returned with error: {e}')
-
-        return param_value
-    '''
     def _get_param_value(self, retries: int = 5):
 
-        
+        '''
         session = requests.Session()
         retry = Retry(total=retries, backoff_factor=0.2, status_forcelist=[404], raise_on_status=False)
         adapter = HTTPAdapter(max_retries=retry)
@@ -274,39 +231,22 @@ class RovLink(Thread):
         param_value = session.get(MAVLINK2REST_URL + "/mavlink/vehicles/1/components/1/messages/PARAM_VALUE")
 
         return param_value
+        '''
 
-    '''
+        return self._get(url=f'{MAVLINK2REST_URL}/mavlink/vehicles/1/components/1/messages/PARAM_VALUE')
+
+    def _get(self, url, retries=3, backoff_factor=1, status_forcelist=[502]):
+
+        session = requests.Session()
+        retry = Retry(total=retries, backoff_factor=backoff_factor, status_forcelist=status_forcelist, raise_on_status=False)
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        
+        param_value = session.get(url=url)
+
+        return param_value
+
     def _post_param_request_read(self, parameter_id):
-
-        param_request_read = None
-
-        data = {
-            'header': {
-                'system_id': 255,
-                'component_id': 0,
-                'sequence': 0},
-            'message': {
-                'type': "PARAM_REQUEST_READ",
-                'param_index': -1,
-                'target_system': 1,
-                'target_component': 1,
-                'param_id': ["\u0000" for _ in range(16)]
-            }
-        }
-
-        for index, char in enumerate(parameter_id):
-            data['message']['param_id'][index] = char
-
-        try:
-            param_request_read = requests.post(MAVLINK2REST_URL + "/mavlink", json=data)
-
-        except Exception as e:
-            logging.warning(f'{self.timestamp()} PARAM_REQUEST_READ returned with error: {e}')
-
-        return param_request_read
-    '''
-
-    def _post_param_request_read(self, parameter_id, retries=3):
 
         #param_request_read = None
 
@@ -327,6 +267,9 @@ class RovLink(Thread):
         for index, char in enumerate(parameter_id):
             data['message']['param_id'][index] = char
 
+        return self._post(url=f'{MAVLINK2REST_URL}/mavlink', data=data)
+
+        '''
         session = requests.Session()
         retry = Retry(total=retries, backoff_factor=1, status_forcelist=[502])
         adapter = HTTPAdapter(max_retries=retry)
@@ -335,7 +278,54 @@ class RovLink(Thread):
         param_request_read = session.post(MAVLINK2REST_URL + "/mavlink", json=data)
 
         return param_request_read
+        '''
     
+    
+    def _post_param_set(self, parameter_id, parameter_value, parameter_type):
+
+        data = {
+            'header': {
+                'system_id': 255,
+                'component_id': 0,
+                'sequence': 0},
+            'message': {
+                'type': "PARAM_SET",
+                'param_value': parameter_value,
+                'target_system': 0,
+                'target_component': 0,
+                'param_id': ["\u0000" for _ in range(16)],
+                'param_type': {'type': parameter_type}
+            }
+        }
+
+        for index, char in enumerate(parameter_id):
+            data["message"]["param_id"][index] = char
+
+        return self._post(url=f'{MAVLINK2REST_URL}/mavlink', data=data)
+
+        '''
+        session = requests.Session()
+        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[502])
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        
+        param_set = session.post(MAVLINK2REST_URL + "/mavlink", json=data)
+
+        return param_set
+        '''
+
+    def _post(self, url, data, retries=3, backoff_factor=1, status_forcelist=[502]):
+
+        session = requests.Session()
+        retry = Retry(total=retries, backoff_factor=backoff_factor, status_forcelist=status_forcelist, raise_on_status=False)
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        
+        param_set = session.post(url=url, json=data)
+
+        return param_set
+        
+    '''
     def set_parameter(self, parameter_id, parameter_value, parameter_type):
 
         def get_param_value_timestamp():
@@ -456,7 +446,51 @@ class RovLink(Thread):
         parameter = check_parameter(parameter)
 
         return parameter
+    '''
 
+    def set_parameter(self, parameter_id, parameter_value, parameter_type):
+
+        param_value_pre = self._get_param_value()
+
+        if not str(param_value_pre.status_code).startswith('2'):
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_SET for parameter "{parameter_id}". status_code: {param_value_pre.status_code}')
+            return param_value_pre
+
+        param_set = self._post_param_set(parameter_id=parameter_id, parameter_value=parameter_value, parameter_type=parameter_type)
+
+        if not str(param_set.status_code).startswith('2'):
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_SET for parameter "{parameter_id}": status_code: {param_set.status_code}')
+            return param_set
+
+        for _ in range(3):
+            time.sleep(0.05)  # it typically takes this amount of time for PARAM_VALUE to update
+            param_value = self._get_param_value()
+
+            if not str(param_value.status_code).startswith('2'):
+                logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_SET for parameter "{parameter_id}". status_code: {param_value.status_code}')
+                return param_value
+            
+            if str(param_value.status_code).startswith('2') and param_value_pre.json()["status"]["time"]["last_update"] != param_value.json()["status"]["time"]["last_update"]:
+                break
+
+        else:
+            logging.warning(f'{self.timestamp()} Same timestamp for PARAM_VALUE before and after PARAM_SET for parameter "{parameter_id}, indicating that the value was not updated')
+            param_value.status_code = 418
+            return param_value
+
+        response_parameter_id = ''
+        for char in param_value.json()['message']['param_id']:
+            if char == '\u0000':
+                break
+
+            response_parameter_id += char
+
+        if response_parameter_id != parameter_id:
+            logging.warning(f'{self.timestamp()} PARAM_VALUE responded with parameter_id "{response_parameter_id}" instead of the expected "{parameter_id}"')
+            param_value.status_code = 419
+            return param_value
+
+        return param_value
 
 
     def get_parameter(self, parameter_id):
@@ -464,14 +498,13 @@ class RovLink(Thread):
         param_value_pre = self._get_param_value()
 
         if not str(param_value_pre.status_code).startswith('2'):
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value_pre.status_code}')
-            #logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ for parameter "{parameter_id}"\tstatus_code: {param_value_pre.status_code}\tpacket: {param_value_pre.json()}')
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE before PARAM_REQUEST_READ for parameter "{parameter_id}". status_code: {param_value_pre.status_code}')
             return param_value_pre
             
         param_request_read = self._post_param_request_read(parameter_id=parameter_id)
 
         if not str(param_request_read.status_code).startswith('2'):
-            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_request_read.status_code}\r\npacket: {param_request_read.json()}')
+            logging.warning(f'{self.timestamp()} Unable to obtain PARAM_REQUEST_READ for parameter "{parameter_id}". status_code: {param_request_read.status_code}')
             return param_request_read
         
         for _ in range(3):
@@ -479,7 +512,7 @@ class RovLink(Thread):
             param_value = self._get_param_value()
 
             if not str(param_value.status_code).startswith('2'):
-                logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}"\r\nstatus_code: {param_value.status_code}\r\npacket: {param_value.json()}')
+                logging.warning(f'{self.timestamp()} Unable to obtain PARAM_VALUE after PARAM_REQUEST_READ for parameter "{parameter_id}". status_code: {param_value.status_code}')
                 return param_value
             
             if str(param_value.status_code).startswith('2') and param_value_pre.json()["status"]["time"]["last_update"] != param_value.json()["status"]["time"]["last_update"]:
@@ -487,7 +520,6 @@ class RovLink(Thread):
 
         else:
             logging.warning(f'{self.timestamp()} Same timestamp for PARAM_VALUE before and after PARAM_REQUEST_READ for parameter "{parameter_id}, indicating that the value was not updated')
-            logging.warning(f'{self.timestamp()} param_value_pre: {param_value_pre.json()["status"]["time"]["last_update"]} \t param_value: {param_value.json()["status"]["time"]["last_update"]}')
             param_value.status_code = 418
             return param_value
 
@@ -510,7 +542,7 @@ class RovLink(Thread):
 
 
 
-
+    '''
     def wait_for_cableguy(self):
         
         logging.info(f'{self.timestamp()} waiting for cable-guy to come online...')
@@ -537,7 +569,7 @@ class RovLink(Thread):
             self._cable_guy = False
 
         return self._cable_guy
-
+    '''
     def check_cable_guy(self) -> bool:
         
         logging.error('CHECK CABLE GUY STARTED')
@@ -579,7 +611,7 @@ class RovLink(Thread):
 
         if self.hostname is None:
             self.status['nucleus_connected'] = 'No hostname'
-            
+
             logging.error('CONNECT NUCLEUS ENDED')
 
             return self._nucleus_connected
@@ -617,6 +649,28 @@ class RovLink(Thread):
         logging.error('CONNECT NUCLEUS ENDED')
 
         return self._nucleus_connected
+
+    def disconnect_nucleus(self):
+
+        logging.error('DISCONNECT NUCLEUS STARTED')
+
+        self.status['nucleus_connected'] = 'Disconnecting...'
+
+        if not self.nucleus_driver.connection.get_connection_status():
+            logging.warning(f'{self.timestamp()} Nucleus already disconnected')
+            return False
+
+        if not self.nucleus_driver.disconnect():
+            logging.warning(f'{self.timestamp()} Failed to disconnect from Nucleus')
+            self.status['nucleus_connected'] = 'Failed'
+            return False
+        
+        logging.error('DISCONNECT NUCLEUS ENDED')
+
+        self._nucleus_connected = False
+        return True
+            
+
 
     def setup_nucleus(self):
 
@@ -723,7 +777,7 @@ class RovLink(Thread):
             self.config_parameters[parameter] = param_value
 
             if not self.EXPECTED_CONFIG_PARAMETERS[parameter] - 0.1 <= param_value <= self.EXPECTED_CONFIG_PARAMETERS[parameter] + 0.1:
-                logging.warning(f'{self.timestamp()} Incorrect value for parameter {parameter}. Expected value: {self.EXPECTED_CONFIG_PARAMETERS[parameter]}.\tReceived value: {response.json()["message"]["param_value"]}.')
+                logging.warning(f'{self.timestamp()} Incorrect value for parameter {parameter}. Expected value: {self.EXPECTED_CONFIG_PARAMETERS[parameter]}. Received value: {response.json()["message"]["param_value"]}.')
                 correct_values = False
 
         return correct_values
@@ -867,6 +921,28 @@ class RovLink(Thread):
         self.read_parameters_thread = Thread(target=read_parameters)
         self.read_parameters_thread.start()
 
+    def start_main_thread(self):
+
+        if not self.main_thread.is_alive():
+
+            self.main_thread = Thread(target=self.run)
+            self.main_thread.start()
+
+        else:
+
+            logging.warning(f'{self.timestamp()} Main thread is already alive. Main thread was not started')
+
+    def stop_main_thread(self):
+
+        if self.main_thread.is_alive():
+
+            self.thread_running = False
+            self.main_thread.join(5)
+
+        else:
+
+            logging.warning(f'{self.timestamp()} Main thread was not running. Main thread was not stopped')
+
     def handle_packet(self):
 
         packet = self.nucleus_driver.read_packet()
@@ -944,176 +1020,5 @@ class RovLink(Thread):
                 self.handle_packet()
             else:
                 time.sleep(0.05)
-
-        self.stop_nucleus()
-
-    
-        
-        self.load_settings()
-        '''
-        self.wait_for_cableguy()
-
-        if self._cable_guy:
-            self.connect_nucleus()  # TODO: Check if Nucleus is running instead of stopping
-        if self._nucleus_connected:
-            self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
-            self.setup_nucleus()
-        '''
-        
-        self._cable_guy = True  # TODO: This is a workaround for unreliable cableguy check
-
-        self.connect_nucleus()  # TODO: Check if Nucleus is running instead of stopping
-        if self._nucleus_connected:
-            self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
-            self.setup_nucleus()
-
-        '''
-        if self._cable_guy:
-            self.wait_for_heartbeat()
-        '''
-
-        self.wait_for_heartbeat()
-
-        if self._heartbeat:
-            self.read_config_parameters_startup()
-            self.read_pid_parameters()
-
-        time.sleep(self.TIMEOUT)
-
-        if self._nucleus_connected and self._dvl_enabled:
-            self.start_nucleus()
-
-        logging.info(f"{self.timestamp()} Nucleus driver running")
-
-        while self.thread_running:
-
-            #if not self._cable_guy or not self._nucleus_connected or not self._dvl_enabled or not self._heartbeat or not self._config:
-            if not self._nucleus_connected or not self._dvl_enabled or not self._heartbeat or not self._config:
-                
-                '''
-                if not self._cable_guy:
-                    
-                    logging.warning(f"{self.timestamp()} Cable guy not available")
-
-                    self.wait_for_cableguy()
-                '''
-
-                if not self._nucleus_connected or not self._dvl_enabled:
-
-                    if not self._nucleus_connected:
-                        logging.warning(f"{self.timestamp()} Nucleus is not connected")
-
-                        self.connect_nucleus()
-
-                    if self._nucleus_connected and not self._dvl_enabled:
-                        logging.warning(f"{self.timestamp()} DVL is not enabled on Nucleus")
-
-                        self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
-                        self.setup_nucleus()
-
-                    if self._nucleus_connected and self._dvl_enabled:
-                        self.stop_nucleus()  # TODO: Check if Nucleus is running instead of stopping
-                        self.start_nucleus()
-
-                if not self._heartbeat:
-                    logging.warning(f"{self.timestamp()} Can't detect heartbeat")
-
-                    '''
-                    if self._cable_guy:
-                        self.wait_for_heartbeat()
-                    '''
-
-                    self.wait_for_heartbeat()
-
-                if not self._config:
-                    logging.warning(f"{self.timestamp()} ROV has incorrect configuration for velocity data input")
-                    
-                    if self._heartbeat:
-                        self.read_config_parameters_startup()
-                        self.read_pid_parameters()
-
-                time.sleep(1)
-
-                continue
-            
-            if not self._nucleus_running:
-                qsize = self.nucleus_driver._parser.packet_queue.qsize
-
-                if qsize == 0:
-                    self.start_nucleus()
-
-                else:
-                    time.sleep(1)
-                    if qsize != self.nucleus_driver._parser.packet_queue.qsize:
-                        self.start_nucleus()
-
-            packet = self.nucleus_driver.read_packet()
-
-            if packet is None:
-                time.sleep(0.005)
-                continue
-
-            self.write_packet(packet=packet)
-
-            if packet['id'] == 0xb4:
-
-                fom_x = packet['fomX']
-                fom_y = packet['fomY']
-                fom_z = packet['fomZ']
-
-                fom = max(fom_x, fom_y, fom_z)
-
-                bad_fom = 3
-                confidence = (3 - min(fom, bad_fom)) * 100 / bad_fom  # TODO: optimize   operate from 0-3
-
-                velocity_x = packet['velocityX']
-                velocity_y = packet['velocityY']
-                velocity_z = packet['velocityZ']
-
-                timestamp = (packet['timeStamp'] + packet['microSeconds'] * 1e-6)
-
-                if self.timestamp_previous is None:
-                    dt = 0
-                else:
-                    dt = timestamp - self.timestamp_previous
-
-                dx = velocity_x * dt
-                dy = velocity_y * dt
-                dz = velocity_z * dt
-
-                delta_orientation = list()
-
-                if self.orientation_current is None:
-                    delta_orientation = [0, 0, 0]
-
-                elif self.orientation_previous is None or self.timestamp_previous is None:
-                    delta_orientation = [0, 0, 0]
-                    self.orientation_previous = self.orientation_current
-
-                else:
-                    for (angle_current, angle_previous) in zip(self.orientation_current, self.orientation_previous):
-                        delta_orientation.append(angle_current - angle_previous)
-
-                    self.orientation_previous = self.orientation_current
-
-                self.timestamp_previous = timestamp
-
-                if self._enable_nucleus_input:
-                    self.send_vision_position_delta(position_delta=[dx, dy, dz], angle_delta=delta_orientation, confidence=int(confidence), dt=int(dt * 1e6))
-                else:
-                    self.vision_position_delta_packet_counter['packets_skipped'] += 1
-
-            elif packet['id'] == 0xd2:
-
-                orientation = list()
-                orientation.append(self.d2r(packet['ahrsData.roll']))
-                orientation.append(self.d2r(packet['ahrsData.pitch']))
-                orientation.append(self.d2r(packet['ahrsData.heading']))
-
-                self.orientation_current = orientation
-
-            elif not self._enable_nucleus_input:
-                time.sleep(0.005)
-                continue
 
         self.stop_nucleus()

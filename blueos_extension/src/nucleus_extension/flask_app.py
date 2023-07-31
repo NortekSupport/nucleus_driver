@@ -16,7 +16,7 @@ if __name__ == "flask_app":
     #nucleus_driver.set_tcp_configuration(host=NUCLEUS_IP)  # TODO: Enable when BlueOS supports environment variables in docker run
 
     rov_link = RovLink(driver=nucleus_driver)
-    rov_link.start()
+    #rov_link.start_main_thread()
 
     app = Flask(__name__, static_url_path="/static", static_folder="static")
     api = Api(app)
@@ -127,6 +127,56 @@ if __name__ == "flask_app":
         rov_link.set_hostname(hostname)
 
         return jsonify(result=f'Hostname set to {hostname}')
+
+    @app.route("/connect_nucleus", methods=['POST'])
+    def connect_nucleus():
+
+        hostname = request.form.get("HOSTNAME", None, type=str)
+
+        if hostname is None:
+            logging.warning(f'Hostname can not be None')
+            return jsonify(result='Hostname can not be None')
+
+        rov_link.set_hostname(hostname)
+        rov_link.connect_nucleus()
+
+        return jsonify(result=f'Connected to {hostname}')
+
+    @app.route("/disconnect_nucleus", methods=['POST'])
+    def disconnect_nucleus():
+
+        rov_link.disconnect_nucleus()
+
+        return jsonify(result=f'Disconnected')
+
+    @app.route("/connect_disconnect_nucleus", methods=['POST'])
+    def connect_disconnect_nucleus():
+        
+        hostname = request.form.get("HOSTNAME", None, type=str)
+
+
+        if not rov_link.nucleus_driver.connection.get_connection_status():
+            if hostname is None:
+                logging.warning(f'Hostname can not be None')
+                return jsonify(result='Hostname can not be None')
+
+            rov_link.set_hostname(hostname)
+            rov_link.connect_nucleus()
+
+        else:
+            rov_link.disconnect_nucleus()
+
+        reply = dict()
+        if rov_link.nucleus_driver.connection.get_connection_status():
+            reply.update({'button_text': 'Disconnect'})
+            reply.update({'response': f'Connected to {hostname}'})
+
+        else:
+            reply.update({'button_text': 'Connect'})
+            reply.update({'response': '---'})
+        
+        return jsonify(reply)
+
 
     @app.route("/register_service")
     def register_service():

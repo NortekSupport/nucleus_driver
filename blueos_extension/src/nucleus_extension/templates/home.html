@@ -34,7 +34,7 @@
 </fieldset>
 </div>
 
-<div>
+<!-- <div>
   <form id="set_hostname">
     <fieldset id="parameters" style="width:18rem">
       <p>Nucleus hostname</p>
@@ -49,6 +49,22 @@
         </tr>
       </table>
       <input type="submit" value="Set hostname">
+      <div><span id="result_hostname">---</span></div>
+    </fieldset>
+  </form>
+</div> -->
+
+<div>
+  <form id="connect_disconnect">
+    <fieldset id="parameters" style="width:18rem">
+      <p>Nucleus connection</p>
+      <table style="text-align:center;">
+        <tr>
+          <td><label for="HOSTNAME">Host </label></td>
+          <td><input type="text" id="HOSTNAME" name="HOSTNAME" style="width:12rem"></td>
+        </tr>
+      </table>
+      <input type="submit" id="connect_disconnect_button" value="Connect">
       <div><span id="result_hostname">---</span></div>
     </fieldset>
   </form>
@@ -154,6 +170,7 @@ Defines the hostname used to connect to the Nucleus device. This value should ma
   $('#toggle_driver').change(enableDriver);
 </script>
 
+<!--
 <script>
   function setHostname(ev) {
     ev.preventDefault();
@@ -169,6 +186,25 @@ Defines the hostname used to connect to the Nucleus device. This value should ma
   }
 
   $('#set_hostname').on('submit', setHostname);
+</script>
+-->
+
+<script>
+  function ConnectDisconnect(ev) {
+    ev.preventDefault();
+    $.ajax({
+      method: 'POST',
+      url: {{ url_for('connect_disconnect_nucleus') | tojson }},
+      data: $(this).serialize()
+    }).done(setConnectionStatus);
+  }
+
+  function setConnectionStatus(data) {
+    $('#connect_disconnect_button').prop('value', data.button_text)
+    $('#result_hostname').text(data.response);
+  }
+
+  $('#connect_disconnect').on('submit', ConnectDisconnect);
 </script>
 
 {% endblock %}
