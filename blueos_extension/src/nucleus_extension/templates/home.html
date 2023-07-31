@@ -15,20 +15,20 @@
       <td><span id="cable_guy">---</span></td>
     </tr>
     <tr>
-      <td><span>Nucleus connected:</span></td>
-      <td><span id="nucleus_connected">---</span></td>
-    </tr>
-    <tr>
-      <td><span>DVL enabled:</span></td>
-      <td><span id="dvl_enabled">---</span></td>
-    </tr>
-    <tr>
       <td><span>Heartbeat:</span></td>
       <td><span id="heartbeat">---</span></td>
     </tr>
     <tr>
       <td><span>Controller parameters:</span></td>
       <td><span id="controller_parameters">---</span></td>
+    </tr>
+    <tr>
+      <td><span>Nucleus connected:</span></td>
+      <td><span id="nucleus_connected">---</span></td>
+    </tr>
+    <tr>
+      <td><span>Nucleus configured:</span></td>
+      <td><span id="nucleus_configured">---</span></td>
     </tr>
   </table>
 </fieldset>
@@ -169,25 +169,6 @@ Defines the hostname used to connect to the Nucleus device. This value should ma
 
   $('#toggle_driver').change(enableDriver);
 </script>
-
-<!--
-<script>
-  function setHostname(ev) {
-    ev.preventDefault();
-    $.ajax({
-      method: 'POST',
-      url: {{ url_for('set_hostname') | tojson }},
-      data: $(this).serialize()
-    }).done(setHostnameShow);
-  }
-
-  function setHostnameShow(data) {
-    $('#result_hostname').text(data.result);
-  }
-
-  $('#set_hostname').on('submit', setHostname);
-</script>
--->
 
 <script>
   function ConnectDisconnect(ev) {

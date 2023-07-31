@@ -37,10 +37,10 @@
   
     function updateStatus(data) {
       $('#cable_guy').text(data.cable_guy);
-      $('#nucleus_connected').text(data.nucleus_connected);
-      $('#dvl_enabled').text(data.dvl_enabled);
       $('#heartbeat').text(data.heartbeat);
       $('#controller_parameters').text(data.controller_parameters);
+      $('#nucleus_connected').text(data.nucleus_connected);
+      $('#nucleus_configured').text(data.nucleus_configured);
 
       $('#toggle_driver').prop("checked", data.enable_nucleus_input);
       /* $('#handle_logging').prop("checked", data.logging); */ /* Future support: logging */ 
