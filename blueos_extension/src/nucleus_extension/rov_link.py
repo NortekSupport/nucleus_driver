@@ -658,6 +658,7 @@ class RovLink:
 
         if not self.nucleus_driver.connection.get_connection_status():
             logging.warning(f'{self.timestamp()} Nucleus already disconnected')
+            self.status['nucleus_connected'] = 'Failed'
             return False
 
         if not self.nucleus_driver.disconnect():
@@ -665,9 +666,13 @@ class RovLink:
             self.status['nucleus_connected'] = 'Failed'
             return False
         
+        self.status['nucleus_connected'] = 'Disconnected'
+
         logging.error('DISCONNECT NUCLEUS ENDED')
 
         self._nucleus_connected = False
+        self._dvl_enabled = False
+        
         return True
             
 
