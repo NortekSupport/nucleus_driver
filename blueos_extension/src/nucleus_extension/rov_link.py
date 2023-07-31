@@ -9,12 +9,8 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 
 
-MAVLINK2REST_URL = "http://127.0.0.1/mavlink2rest"
-#MAVLINK2REST_URL = "http://host.docker.internal/mavlink2rest"
-
 HOST_URL = "http://127.0.0.1"
 #HOST_URL = "http://host.docker.internal"
-
 
 
 class RovLink:
@@ -144,14 +140,14 @@ class RovLink:
             with open(self.settings_path) as settings:
                 data = json.load(settings)
                 self.hostname = data["hostname"]
-                logging.debug(f"[{self.timestamp()}] Loaded settings: {data}")
+                logging.debug(f"{self.timestamp()} Loaded settings: {data}")
         except FileNotFoundError:
-            logging.warning(f"[{self.timestamp()}] Settings file not found, using default.")
+            logging.warning(f"{self.timestamp()} Settings file not found, using default.")
         except ValueError:
-            logging.warning(f"[{self.timestamp()}] File corrupted, using default settings.")
+            logging.warning(f"{self.timestamp()} File corrupted, using default settings.")
         except KeyError as error:
-            logging.warning(f"[{self.timestamp()}] key not found: {error}")
-            logging.warning(f"[{self.timestamp()}] using default instead")
+            logging.warning(f"{self.timestamp()} key not found: {error}")
+            logging.warning(f"{self.timestamp()} using default instead")
 
     def save_settings(self) -> None:
         """
@@ -185,7 +181,7 @@ class RovLink:
 
         self.hostname = hostname
 
-        self.save_settings()
+        #self.save_settings()
 
     def timestamp(self) -> str:
 
@@ -220,8 +216,6 @@ class RovLink:
         return param_value
 
     def _post_param_request_read(self, parameter_id):
-
-        #param_request_read = None
 
         data = {
             'header': {
@@ -418,7 +412,6 @@ class RovLink:
 
             return self._nucleus_connected
         
-
         self.status['nucleus_connected'] = 'Connecting...'
 
         if self.nucleus_driver.connection.get_connection_status() and self.nucleus_driver.get_connection_type == 'serial':
@@ -623,7 +616,6 @@ class RovLink:
             logging.warning(f'{self.timestamp()} Failed to create VISION_POSITION_DELTA packet')
             return
 
-        #response = requests.post(MAVLINK2REST_URL + "/mavlink", json=vision_position_delta)
         response = requests.post(f'{HOST_URL}/mavlink2rest/mavlink', json=vision_position_delta)
 
         if str(response.status_code).startswith('2'):
@@ -749,7 +741,7 @@ class RovLink:
 
     def run(self):
 
-        self.load_settings()
+        #self.load_settings()
 
         self.check_requirements_startup()
 
