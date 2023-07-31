@@ -890,9 +890,9 @@ class RovLink:
             self.check_heartbeat_thread = Thread(target=self.check_heartbeat)
             self.check_heartbeat_thread.start()
 
-        if self._cable_guy and not self._nucleus_connected and not self.connect_nucleus_thread.is_alive():
-            self.connect_nucleus_thread = Thread(target=self.connect_nucleus)
-            self.connect_nucleus_thread.start()
+        #if self._cable_guy and not self._nucleus_connected and not self.connect_nucleus_thread.is_alive():
+        #    self.connect_nucleus_thread = Thread(target=self.connect_nucleus)
+        #    self.connect_nucleus_thread.start()
 
         if self._nucleus_running is None and self._nucleus_connected and not self.stop_nucleus_thread.is_alive():
             self.stop_nucleus_thread = Thread(target=self.stop_nucleus)

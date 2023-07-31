@@ -16,7 +16,7 @@ if __name__ == "flask_app":
     #nucleus_driver.set_tcp_configuration(host=NUCLEUS_IP)  # TODO: Enable when BlueOS supports environment variables in docker run
 
     rov_link = RovLink(driver=nucleus_driver)
-    #rov_link.start_main_thread()
+    rov_link.start_main_thread()
 
     app = Flask(__name__, static_url_path="/static", static_folder="static")
     api = Api(app)
