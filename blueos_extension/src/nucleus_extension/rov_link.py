@@ -671,8 +671,9 @@ class RovLink:
         logging.error('DISCONNECT NUCLEUS ENDED')
 
         self._nucleus_connected = False
+        self._nucleus_running = None
         self._dvl_enabled = False
-        
+
         return True
             
 
