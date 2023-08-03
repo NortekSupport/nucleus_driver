@@ -78,11 +78,14 @@ class Commands:
 
         if nmea:
             for reply in reply_list:
-                reply_split = reply.split(b'*')
-                nmea_checksum = self._nmea_checksum(reply_split[0])
-                if nmea_checksum != reply_split[1].rstrip(b'\r\n'):
-                    self.messages.write_warning('Reply did not pass nmea checksum: {}\t{}'.format(reply, nmea_checksum))
-
+                try:
+                    reply_split = reply.split(b'*')
+                    nmea_checksum = self._nmea_checksum(reply_split[0])
+                    if nmea_checksum != reply_split[1].rstrip(b'\r\n'):
+                        self.messages.write_warning('Reply did not pass nmea checksum: {}\t{}'.format(reply, nmea_checksum))
+                except Exception as e:
+                    self.messages.write_warning(f'Failed to split nmea reply: {reply} \t error: {e}')
+                    
         return reply_list
 
     def _nmea_checksum(self, command):
