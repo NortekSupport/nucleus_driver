@@ -9,8 +9,8 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 
 
-HOST_URL = "http://127.0.0.1"
-#HOST_URL = "http://host.docker.internal"
+#HOST_URL = "http://127.0.0.1"
+HOST_URL = "http://host.docker.internal"
 
 
 class RovLink:
