@@ -111,17 +111,9 @@ class Commands:
 
         return get_reply
 
-    def read_start_up(self, timeout: int = 1) -> [bytes]:
+    def read_start_up(self, timeout: int = 2) -> [bytes]:
 
         reply = self._get_reply(terminator=b'OK\r\n', timeout=timeout)
-        # print(reply)
-        # for i in range(5):
-        #    reply += self._get_reply()
-        #    print(reply)
-        #    if b'OK\r\n' in reply:
-        #        break
-
-        # TODO: Add _handle_reply() ?
 
         start_up_message = [reply]
 

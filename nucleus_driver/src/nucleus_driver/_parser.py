@@ -446,6 +446,7 @@ class Parser:
                                   }
 
                     if header_data['id'] == self.ID_IMU:
+
                         imu_status = unpack('<I', data[12:16])[0]
 
                         sensor = {'status.isValid': _get_status(status_bits=imu_status, bit=0),
