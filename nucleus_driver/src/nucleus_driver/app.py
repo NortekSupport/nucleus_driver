@@ -194,24 +194,23 @@ class App(cmd2.Cmd):
     @with_category(CMD_CAT_COMMAND)
     def do_command(self, command_args):
 
-        if not self.nucleus_driver.connection.get_connection_status():
-            self.nucleus_driver.messages.write_message('Nucleus not connected')
-            return
-
-        if self.nucleus_driver.parser.thread.is_alive():
-            self.nucleus_driver.messages.write_message('Can not send command to Nucleus while parser is running')
-            return
-
         command = command_args.command
 
         if not self.nucleus_driver.connection.get_connection_status():
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
+        if self.nucleus_driver.parser.thread.is_alive() and 'APPLYTAG' not in command.upper():
+            self.nucleus_driver.messages.write_message('Can not send command to Nucleus while parser is running')
+            return
+
         reply = self.nucleus_driver.send_command(command)
 
         for entry in reply:
-            self.nucleus_driver.messages.write_message(entry.decode(), skip_newline=True)
+            try:
+                self.nucleus_driver.messages.write_message(entry.decode(), skip_newline=True)
+            except UnicodeDecodeError:
+                self.nucleus_driver.messages.write_warning(f'Failed to decode: {entry}')
 
     flash_firmware_parser = Cmd2ArgumentParser(description='Flash firmware')
     flash_firmware_parser.add_argument('path', help='Set flash file. Extension must be in [.bin, .ldr, .zip]', completer=cmd2.Cmd.path_complete)

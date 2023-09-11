@@ -6,7 +6,7 @@ class Commands:
 
     DHCP_STATIC = ['DHCP', 'STATIC']
     ON_OFF = ['ON', 'OFF']
-    MODES = ['NORMAL', 'AUTO']
+    MODES = ['FAST_ACQ', 'AUTO', 'CRAWLER']
     PL_MODES = ['MAX', 'USER']
     TRIGGER_SOURCES = ['INTERNAL', 'EXTRISE', 'EXTFALL', 'EXTEDGES', 'COMMAND']
     ALTI_RANGE = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
@@ -1431,6 +1431,161 @@ class Commands:
 
         return get_reply
 
+
+    def set_imu(self, freq=None, ds=None, df=None) -> [bytes]:
+
+        self._reset_buffer()
+
+        set_imu_command = b'SETIMU'
+
+        if freq is not None:
+            if isinstance(freq, int):
+                set_imu_command += b',FREQ=' + str(freq).encode()
+            else:
+                self.messages.write_warning('Invalid value for FREQ in SETIMU command')
+
+        if ds is not None:
+            if ds.upper() in self.ON_OFF:
+                set_imu_command += b',DS="' + ds.upper().encode() + b'"'
+            else:
+                self.messages.write_warning('Invalid value for DS in SETIMU command')
+
+        if df is not None:
+            if isinstance(df, int):
+                set_imu_command += b',DF=' + str(df).encode()
+            else:
+                self.messages.write_warning('Invalid value for DF in SETIMU command')
+
+        set_imu_command += b'\r\n'
+
+        self.connection.write(set_imu_command)
+
+        get_reply = self._handle_reply(command=set_imu_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+    def get_imu(self, freq=False, ds=False, df=False) -> [bytes]:
+
+        self._reset_buffer()
+
+        get_imu_command = b'GETIMU'
+
+        if freq is True:
+            get_imu_command += b',FREQ'
+
+        if ds is True:
+            get_imu_command += b',DS'
+
+        if df is True:
+            get_imu_command += b',DF'
+
+        get_imu_command += b'\r\n'
+
+        self.connection.write(get_imu_command)
+
+        get_reply = self._handle_reply(command=get_imu_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+    def get_imu_lim(self, freq=False, ds=False, df=False) -> [bytes]:
+
+        self._reset_buffer()
+
+        get_imu_lim_command = b'GETIMULIM'
+
+        if freq is True:
+            get_imu_lim_command += b',FREQ'
+
+        if ds is True:
+            get_imu_lim_command += b',DS'
+
+        if df is True:
+            get_imu_lim_command += b',DF'
+
+        get_imu_lim_command += b'\r\n'
+
+        self.connection.write(get_imu_lim_command)
+
+        get_reply = self._handle_reply(command=get_imu_lim_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+
+    def set_nav(self, freq=None, ds=None, df=None):
+
+        # TODO: complete this command
+
+        set_nav_command = b'SETNAV'
+
+        if freq is not None:
+            if isinstance(freq, int):
+                set_nav_command += b',FREQ=' + str(freq).encode()
+            else:
+                self.messages.write_warning('Invalid value for FREQ in SETNAV command')
+
+        if ds is not None:
+            if ds.upper() in self.ON_OFF:
+                set_nav_command += b',DS="' + ds.upper().encode() + b'"'
+            else:
+                self.messages.write_warning('Invalid value for DS in SETNAV command')
+
+        if df is not None:
+            if isinstance(df, int):
+                set_nav_command += b',DF=' + str(df).encode()
+            else:
+                self.messages.write_warning('Invalid value for DF in SETNAV command')
+
+        set_nav_command += b'\r\n'
+
+        self.connection.write(set_nav_command)
+
+        get_reply = self._handle_reply(command=set_nav_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+    def get_nav(self, freq=False, ds=False, df=False):
+
+        get_nav_command = b'GETNAV'
+
+        if freq is True:
+            get_nav_command += b',FREQ'
+
+        if ds is True:
+            get_nav_command += b',DS'
+
+        if df is True:
+            get_nav_command += b',DF'
+
+        get_nav_command += b'\r\n'
+
+        self.connection.write(get_nav_command)
+
+        get_reply = self._handle_reply(command=get_nav_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+    def get_nav_lim(self, freq=False, ds=False, df=False):
+
+        get_nav_lim_command = b'GETNAVLIM'
+
+        if freq is True:
+            get_nav_lim_command += b',FREQ'
+
+        if ds is True:
+            get_nav_lim_command += b',DS'
+
+        if df is True:
+            get_nav_lim_command += b',DF'
+
+        get_nav_lim_command += b'\r\n'
+
+        self.connection.write(get_nav_lim_command)
+
+        get_reply = self._handle_reply(command=get_nav_lim_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+
     def set_eth(self, ipmethod=None, ip=None, netmask=None, gateway=None, password=None):
 
         self._reset_buffer()
@@ -1795,5 +1950,22 @@ class Commands:
         self.connection.write(listfiles_command)
 
         get_reply = self._handle_reply(command=listfiles_command, terminator=b'OK\r\n', timeout=10)
+
+        return get_reply
+
+    def apply_tag(self, name: str =None):
+
+        self._reset_buffer()
+
+        command = b'APPLYTAG'
+
+        if name is not None:
+            command += b',NAME="' + name.encode() + b'"'
+            
+        command += b'\r\n'
+
+        self.connection.write(command)
+
+        get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
 
         return get_reply
