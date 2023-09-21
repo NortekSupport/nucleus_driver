@@ -19,7 +19,8 @@ class Download:
         self.dvl_download_statistics['successful bytes'] = 0
         self.dvl_download_statistics['failed bytes'] = 0
 
-        self.PACKET_LENGTH = 1024 * 1024
+        self.PACKET_LENGTH_TCP = 1024 * 1024
+        self.PACKET_LENGTH_SERIAL = 1024 * 10
 
     @staticmethod
     def _handle_crc(dvl_data: bytes):
@@ -386,7 +387,7 @@ class Download:
                 
                 timeout = min(2 + attempt, 10)  # First iteration is 3s, 3 last iterations are 10s
 
-                status, package = self.download_data(fid=download_parameters['fid'], src=1, sa=index, length=min(download_parameters['end'] - index, self.PACKET_LENGTH), timeout=timeout)
+                status, package = self.download_data(fid=download_parameters['fid'], src=1, sa=index, length=min(download_parameters['end'] - index, packet_length), timeout=timeout)
 
                 if status:
                     if failed_attempt:
@@ -455,6 +456,11 @@ class Download:
         if not _check_arguments():
             return False
 
+        if self.connection.get_connection_type() == 'tcp':
+            packet_length = self.PACKET_LENGTH_TCP
+        else:
+            packet_length = self.PACKET_LENGTH_SERIAL
+
         status, download_parameters = self.get_download_parameters(src=1, fid=fid, sa=sa, length=length)
         if not status:
             return False
@@ -481,7 +487,7 @@ class Download:
 
                 downloaded_bytes = 0
                 data = b''
-                for index in range(download_parameters['sa'], download_parameters['end'], self.PACKET_LENGTH):
+                for index in range(download_parameters['sa'], download_parameters['end'], packet_length):
 
                     status, package = _download_data()
 
@@ -529,7 +535,7 @@ class Download:
 
                 timeout = min(2 + attempt, 10)  # First iteration is 3s, 3 last iterations are 10s
 
-                status, package = self.download_data(fid=download_parameters['fid'], src=0, sa=index, length=min(download_parameters['end'] - index, self.PACKET_LENGTH), timeout=timeout)
+                status, package = self.download_data(fid=download_parameters['fid'], src=0, sa=index, length=min(download_parameters['end'] - index, packet_length), timeout=timeout)
 
                 if status:
                     if failed_attempt:
@@ -561,6 +567,11 @@ class Download:
         if not _check_arguments():
             return False
 
+        if self.connection.get_connection_type() == 'tcp':
+            packet_length = self.PACKET_LENGTH_TCP
+        else:
+            packet_length = self.PACKET_LENGTH_SERIAL
+
         status, download_parameters = self.get_download_parameters(src=0, fid=fid, sa=sa, length=length)
         if not status:
             return False
@@ -584,7 +595,7 @@ class Download:
                 file.write(get_all)
                 percentage_previous = -1
                 downloaded_bytes = 0
-                for index in range(download_parameters['sa'], download_parameters['end'], self.PACKET_LENGTH):
+                for index in range(download_parameters['sa'], download_parameters['end'], packet_length):
 
                     status, package = _download_data()
 
