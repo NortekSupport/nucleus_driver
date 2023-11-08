@@ -420,7 +420,7 @@ class Flash:
 
                 start_up_message = self.commands.read_start_up(timeout=100)
 
-                if b'Nortek Fusion DVL1000\r\n' not in start_up_message[0] and b'Nortek Nucleus1000\r\n' not in start_up_message[0]:
+                if b'Nortek Nucleus1000' not in start_up_message[0]:
                     self.messages.write_message(message='System did not start up properly')
                     return -403
 
