@@ -3,6 +3,7 @@ import time
 from dataclasses import dataclass
 import serial
 from serial.tools import list_ports
+from serial.serialutil import SerialException
 import socket
 import select
 import errno
@@ -255,6 +256,9 @@ class Connection:
 
             return True
 
+        self.nucleus_id = None
+        self.firmware_version = None
+
         if self.get_connection_status() is True:
             self.messages.write_message(message='Nucleus is already connected')
             return False
@@ -440,7 +444,10 @@ class Connection:
                 return None
             
         if self.get_connection_type() == 'serial':
-            data = self.serial.read(size=self.serial.in_waiting)
+            try:
+                data = self.serial.read(size=self.serial.in_waiting)
+            except SerialException:
+                data = b''
         
         return data
 

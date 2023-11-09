@@ -1,5 +1,6 @@
 from re import match
 from datetime import datetime
+import time
 
 
 class Commands:
@@ -229,13 +230,13 @@ class Commands:
         command = b'UPLOAD\r\n'
 
         self.connection.write(command)
-        get_ack_reply = self._handle_reply(command=command, terminator=b'ACK\r\n')
+        get_ack_reply = self._handle_reply(command=command, terminator=b'ACK\r\n', timeout=5)
 
         if b'ACK\r\n' not in get_ack_reply:
             return get_ack_reply
 
         self.connection.write(package)
-        get_ok_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+        get_ok_reply = self._handle_reply(command=command, terminator=b'OK\r\n', timeout=10)
 
         get_reply = list()
         get_reply.extend(get_ack_reply)
@@ -1802,11 +1803,23 @@ class Commands:
 
         return get_reply
 
-    def get_all(self):
+    def get_all(self, _nmea=False):
 
         self._reset_buffer()
 
-        command = b'GETALL\r\n'
+        command = b''
+
+        if _nmea is True:
+            command += b'$PNOR,'
+
+        command += b'GETALL'
+
+        if _nmea is True:
+            nmea_checksum = self._nmea_checksum(command)
+            command += b'*'
+            command += nmea_checksum
+        
+        command += b'\r\n'
 
         self.connection.write(command)
 
