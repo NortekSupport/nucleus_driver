@@ -63,7 +63,7 @@ class Logger:
                       'speedOverGround', 'turnRateX', 'turnRateY', 'turnRateZ']
 
         imu_fields = ['status.isValid',
-                      'status.hasDataPathOverrun', 'status.hasFlashUpdateFailure', 'status.hasSpiComError',
+                      'status.hasChecksumError', 'status.hasDataPathOverrun', 'status.hasFlashUpdateFailure', 'status.hasSpiComError',
                       'status.hasLowVoltage', 'status.hasSensorFailure', 'status.hasMemoryFailure',
                       'status.hasGyro1Failure', 'status.hasGyro2Failure', 'status.hasAccelerometerFailure',
                       'accelerometer.x', 'accelerometer.y', 'accelerometer.z',

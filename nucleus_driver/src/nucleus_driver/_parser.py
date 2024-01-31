@@ -450,6 +450,7 @@ class Parser:
                         imu_status = unpack('<I', data[12:16])[0]
 
                         sensor = {'status.isValid': _get_status(status_bits=imu_status, bit=0),
+                                  'status.hasChecksumError': _get_status(status_bits=imu_status, bit=15),
                                   'status.hasDataPathOverrun': _get_status(status_bits=imu_status, bit=17),
                                   'status.hasFlashUpdateFailure': _get_status(status_bits=imu_status, bit=18),
                                   'status.hasSpiComError': _get_status(status_bits=imu_status, bit=19),
