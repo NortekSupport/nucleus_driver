@@ -40,6 +40,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CurrentProfile.msg"
   "msg/FieldCalibration.msg"
   "msg/IMU.msg"
+  "msg/INS.msg"
   "msg/Magnetometer.msg"
 )
 
