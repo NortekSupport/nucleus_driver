@@ -23,6 +23,7 @@ from nucleus_subscribers.bottom_track_packets import SubscriberBottomTrackPacket
 from nucleus_subscribers.current_profile_packets import SubscriberCurrentProfilePackets
 from nucleus_subscribers.field_calibration_packets import SubscriberFieldCalibrationPackets
 from nucleus_subscribers.imu_packets import SubscriberImuPackets
+from nucleus_subscribers.ins_packets import SubscriberInsPackets
 from nucleus_subscribers.magnetometer_packets import SubscriberMagnetometerPackets
 from nucleus_subscribers.water_track_packets import SubscriberWaterTrackPackets
 
@@ -37,6 +38,7 @@ class NucleusCommunication:
         self.current_profile_queue = Queue()
         self.field_calibration_queue = Queue()
         self.imu_queue = Queue()
+        self.ins_queue = Queue()
         self.mag_queue = Queue()
         self.water_track_queue = Queue()
 
@@ -46,6 +48,7 @@ class NucleusCommunication:
         self.current_profile_subscriber = SubscriberCurrentProfilePackets(callback_function=self.current_profile_queue.put)
         self.field_calibration_subscriber = SubscriberFieldCalibrationPackets(callback_function=self.field_calibration_queue.put)
         self.imu_subscriber = SubscriberImuPackets(callback_function=self.imu_queue.put)
+        self.ins_subscriber = SubscriberInsPackets(callback_function=self.ins_queue.put)
         self.mag_subscriber = SubscriberMagnetometerPackets(callback_function=self.mag_queue.put)
         self.water_track_subscriber = SubscriberWaterTrackPackets(callback_function=self.water_track_queue.put)
 
@@ -60,6 +63,7 @@ class NucleusCommunication:
         self.subscriber_executor.add_node(self.current_profile_subscriber)
         self.subscriber_executor.add_node(self.field_calibration_subscriber)
         self.subscriber_executor.add_node(self.imu_subscriber)
+        self.subscriber_executor.add_node(self.ins_subscriber)
         self.subscriber_executor.add_node(self.ahrs_subscriber)
         self.subscriber_executor.add_node(self.mag_subscriber)
         self.subscriber_executor.add_node(self.water_track_subscriber)
@@ -77,6 +81,7 @@ class NucleusCommunication:
         self.current_profile_subscriber.destroy_node()
         self.field_calibration_subscriber.destroy_node()
         self.imu_subscriber.destroy_node()
+        self.ins_subscriber.destroy_node()
         self.mag_subscriber.destroy_node()
         self.water_track_subscriber.destroy_node()
 
