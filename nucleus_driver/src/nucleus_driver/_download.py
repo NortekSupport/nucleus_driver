@@ -228,7 +228,7 @@ class Download:
             while True:
                 if b is not None:
                     b_prev = b
-                a, b, c = c.partition(b'\xa5')
+                a, b, c = c.partition(b'\xa5\n\xa0')  # Start of DVL get_all data
                 if b_prev is not None:
                     get_all.append(b_prev + a)
                 if len(c) < 2:
@@ -351,7 +351,7 @@ class Download:
         dvl_data['data'] = get_all_list[1][10:]
 
         if _check_nucleus_data():
-            get_all_nucleus = nucleus_data['data']
+            get_all_nucleus = get_all_list[0]
         else:
             get_all_nucleus = None
 
@@ -589,9 +589,13 @@ class Download:
             self.messages.write_message('Downloading data to: {}'.format(file_path))
 
             with open(file_path + '/get_all.txt', 'w') as file:
-                file.writelines(get_all.decode())
+                if get_all[10] == 0x20:
+                    file.writelines(get_all[11:].decode())
+                else:
+                    file.writelines(get_all[10:].decode())
 
-            with open(file_path + '/nucleus_data.bin', 'wb') as file:
+            with open(file_path + '/nucleus_data.nucleus', 'wb') as file:
+                
                 file.write(get_all)
                 percentage_previous = -1
                 downloaded_bytes = 0
@@ -613,7 +617,7 @@ class Download:
                     file.write(package)
 
         return status
-
+    
     def convert_nucleus_data(self, path) -> bool:
 
         if not Path(path).is_file():
