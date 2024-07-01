@@ -171,8 +171,8 @@ class Logger:
 
             driver_fields = ['timestampPython']
 
-            cp_fields = ['serialNumber', 'soundVelocity', 'temperature', 'pressure',
-                        'cellSize', 'blanking', 'numberOfCells', 'ambiguityVelocity']
+            cp_fields = ['serialNumber', 'curProfConfig.bit0', 'curProfConfig.bit1', 'soundVelocity', 'temperature',
+                         'pressure', 'cellSize', 'blanking', 'numberOfCells', 'ambiguityVelocity']
 
             for index in range(number_of_cells * 3):
                 cp_fields.append('velocityData_{}'.format(index))
@@ -211,6 +211,26 @@ class Logger:
 
     def start(self, _converting=False) -> str:
 
+        def get_all_package(get_all: str) -> str:
+
+            get_all_package = b''.join(entry.split(b'$PNOR,')[1].split(b'*')[0] + b'\r\n' for entry in get_all).split(b'OK')[0]   
+
+            sync_byte = b'\xa5'
+            header_size = b'\x0A'
+            packet_id = b'\xA0'
+            family_id = b'\x20'
+            data_size = len(get_all_package).to_bytes(2, byteorder='little')
+
+            checksum = self.parser.checksum(get_all_package).to_bytes(2, byteorder='little')
+
+            header = sync_byte + header_size + packet_id + family_id + data_size +  checksum
+
+            header_checksum = self.parser.checksum(header).to_bytes(2, byteorder='little')
+
+            header = header + header_checksum
+
+            return header + get_all_package
+    
         folder = self._path + '/' + datetime.now().strftime('%y%m%d_%H%M%S')
         self._logging_folder = folder
 
@@ -238,6 +258,10 @@ class Logger:
         self.ascii_writer.writeheader()
 
         self._logging = True
+
+        if self.connection.get_all_nmea is not None:
+            get_all = get_all_package(self.connection.get_all_nmea)
+            self.parser.add_data(get_all)
 
         return folder
 

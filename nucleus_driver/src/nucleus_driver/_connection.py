@@ -46,6 +46,7 @@ class Connection:
         self.nucleus_id = None
         self.firmware_version = None
         self.get_all = None
+        self.get_all_nmea = b''
 
     def get_connection_type(self) -> str:
 
@@ -311,24 +312,34 @@ class Connection:
 
     def get_info(self):
 
-        get_all = self.commands.get_all()
+        get_all = self.commands.get_all(_nmea=True)
 
-        if len(get_all) >= 15 and get_all[-1] == b'OK\r\n':
-
+        if len(get_all) >= 15 and b'OK' in get_all[-1]:
+            
+            self.get_all_nmea = get_all
             self.get_all = list()
-
+            
             try:
                 for entry in get_all:
-                    if b'ID' in entry:
-                        self.nucleus_id = entry.lstrip(b'ID,').rstrip(b'\r\n').decode()
 
-                    if b'GETFW' in entry:
-                        self.firmware_version = entry.lstrip(b'GETFW,').rstrip(b'\r\n').decode()
+                    stripped_entry = entry.split(b'*')[0].split(b'$PNOR,')[1]
 
-                    if b'OK\r\n' in entry:
+                    if b'ID' in stripped_entry:
+
+                        stripped_id_entry = stripped_entry.split(b'*')[0].lstrip(b'ID,')
+
+                        self.nucleus_id = ','.join([x.split(b'=')[1].decode() for x in stripped_id_entry.split(b',')])
+
+                    if b'GETFW' in stripped_entry:
+
+                        stripped_getfw_entry = stripped_entry.split(b'*')[0].lstrip(b'GETFW,')
+
+                        self.firmware_version = ','.join([x.split(b'=')[1].decode() for x in stripped_getfw_entry.split(b',')])
+
+                    if b'OK\r\n' in stripped_entry:
                         break
 
-                    self.get_all.append(entry.decode())
+                    self.get_all.append(stripped_entry.decode() + '\r\n')
 
             except UnicodeDecodeError:
                 self.messages.write_warning('Failed to decode GETALL message')

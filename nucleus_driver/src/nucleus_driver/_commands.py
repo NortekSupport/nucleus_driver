@@ -1823,7 +1823,12 @@ class Commands:
 
         self.connection.write(command)
 
-        get_reply = self._handle_reply(command=command, terminator=b'OK\r\n', timeout=2)
+        if _nmea is True:
+            terminator = b'OK*2B\r\n'
+        else:
+            terminator = b'OK\r\n'
+
+        get_reply = self._handle_reply(command=command, terminator=terminator, timeout=2)
 
         return get_reply
 
