@@ -2,7 +2,7 @@ import os
 import cmd2
 from cmd2 import Fg, style, Cmd2ArgumentParser, with_argparser, with_category
 
-from nucleus_driver import NucleusDriver
+from nucleus_driver import NucleusDriver, __version__
 
 
 class App(cmd2.Cmd):
@@ -30,6 +30,7 @@ class App(cmd2.Cmd):
                  " |_| \_|\__,_|\___|_|\___|\__,_|___/ |_____/|_|  |_| \_/ \___|_|   \r\n"]
 
         self.intro = style(''.join(intro), fg=Fg.BLUE, bold=True)
+        self.intro += style(f' Version: {__version__}\r\n', fg=Fg.MAGENTA)
 
         del cmd2.Cmd.do_edit
         del cmd2.Cmd.do_alias

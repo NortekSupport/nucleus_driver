@@ -30,7 +30,7 @@ class NucleusDriver:
         self.connection.commands = self.commands
         self.connection.parser = self.parser
         self.logger.commands = self.commands
-
+        self.logger.parser = self.parser
 
         self.logging_fieldcal = False
 
