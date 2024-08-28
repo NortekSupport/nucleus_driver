@@ -554,7 +554,7 @@ class Parser:
                                   'numberOfCells': unpack('<H', data[44:46])[0],
                                   'ambiguityVelocity': unpack('<H', data[46:48])[0]}
 
-                        velocity_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'H')
+                        velocity_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'h')
                         velocity_data_offset = common_data['offsetOfData']
                         velocity_data_size = 2 * 3 * sensor['numberOfCells']
                         velocity_data = unpack(velocity_data_format, data[velocity_data_offset: velocity_data_offset + velocity_data_size])[:velocity_data_size]

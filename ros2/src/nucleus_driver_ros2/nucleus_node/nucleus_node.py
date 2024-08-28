@@ -366,7 +366,7 @@ class NucleusNode(Node):
             bottom_track_packet.velocity_z = packet["velocityZ"]
             bottom_track_packet.fom_x = packet["fomX"]
             bottom_track_packet.fom_y = packet["fomY"]
-            bottom_track_packet.fom_z = packet["fomX"]
+            bottom_track_packet.fom_z = packet["fomZ"]
             bottom_track_packet.dt_xyz = packet["dtXYZ"]
             bottom_track_packet.time_vel_xyz = packet["timeVelXYZ"]
 
