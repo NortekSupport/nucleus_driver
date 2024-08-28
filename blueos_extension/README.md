@@ -101,7 +101,7 @@ with the value following "`PORT=`" being your preferred port.
 The docker container can be executed with the following command
 
 ```
-docker run --net=host -v /root/.config/blueos:/root/.config --name=nucleus_driver --restart=unless-stopped nucleus_driver
+docker run --net=host --add-host=host.docker.internal:host-gateway -v /root/.config/blueos:/root/.config --name=nucleus_driver --restart=unless-stopped nucleus_driver
 ```
 
 `--net=host` allows the container to share the network of the ROV which is necessary for it to communicate with the ROV and make the GUI available
