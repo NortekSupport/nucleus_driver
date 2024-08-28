@@ -1,0 +1,1 @@
+string string_data
