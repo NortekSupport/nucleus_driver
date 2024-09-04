@@ -38,6 +38,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/AHRS.msg"
   "msg/Altimeter.msg"
   "msg/BottomTrack.msg"
+  "msg/WaterTrack.msg"
   "msg/CurrentProfile.msg"
   "msg/FieldCalibration.msg"
   "msg/IMU.msg"
