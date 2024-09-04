@@ -1,3 +1,5 @@
+builtin_interfaces/Time system_timestamp
+
 bool posix_time
 uint32 timestamp
 uint32 microseconds
