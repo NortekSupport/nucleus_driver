@@ -24,6 +24,7 @@ if(BUILD_TESTING)
 endif()
 
 find_package(rosidl_default_generators REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ConnectSerial.srv"
@@ -42,6 +43,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/IMU.msg"
   "msg/INS.msg"
   "msg/Magnetometer.msg"
+  DEPENDENCIES builtin_interfaces
 )
 
 ament_package()
