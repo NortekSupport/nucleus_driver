@@ -15,6 +15,7 @@ from interfaces.msg import (
     INS,
     Altimeter,
     BottomTrack,
+    WaterTrack,
     CurrentProfile,
     FieldCalibration,
     IMU,
@@ -42,7 +43,7 @@ class NucleusNode(Node):
         self.ahrs_publisher = self.create_publisher(AHRS, "nucleus_node/ahrs_packets", 100)
         self.altimeter_publisher = self.create_publisher(Altimeter, "nucleus_node/altimeter_packets", 100)
         self.bottom_track_publisher = self.create_publisher(BottomTrack, "nucleus_node/bottom_track_packets", 100)
-        self.water_track_publisher = self.create_publisher(BottomTrack, "nucleus_node/water_track_packets", 100)
+        self.water_track_publisher = self.create_publisher(WaterTrack, "nucleus_node/water_track_packets", 100)
         self.current_profile_publisher = self.create_publisher(CurrentProfile, "nucleus_node/current_profile_packets", 100)
         self.field_calibration_publisher = self.create_publisher(FieldCalibration, "nucleus_node/field_calibration_packets", 100)
         self.imu_publisher = self.create_publisher(IMU, "nucleus_node/imu_packets", 100)
@@ -172,9 +173,13 @@ class NucleusNode(Node):
         if packet is None:
             return
 
+        system_timestamp = self.get_clock().now()
+
         if packet["id"] == 0xD2:
 
             ahrs_packet = AHRS()
+
+            ahrs_packet.system_timestamp = system_timestamp.to_msg()
 
             ahrs_packet.posix_time = packet["flags.posixTime"]
             ahrs_packet.timestamp = packet["timeStamp"]
@@ -210,9 +215,11 @@ class NucleusNode(Node):
 
             self.ahrs_publisher.publish(ahrs_packet)
 
-        if packet["id"] == 0xDC:
+        elif packet["id"] == 0xDC:
 
             ins_packet = INS()
+
+            ins_packet.system_timestamp = system_timestamp.to_msg()
 
             ins_packet.posix_time = packet["flags.posixTime"]
             ins_packet.timestamp = packet["timeStamp"]
@@ -270,9 +277,11 @@ class NucleusNode(Node):
 
             self.ins_publisher.publish(ins_packet)
 
-        if packet["id"] == 0x82:
+        elif packet["id"] == 0x82:
 
             imu_packet = IMU()
+
+            imu_packet.system_timestamp = system_timestamp.to_msg()
 
             imu_packet.posix_time = packet["flags.posixTime"]
             imu_packet.timestamp = packet["timeStamp"]
@@ -299,9 +308,11 @@ class NucleusNode(Node):
 
             self.imu_publisher.publish(imu_packet)
 
-        if packet["id"] == 0x87:
+        elif packet["id"] == 0x87:
 
             mag_packet = Magnetometer()
+
+            mag_packet.system_timestamp = system_timestamp.to_msg()
 
             mag_packet.posix_time = packet["flags.posixTime"]
             mag_packet.timestamp = packet["timeStamp"]
@@ -318,9 +329,11 @@ class NucleusNode(Node):
 
             self.mag_publisher.publish(mag_packet)
 
-        if packet["id"] in [0xB4, 0xBE]:
+        elif packet["id"] in [0xB4, 0xBE]:
 
             bottom_track_packet = BottomTrack()
+
+            bottom_track_packet.system_timestamp = system_timestamp.to_msg()
 
             bottom_track_packet.posix_time = packet["flags.posixTime"]
             bottom_track_packet.timestamp = packet["timeStamp"]
@@ -370,15 +383,69 @@ class NucleusNode(Node):
             bottom_track_packet.dt_xyz = packet["dtXYZ"]
             bottom_track_packet.time_vel_xyz = packet["timeVelXYZ"]
 
-            if packet["id"] == 0xB4:
-                self.bottom_track_publisher.publish(bottom_track_packet)
+            self.bottom_track_publisher.publish(bottom_track_packet)
 
-            elif packet["id"] == 0xBE:
-                self.water_track_publisher.publish(bottom_track_packet)
+        elif packet["id"] == 0xBE:
 
-        if packet["id"] == 0xAA:
+            water_track_packet = WaterTrack()
+
+            water_track_packet.system_timestamp = system_timestamp.to_msg()
+
+            water_track_packet.posix_time = packet["flags.posixTime"]
+            water_track_packet.timestamp = packet["timeStamp"]
+            water_track_packet.microseconds = packet["microSeconds"]
+
+            water_track_packet.beam_1_velocity_valid = packet["status.beam1VelocityValid"]
+            water_track_packet.beam_2_velocity_valid = packet["status.beam2VelocityValid"]
+            water_track_packet.beam_3_velocity_valid = packet["status.beam3VelocityValid"]
+            water_track_packet.beam_1_distance_valid = packet["status.beam1DistanceValid"]
+            water_track_packet.beam_2_distance_valid = packet["status.beam2DistanceValid"]
+            water_track_packet.beam_3_distance_valid = packet["status.beam3DistanceValid"]
+            water_track_packet.beam_1_fom_valid = packet["status.beam1FomValid"]
+            water_track_packet.beam_2_fom_valid = packet["status.beam2FomValid"]
+            water_track_packet.beam_3_fom_valid = packet["status.beam3FomValid"]
+            water_track_packet.x_velocity_valid = packet["status.xVelocityValid"]
+            water_track_packet.y_velocity_valid = packet["status.yVelocityValid"]
+            water_track_packet.z_velocity_valid = packet["status.zVelocityValid"]
+            water_track_packet.x_fom_valid = packet["status.xFomValid"]
+            water_track_packet.y_fom_valid = packet["status.yFomValid"]
+            water_track_packet.z_fom_valid = packet["status.zFomValid"]
+
+            water_track_packet.serial_number = packet["serialNumber"]
+            water_track_packet.sound_speed = packet["soundSpeed"]
+            water_track_packet.temperature = packet["temperature"]
+            water_track_packet.pressure = packet["pressure"]
+            water_track_packet.velocity_beam_1 = packet["velocityBeam1"]
+            water_track_packet.velocity_beam_2 = packet["velocityBeam2"]
+            water_track_packet.velocity_beam_3 = packet["velocityBeam3"]
+            water_track_packet.distance_beam_1 = packet["distanceBeam1"]
+            water_track_packet.distance_beam_2 = packet["distanceBeam2"]
+            water_track_packet.distance_beam_3 = packet["distanceBeam3"]
+            water_track_packet.fom_beam_1 = packet["fomBeam1"]
+            water_track_packet.fom_beam_2 = packet["fomBeam2"]
+            water_track_packet.fom_beam_3 = packet["fomBeam3"]
+            water_track_packet.dt_beam_1 = packet["dtBeam1"]
+            water_track_packet.dt_beam_2 = packet["dtBeam2"]
+            water_track_packet.dt_beam_3 = packet["dtBeam3"]
+            water_track_packet.time_vel_beam_1 = packet["timeVelBeam1"]
+            water_track_packet.time_vel_beam_2 = packet["timeVelBeam2"]
+            water_track_packet.time_vel_beam_3 = packet["timeVelBeam3"]
+            water_track_packet.velocity_x = packet["velocityX"]
+            water_track_packet.velocity_y = packet["velocityY"]
+            water_track_packet.velocity_z = packet["velocityZ"]
+            water_track_packet.fom_x = packet["fomX"]
+            water_track_packet.fom_y = packet["fomY"]
+            water_track_packet.fom_z = packet["fomZ"]
+            water_track_packet.dt_xyz = packet["dtXYZ"]
+            water_track_packet.time_vel_xyz = packet["timeVelXYZ"]
+
+            self.water_track_publisher.publish(water_track_packet)
+
+        elif packet["id"] == 0xAA:
 
             altimeter_packet = Altimeter()
+
+            altimeter_packet.system_timestamp = system_timestamp.to_msg()
 
             altimeter_packet.posix_time = packet["flags.posixTime"]
             altimeter_packet.timestamp = packet["timeStamp"]
@@ -398,9 +465,11 @@ class NucleusNode(Node):
 
             self.altimeter_publisher.publish(altimeter_packet)
 
-        if packet["id"] == 0xC0:
+        elif packet["id"] == 0xC0:
 
             current_profile_packet = CurrentProfile()
+
+            current_profile_packet.system_timestamp = system_timestamp.to_msg()
 
             current_profile_packet.posix_time = packet["flags.posixTime"]
             current_profile_packet.timestamp = packet["timeStamp"]
@@ -435,9 +504,11 @@ class NucleusNode(Node):
 
             self.current_profile_publisher.publish(current_profile_packet)
 
-        if packet["id"] == 0x8B:
+        elif packet["id"] == 0x8B:
 
             field_calibration_packet = FieldCalibration()
+
+            field_calibration_packet.system_timestamp = system_timestamp.to_msg()
 
             field_calibration_packet.posix_time = packet["flags.posixTime"]
             field_calibration_packet.timestamp = packet["timeStamp"]
@@ -472,9 +543,18 @@ def main():
 
     nucleus_node = NucleusNode()
 
-    rclpy.spin(nucleus_node)
+    try:
+        rclpy.spin(nucleus_node)
+    except KeyboardInterrupt:
+        stop_status = nucleus_node.nucleus_driver.stop()
+        nucleus_node.get_logger().info(f'stop status {stop_status}')
 
-    rclpy.shutdown()
+        disconnect_status = nucleus_node.nucleus_driver.disconnect()
+        nucleus_node.get_logger().info(f'stop status {disconnect_status}')
+
+    finally:
+        nucleus_node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":
