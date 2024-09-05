@@ -13,6 +13,7 @@ class Commands:
     ALTI_RANGE = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     CP_RANGE = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     MAG_METHODS = ['AUTO', 'OFF', 'WMM']
+    INST_TYPE = ['SENSORS', 'NAV']
 
     ADDRESS_PATTERN = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
 
@@ -565,11 +566,17 @@ class Commands:
 
         return get_reply
 
-    def set_inst(self, rotxy=None, rotyz=None, rotxz=None, led=None) -> [bytes]:
+    def set_inst(self, type=None, rotxy=None, rotyz=None, rotxz=None, led=None) -> [bytes]:
 
         self._reset_buffer()
 
         set_inst_command = b'SETINST'
+
+        if type is not None:
+            if type.upper() in self.INST_TYPE:
+                set_inst_command += b',TYPE="' + type.upper().encode() + b'"'
+            else:
+                self.messages.write_warning('Invalid value for TYPE in SETINST command')
 
         if rotxy is not None:
             if isinstance(rotxy, float) or isinstance(rotxy, int):
@@ -603,7 +610,7 @@ class Commands:
 
         return get_reply
 
-    def get_inst(self, type=False, rotxy=False, rotyz=False, rotxz=False) -> [bytes]:
+    def get_inst(self, type=False, rotxy=False, rotyz=False, rotxz=False, led=False) -> [bytes]:
 
         self._reset_buffer()
 
@@ -621,6 +628,9 @@ class Commands:
         if rotxz is True:
             get_inst_command += b',ROTXZ'
 
+        if led is True:
+            get_inst_command += b',LED'
+
         get_inst_command += b'\r\n'
 
         self.connection.write(get_inst_command)
@@ -629,7 +639,7 @@ class Commands:
 
         return get_reply
 
-    def get_inst_lim(self, type=False, rotxy=False, rotyz=False, rotxz=False) -> [bytes]:
+    def get_inst_lim(self, type=False, rotxy=False, rotyz=False, rotxz=False, led=True) -> [bytes]:
 
         self._reset_buffer()
 
@@ -646,6 +656,9 @@ class Commands:
 
         if rotxz is True:
             get_inst_lim_command += b',ROTXZ'
+
+        if led is True:
+            get_inst_lim_command += b',LED'
 
         get_inst_lim_command += b'\r\n'
 
