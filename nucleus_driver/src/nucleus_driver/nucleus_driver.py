@@ -117,9 +117,9 @@ class NucleusDriver:
     # Parser
     ###########################################
 
-    def read_packet(self):
+    def read_packet(self, timeout=None):
 
-        packet = self.parser.read_packet()
+        packet = self.parser.read_packet(timeout=timeout)
 
         return packet
 
