@@ -48,15 +48,20 @@ def main(args=None):
     subscriber = SubscriberMagnetometerPackets(callback_function=mag_packet_callback)
 
     executor = SingleThreadedExecutor()
-    executor.add_node(subscriber)
 
-    subscriber.subscribe()
+    try:
+        executor.add_node(subscriber)
+        subscriber.subscribe()
 
-    executor.shutdown()
+    except KeyboardInterrupt:
+        pass
 
-    subscriber.destroy_node()
+    finally:
+        executor.shutdown()
+        subscriber.destroy_node()
 
-    rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

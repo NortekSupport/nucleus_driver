@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from threading import Thread
+from rclpy._rclpy_pybind11 import RCLError
 
 from interfaces.srv import (
     ConnectTcp,
@@ -50,7 +51,6 @@ class NucleusNode(Node):
         self.imu_publisher = self.create_publisher(IMU, "nucleus_node/imu_packets", 100)
         self.ins_publisher = self.create_publisher(INS, "nucleus_node/ins_packets", 100)
         self.mag_publisher = self.create_publisher(Magnetometer, "nucleus_node/magnetometer_packets", 100)
-        # self.packet_timer = self.create_timer(0.001, self.packet_callback)
 
         self.start_thread_timer = self.create_timer(0.1, self.start_thread) # This ensures that the thread is started after the node is initialized and rcplpy.spin() is called
 
@@ -71,8 +71,7 @@ class NucleusNode(Node):
 
     def stop(self):
         self._thread_running = False
-        self.packet_thread.join()
-        self.get_logger().info("Nucleus Node stopped")
+        self.packet_thread.join(timeout=2)  # 1 second more than the timeout of the read_packet method
 
     def connect_tcp_callback(self, request, response):
 
@@ -109,24 +108,24 @@ class NucleusNode(Node):
         response.status = status
 
         if status:
-            self.get_logger().info(f"Successfully disconnected from Nucleus")
+            self.get_logger().info("Successfully disconnected from Nucleus")
         else:
-            self.get_logger().info(f"Failed to disconnect from Nucleus")
+            self.get_logger().info("Failed to disconnect from Nucleus")
 
         return response
 
     def start_callback(self, request, response):
 
         if not self.nucleus_driver.connection.get_connection_status():
-            self.get_logger().info(f"Nucleus is not connected")
-            response.reply = f"Nucleus is not connected"
+            self.get_logger().info("Nucleus is not connected")
+            response.reply = "Nucleus is not connected"
 
         else:
             reply = self.nucleus_driver.start_measurement()
 
             try:
                 response.reply = reply[0].decode()
-                self.get_logger().info(f"start reply: {response.reply}")
+                self.get_logger().info(f"start reply: {response.reply.strip()}")
             except Exception as e:
                 response.reply = f"Failed to decode response from start command: {e}"
 
@@ -135,32 +134,32 @@ class NucleusNode(Node):
     def start_field_calibration_callback(self, request, response):
 
         if not self.nucleus_driver.connection.get_connection_status():
-            self.get_logger().info(f"Nucleus is not connected")
-            response.reply = f"Nucleus is not connected"
+            self.get_logger().info("Nucleus is not connected")
+            response.reply = "Nucleus is not connected"
 
         else:
             reply = self.nucleus_driver.start_fieldcal()
 
             try:
                 response.reply = reply[0].decode()
-                self.get_logger().info(f"start field calibration reply: {response.reply}")
+                self.get_logger().info(f"start field calibration reply: {response.reply.strip()}")
             except Exception as e:
-                response.reply = f"Failed to decode response from start field calibration command: {e}"
+                response.reply = "Failed to decode response from start field calibration command: {e}"
 
         return response
 
     def stop_callback(self, request, response):
 
         if not self.nucleus_driver.connection.get_connection_status():
-            self.get_logger().info(f"Nucleus is not connected")
-            response.reply = f"Nucleus is not connected"
+            self.get_logger().info("Nucleus is not connected")
+            response.reply = "Nucleus is not connected"
 
         else:
             reply = self.nucleus_driver.stop()
 
             try:
                 response.reply = reply[0].decode()
-                self.get_logger().info(f"stop reply: {response.reply}")
+                self.get_logger().info(f"stop reply: {response.reply.strip()}")
             except Exception as e:
                 response.reply = f"Failed to decode response from start command: {e}"
 
@@ -169,8 +168,8 @@ class NucleusNode(Node):
     def command_callback(self, request, response):
 
         if not self.nucleus_driver.connection.get_connection_status():
-            self.get_logger().info(f"Nucleus is not connected")
-            response.reply = f"Nucleus is not connected"
+            self.get_logger().info("Nucleus is not connected")
+            response.reply = "Nucleus is not connected"
 
         else:
             command = request.command
@@ -181,24 +180,18 @@ class NucleusNode(Node):
                 for entry in reply:
                     response.reply += entry.decode()
 
-                self.get_logger().info(f"command reply: {response.reply}")
+                self.get_logger().info(f"command reply: {response.reply.strip()}")
             except Exception as e:
                 response.reply = f"Failed to decode response from command: {e}"
 
         return response
 
-    """ def packet_callback(self):
-
-        packet = self.nucleus_driver.read_packet()
-
-        if packet is None:
-            return """
     
     def packet_handling(self):
 
-        while self._thread_running:
+        while self._thread_running and rclpy.ok():
 
-            packet = self.nucleus_driver.read_packet(timeout=1)
+            packet = self.nucleus_driver.read_packet(timeout=1, _suppress_warning=True)
 
             if packet is None:
                 continue
@@ -243,7 +236,12 @@ class NucleusNode(Node):
                 ahrs_packet.declination = packet["declination"]
                 ahrs_packet.depth = packet["depth"]
 
-                self.ahrs_publisher.publish(ahrs_packet)
+                try:
+                    self.ahrs_publisher.publish(ahrs_packet)
+                except RCLError:
+                    pass
+                except Exception as e:
+                    self.get_logger().error(f"Failed to publish AHRS packet: {e}")
 
             elif packet["id"] == 0xDC:
 
@@ -305,7 +303,12 @@ class NucleusNode(Node):
                 ins_packet.turn_rate_y = packet["turnRateY"]
                 ins_packet.turn_rate_z = packet["turnRateZ"]
 
-                self.ins_publisher.publish(ins_packet)
+                try:
+                    self.ins_publisher.publish(ins_packet)
+                except RCLError:
+                    pass
+                except Exception as e:
+                    self.get_logger().error(f"Failed to publish INS packet: {e}")
 
             elif packet["id"] == 0x82:
 
@@ -336,7 +339,12 @@ class NucleusNode(Node):
                 imu_packet.gyro_z = packet["gyro.z"]
                 imu_packet.temperature = packet["temperature"]
 
-                self.imu_publisher.publish(imu_packet)
+                try:
+                    self.imu_publisher.publish(imu_packet)
+                except RCLError:
+                    pass
+                except Exception as e:
+                    self.get_logger().error(f"Failed to publish IMU packet: {e}")
 
             elif packet["id"] == 0x87:
 
@@ -357,7 +365,12 @@ class NucleusNode(Node):
                 mag_packet.magnetometer_y = packet["magnetometer.y"]
                 mag_packet.magnetometer_z = packet["magnetometer.z"]
 
-                self.mag_publisher.publish(mag_packet)
+                try:
+                    self.mag_publisher.publish(mag_packet)
+                except RCLError:
+                    pass
+                except Exception as e:
+                    self.get_logger().error(f"Failed to publish Magnetometer packet: {e}")
 
             elif packet["id"] in [0xB4, 0xBE]:
 
@@ -413,7 +426,12 @@ class NucleusNode(Node):
                 bottom_track_packet.dt_xyz = packet["dtXYZ"]
                 bottom_track_packet.time_vel_xyz = packet["timeVelXYZ"]
 
-                self.bottom_track_publisher.publish(bottom_track_packet)
+                try:
+                    self.bottom_track_publisher.publish(bottom_track_packet)
+                except RCLError:
+                    pass
+                except Exception as e:
+                    self.get_logger().error(f"Failed to publish Bottom Track packet: {e}")
 
             elif packet["id"] == 0xBE:
 
@@ -469,7 +487,12 @@ class NucleusNode(Node):
                 water_track_packet.dt_xyz = packet["dtXYZ"]
                 water_track_packet.time_vel_xyz = packet["timeVelXYZ"]
 
-                self.water_track_publisher.publish(water_track_packet)
+                try:
+                    self.water_track_publisher.publish(water_track_packet)
+                except RCLError:
+                    pass
+                except Exception as e:
+                    self.get_logger().error(f"Failed to publish Water Track packet: {e}")
 
             elif packet["id"] == 0xAA:
 
@@ -493,7 +516,12 @@ class NucleusNode(Node):
                 altimeter_packet.altimeter_distance = packet["altimeterDistance"]
                 altimeter_packet.altimeter_quality = packet["altimeterQuality"]
 
-                self.altimeter_publisher.publish(altimeter_packet)
+                try:
+                    self.altimeter_publisher.publish(altimeter_packet)
+                except RCLError:
+                    pass
+                except Exception as e:
+                    self.get_logger().error(f"Failed to publish Altimeter packet: {e}")
 
             elif packet["id"] == 0xC0:
 
@@ -532,7 +560,12 @@ class NucleusNode(Node):
                 current_profile_packet.amplitude_data = amplitude_data
                 current_profile_packet.correlation_data = correlation_data
 
-                self.current_profile_publisher.publish(current_profile_packet)
+                try:
+                    self.current_profile_publisher.publish(current_profile_packet)
+                except RCLError:
+                    pass
+                except Exception as e:
+                    self.get_logger().error(f"Failed to publish Current Profile packet: {e}")
 
             elif packet["id"] == 0x8B:
 
@@ -564,7 +597,12 @@ class NucleusNode(Node):
                 field_calibration_packet.fom_field_calibration = packet["fomFieldCalibration"]
                 field_calibration_packet.coverage = packet["coverage"]
 
-                self.field_calibration_publisher.publish(field_calibration_packet)
+                try:
+                    self.field_calibration_publisher.publish(field_calibration_packet)
+                except RCLError:
+                    pass
+                except Exception as e:
+                    self.get_logger().error(f"Failed to publish Field Calibration packet: {e}")
 
 
 def main():
@@ -577,23 +615,25 @@ def main():
         rclpy.spin(nucleus_node)
 
     except KeyboardInterrupt:
-        nucleus_node.get_logger().info('Keyboard Interrupt (SIGINT)')
+        print('Keyboard Interrupt (SIGINT)')
 
     except Exception as e:
         nucleus_node.get_logger().error(f'An unexpected error occurred: {e}')
 
     finally:
-        stop_status = nucleus_node.nucleus_driver.stop()
-        nucleus_node.get_logger().info(f'stop status {stop_status}')
-
-        disconnect_status = nucleus_node.nucleus_driver.disconnect()
-        nucleus_node.get_logger().info(f'stop status {disconnect_status}')
-
         nucleus_node.stop()
-        nucleus_node.get_logger().info('Nucleus Node stopped')
+
+        if nucleus_node.nucleus_driver.connection.get_connection_status():
+            stop_status = nucleus_node.nucleus_driver.stop()
+            print(f'stop reply: {stop_status[0].decode().strip()}')
+
+            disconnect_status = nucleus_node.nucleus_driver.disconnect()
+            print(f'Disconnect status {disconnect_status}')
 
         nucleus_node.destroy_node()
-        rclpy.shutdown()
+
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

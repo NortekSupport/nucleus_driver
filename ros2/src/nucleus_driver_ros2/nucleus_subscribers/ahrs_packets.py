@@ -14,7 +14,7 @@ class SubscriberAhrsPackets(Node):
         self.subscription = self.create_subscription(AHRS, topic='nucleus_node/ahrs_packets', callback=callback_function, qos_profile=qos_profile)
 
     def subscribe(self):
-
+        
         if self.executor is not None:
             self.executor.spin()
         else:
@@ -23,6 +23,7 @@ class SubscriberAhrsPackets(Node):
             executor.add_node(self)
             executor.spin()
             executor.shutdown()
+
 
 def main(args=None):
 
@@ -48,15 +49,20 @@ def main(args=None):
     subscriber = SubscriberAhrsPackets(callback_function=ahrs_packet_callback)
 
     executor = SingleThreadedExecutor()
-    executor.add_node(subscriber)
-    
-    subscriber.subscribe()
 
-    executor.shutdown()
+    try:
+        executor.add_node(subscriber)
+        subscriber.subscribe()
 
-    subscriber.destroy_node()
+    except KeyboardInterrupt:
+        pass
 
-    rclpy.shutdown()
+    finally:
+        executor.shutdown()
+        subscriber.destroy_node()
+
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

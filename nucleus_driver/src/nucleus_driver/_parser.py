@@ -131,7 +131,7 @@ class Parser:
 
             self.logger._writing_packet = False
 
-    def read_packet(self, timeout=None):
+    def read_packet(self, timeout=None, _suppress_warning=False):
 
         packet = None
 
@@ -143,7 +143,8 @@ class Parser:
                 packet = self.packet_queue.get_nowait()
 
         except Exception as exception:
-            self.messages.write_warning('failed to retrieve packet from packet queue: {}'.format(exception))
+            if not _suppress_warning:
+                self.messages.write_warning(f'Failed to retrieve packet from packet queue: {exception}')
 
         return packet
 
