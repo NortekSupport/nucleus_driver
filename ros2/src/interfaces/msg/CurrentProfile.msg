@@ -13,6 +13,6 @@ float32 blanking
 uint16 number_of_cells
 uint16 ambiguity_velocity
 
-uint16[] velocity_data
+int16[] velocity_data
 uint8[] amplitude_data
 uint8[] correlation_data

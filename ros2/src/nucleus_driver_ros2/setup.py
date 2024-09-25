@@ -4,7 +4,7 @@ package_name = "nucleus_driver_ros2"
 
 setup(
     name=package_name,
-    version="0.2.0",
+    version="0.2.1",
     packages=["nucleus_node", "nucleus_clients", "nucleus_subscribers"],
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
