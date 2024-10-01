@@ -372,7 +372,7 @@ class NucleusNode(Node):
                 except Exception as e:
                     self.get_logger().error(f"Failed to publish Magnetometer packet: {e}")
 
-            elif packet["id"] in [0xB4, 0xBE]:
+            elif packet["id"] == 0xB4:
 
                 bottom_track_packet = BottomTrack()
 
