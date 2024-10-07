@@ -1,7 +1,7 @@
 builtin_interfaces/Time system_timestamp
 
 bool posix_time
-uint32 nucleus_timestamp
+uint32 timestamp
 uint32 microseconds
 
 bool beam_1_velocity_valid
