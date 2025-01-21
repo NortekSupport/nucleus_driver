@@ -27,7 +27,7 @@ The nucleus device supports both serial and TCP connection. For serial connectio
 thus only the serial port is required to establish a connection with the driver
 
 ```python
-SERIAL_PORT = "dev/ttyUSB0"
+SERIAL_PORT = "/dev/ttyUSB0"
 
 driver.set_serial_configuration(port=SERIAL_PORT)
 driver.connect(connection_type='serial')
