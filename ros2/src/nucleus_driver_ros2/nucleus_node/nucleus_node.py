@@ -231,7 +231,7 @@ class NucleusNode(Node):
                 ahrs_packet.rotation_matrix_5 = packet["ahrsData.rotationMatrix_5"]
                 ahrs_packet.rotation_matrix_6 = packet["ahrsData.rotationMatrix_6"]
                 ahrs_packet.rotation_matrix_7 = packet["ahrsData.rotationMatrix_7"]
-                ahrs_packet.rotation_matrix_0 = packet["ahrsData.rotationMatrix_0"]
+                ahrs_packet.rotation_matrix_8 = packet["ahrsData.rotationMatrix_8"]
 
                 ahrs_packet.declination = packet["declination"]
                 ahrs_packet.depth = packet["depth"]
@@ -276,7 +276,7 @@ class NucleusNode(Node):
                 ins_packet.rotation_matrix_5 = packet["ahrsData.rotationMatrix_5"]
                 ins_packet.rotation_matrix_6 = packet["ahrsData.rotationMatrix_6"]
                 ins_packet.rotation_matrix_7 = packet["ahrsData.rotationMatrix_7"]
-                ins_packet.rotation_matrix_0 = packet["ahrsData.rotationMatrix_0"]
+                ins_packet.rotation_matrix_8 = packet["ahrsData.rotationMatrix_8"]
 
                 ins_packet.declination = packet["declination"]
                 ins_packet.depth = packet["depth"]
