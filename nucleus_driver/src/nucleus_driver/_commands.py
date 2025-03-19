@@ -13,7 +13,6 @@ class Commands:
     ALTI_RANGE = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     CP_RANGE = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     MAG_METHODS = ['AUTO', 'OFF', 'WMM']
-    INST_TYPE = ['SENSORS', 'NAV']
 
     ADDRESS_PATTERN = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
 
@@ -425,8 +424,7 @@ class Commands:
 
         return get_reply
 
-    def set_mission(self, poff=None, long=None, lat=None, decl=None, range=None, bd=None, sv=None,
-                    sa=None) -> [bytes]:
+    def set_mission(self, poff=None, long=None, lat=None, decl=None, range=None, bd=None, sv=None, sa=None) -> [bytes]:
 
         self._reset_buffer()
 
@@ -566,17 +564,11 @@ class Commands:
 
         return get_reply
 
-    def set_inst(self, type=None, rotxy=None, rotyz=None, rotxz=None, led=None) -> [bytes]:
+    def set_inst(self, rotxy=None, rotyz=None, rotxz=None, led=None) -> [bytes]:
 
         self._reset_buffer()
 
         set_inst_command = b'SETINST'
-
-        if type is not None:
-            if type.upper() in self.INST_TYPE:
-                set_inst_command += b',TYPE="' + type.upper().encode() + b'"'
-            else:
-                self.messages.write_warning('Invalid value for TYPE in SETINST command')
 
         if rotxy is not None:
             if isinstance(rotxy, float) or isinstance(rotxy, int):
@@ -610,7 +602,7 @@ class Commands:
 
         return get_reply
 
-    def get_inst(self, type=False, rotxy=False, rotyz=False, rotxz=False, led=False) -> [bytes]:
+    def get_inst(self, type=False, rotxy=False, rotyz=False, rotxz=False) -> [bytes]:
 
         self._reset_buffer()
 
@@ -628,9 +620,6 @@ class Commands:
         if rotxz is True:
             get_inst_command += b',ROTXZ'
 
-        if led is True:
-            get_inst_command += b',LED'
-
         get_inst_command += b'\r\n'
 
         self.connection.write(get_inst_command)
@@ -639,7 +628,7 @@ class Commands:
 
         return get_reply
 
-    def get_inst_lim(self, type=False, rotxy=False, rotyz=False, rotxz=False, led=True) -> [bytes]:
+    def get_inst_lim(self, type=False, rotxy=False, rotyz=False, rotxz=False) -> [bytes]:
 
         self._reset_buffer()
 
@@ -656,9 +645,6 @@ class Commands:
 
         if rotxz is True:
             get_inst_lim_command += b',ROTXZ'
-
-        if led is True:
-            get_inst_lim_command += b',LED'
 
         get_inst_lim_command += b'\r\n'
 
@@ -1993,6 +1979,56 @@ class Commands:
         if name is not None:
             command += b',NAME="' + name.encode() + b'"'
             
+        command += b'\r\n'
+
+        self.connection.write(command)
+
+        get_reply = self._handle_reply(command=command, terminator=b'OK\r\n')
+
+        return get_reply
+
+    def update_pos(self, x=None, y=None, dx=None, dy=None, long=None, lat=None):
+
+        self._reset_buffer()
+
+        command = b'UPDATEPOS'
+
+        if x is not None:
+            if isinstance(x, int) or isinstance(x, float):
+                command += b',X=' + str(x).encode()
+            else:
+                self.messages.write_warning('Invalid value for X in UPDATEPOS command')
+
+        if y is not None:
+            if isinstance(y, int) or isinstance(y, float):
+                command += b',Y=' + str(y).encode()
+            else:
+                self.messages.write_warning('Invalid value for Y in UPDATEPOS command')
+
+        if dx is not None:
+            if isinstance(dx, int) or isinstance(dx, float):
+                command += b',DX=' + str(dx).encode()
+            else:
+                self.messages.write_warning('Invalid value for DX in UPDATEPOS command')
+
+        if dy is not None:
+            if isinstance(dy, int) or isinstance(dy, float):
+                command += b',DY=' + str(dy).encode()
+            else:
+                self.messages.write_warning('Invalid value for DY in UPDATEPOS command')
+
+        if long is not None:
+            if isinstance(long, int) or isinstance(long, float):
+                command += b',LONG=' + str(long).encode()
+            else:
+                self.messages.write_warning('Invalid value for LONG in UPDATEPOS command')
+
+        if lat is not None:
+            if isinstance(lat, int) or isinstance(lat, float):
+                command += b',LAT=' + str(lat).encode()
+            else:
+                self.messages.write_warning('Invalid value for LAT in UPDATEPOS command')
+
         command += b'\r\n'
 
         self.connection.write(command)
