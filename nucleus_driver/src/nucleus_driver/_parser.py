@@ -23,6 +23,7 @@ class Parser:
     ID_ASCII = 0xA0
     ID_SPECTRUM_ANALYZER = 0x20
     ID_CURRENT_PROFILE = 0xC0
+    ID_FAST_PRESSURE = 0x96
 
     DEFAULT_RESPONSE_TIMEOUT = 5
 
@@ -598,6 +599,9 @@ class Parser:
                                   'fomFieldCalibration': unpack('<f', data[common_data['offsetOfData'] + 60: common_data['offsetOfData'] + 64])[0],
                                   'coverage': unpack('<f', data[common_data['offsetOfData'] + 64: common_data['offsetOfData'] + 68])[0]
                                   }
+
+                    if header_data['id'] == self.ID_FAST_PRESSURE:
+                        sensor = {'fast_pressure': unpack('<f', data[common_data['offsetOfData']: common_data['offsetOfData'] + 4])[0]}
 
                     if header_data['id'] == self.ID_ASCII:
                         sensor = {'string': unpack('<{}s'.format(len(data)), data)}

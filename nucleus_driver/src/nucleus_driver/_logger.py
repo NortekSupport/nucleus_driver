@@ -89,20 +89,9 @@ class Logger:
         alti_fields = ['status.altimeterDistanceValid', 'status.altimeterQualityValid', 'status.pressureValid', 'status.temperatureValid',
                        'serialNumber', 'soundSpeed', 'temperature', 'pressure',
                        'altimeterDistance', 'altimeterQuality']
-        '''
-        cp_fields = ['serialNumber', 'soundVelocity', 'temperature', 'pressure',
-                     'cellSize', 'blanking', 'numberOfCells', 'ambiguityVelocity']
 
-        if self.cp_nc is not None:
-            for index in range(self.cp_nc * 3):
-                cp_fields.append('velocityData_{}'.format(index))
+        fast_pressure_fields = ['fast_pressure']
 
-            for index in range(self.cp_nc * 3):
-                cp_fields.append('amplitudeData_{}'.format(index))
-
-            for index in range(self.cp_nc * 3):
-                cp_fields.append('correlationData_{}'.format(index))
-        '''
         fc_fields = ['status.pointsUsedInEstimation',
                      'hardIron.x', 'hardIron.y', 'hardIron.z',
                      'sAxis_0', 'sAxis_1', 'sAxis_2',
@@ -123,7 +112,7 @@ class Logger:
                        mag_fields,
                        dvl_fields,
                        alti_fields,
-                       #cp_fields,
+                       fast_pressure_fields,
                        fc_fields,
                        string_fields]
 
