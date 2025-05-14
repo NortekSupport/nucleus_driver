@@ -93,6 +93,25 @@ class App(cmd2.Cmd):
 
             return True
 
+        def tcp_port_configuration() -> (bool, int):
+
+            self.nucleus_driver.messages.write_message('\ntcp - port: ')
+            self.nucleus_driver.messages.write_message('[0] 9000 - command & stream')
+            self.nucleus_driver.messages.write_message('[1] 9002 - stream only')
+            reply = input('Input integer value in range [0:1]: ')
+
+            if reply == '0':
+                port = 9000
+            elif reply == '1':
+                port = 9002
+            else:
+                self.nucleus_driver.messages.write_message('Invalid selection')
+                return False, None
+
+            self.nucleus_driver.connection.set_tcp_configuration(port=port)
+
+            return True, port
+
         config_status = False
         password = None
 
@@ -101,7 +120,12 @@ class App(cmd2.Cmd):
 
         elif connect_args.connection_type == 'tcp':
             config_status = tcp_configuration()
+
+            port = None
             if config_status:
+                config_status, port = tcp_port_configuration()
+
+            if config_status and port == 9000:
                 password = input('\ntcp - password: ')
 
         if not config_status:

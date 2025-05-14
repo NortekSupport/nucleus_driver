@@ -251,6 +251,11 @@ class Connection:
                 return False
 
             self._connected = True
+
+            if self.tcp_configuration.port == 9002:
+                # No need to login to the Nucleus 
+                return True
+            
             if not _login_tcp():
                 self.disconnect()
                 return False
