@@ -42,9 +42,9 @@ class NucleusDriver:
 
         self.connection.set_serial_configuration(port=port)
 
-    def set_tcp_configuration(self, host=None):
+    def set_tcp_configuration(self, host=None, port=None):
 
-        self.connection.set_tcp_configuration(host=host)
+        self.connection.set_tcp_configuration(host=host, port=port)
 
     def connect(self, connection_type, password=None) -> bool:
 

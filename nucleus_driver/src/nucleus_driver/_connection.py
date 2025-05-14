@@ -251,6 +251,11 @@ class Connection:
                 return False
 
             self._connected = True
+
+            if self.tcp_configuration.port == 9002:
+                # No need to login to the Nucleus 
+                return True
+            
             if not _login_tcp():
                 self.disconnect()
                 return False
@@ -277,6 +282,9 @@ class Connection:
         if not self.get_connection_status():
             self.messages.write_warning('Failed to establish connection to device')
             return False
+
+        if self.get_connection_type() == 'tcp' and self.tcp_configuration.port == 9002:
+            get_device_info = False
 
         if get_device_info:
             if not self.set_clockstring():
