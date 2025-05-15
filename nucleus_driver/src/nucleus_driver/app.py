@@ -121,11 +121,12 @@ class App(cmd2.Cmd):
         elif connect_args.connection_type == 'tcp':
             config_status = tcp_configuration()
 
-            port = None
+            # This may be added when nucleus_driver fully supports the streaming port
+            """ port = None
             if config_status:
-                config_status, port = tcp_port_configuration()
+                config_status, port = tcp_port_configuration() """
 
-            if config_status and port == 9000:
+            if config_status: # and port == 9000:
                 password = input('\ntcp - password: ')
 
         if not config_status:
