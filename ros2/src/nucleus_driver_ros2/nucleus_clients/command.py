@@ -19,9 +19,10 @@ class ClientCommand(Node):
 
         self.request = Command.Request()
 
-    def send_request(self, command, timeout_sec=None):
+    def send_request(self, command, nmea=False, timeout_sec=None):
         
         self.request.command = command
+        self.request.nmea = nmea
 
         self.call = self.client.call_async(self.request)
         
