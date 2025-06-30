@@ -1,11 +1,21 @@
 
 # BlueOS extension
 
+## BETA
+
+This extension is currently under active development, with ongoing enhancements aimed at providing full support for AUTO and GUIDED modes in the BlueROV2.
+
+As such, any release from version 2.0.0 onward should be considered a BETA version. While we strive for stability and usability, new features may still be in progress and occasional issues may arise.
+
+If you encounter unexpected behavior or problems with a new release, please don’t hesitate to contact our [support](https://support.nortekgroup.com) team. Your feedback is invaluable in helping us improve the extension.
+
+## Intro
+
 This is a Nucleus extension for the BlueOS software running on BlueROV2. 
 
 It works by wrapping the Nucleus Driver in a docker image, with a script that feeds velocity data from the Nucleus device into the ArduSub control system through mavlink commands.
 
-This allows the user to utilize the "position hold" functionality in the ROV
+This allows the user to utilize the "position hold", "auto" and "guided" functionality in the ROV. "auto" and "guided" require the Nucleus to have the INS license in order to work.
 
 ## Nortek Nucleus integration
 
@@ -15,11 +25,13 @@ To mount the Nucleus unto the BlueROV2 and connect it to its network, refer Nort
 
 ### BlueOS
 
-BlueOS needs to be of version 1.1.0-beta18 or newer in order to support the adding of third party extensions.
+BlueOS needs to be of version 1.2.6 or newer in order to support the adding of third party extensions.
 
 ### ArduSub
 
-ArduSub needs to be of version 4.1.0 or newer for it to support the VISUAL_POSITION_DELTA packets used to send velocity data to the ROV.
+ArduSub needs to be of version 4.1.2 or newer for it to support the mavlink packets used to send data from the Nucleus.
+
+The current version of the extension is developed on ArduSub version 4.5.0 and it is recommended to use at least this version of ArduSub.
 
 ### Nucleus
 
@@ -68,89 +80,103 @@ The extension itself can be opened in the menu by navigating to Extensions > Nuc
 
 Opening this will present the user with the GUI for the Nucleus extension which is covered in [Using the extension](#using-the-extension)
 
-### Docker
-
-To set this extension up manually, ssh into the Raspberry Pi on the BlueROV2 (or access via red-pill in [BlueOS terminal](https://docs.bluerobotics.com/ardusub-zola/software/onboard/BlueOS-1.0/advanced-usage/#terminal)).
-
-**N.B.** The docker image available on dockerhub is set to use port 80 for its user interface which allows BlueOS to handle which port this user interface should be available at. For the manual approach it is therefore necessary to build the docker image with a different port if you wish to have access to the user interface.
-
-**N.B.** In the current version of the extension it is necessary to have access to the GUI as it is required for establishing the connection to the Nucleus.
-
-On the onboard computer, clone this repo in your preferred path with the following command:
-
-```
-git clone git@github.com:nortekgroup/nucleus_driver.git
-```
-
-Navigate to the blueos_extension folder (the folder containing the Dockerfile) and build the docker image with the following command:
-
-```
-docker build . -t nucleus_driver
-```
-
-The GUI of the extension is by default on port 5000. 
-
-If another port is preferred for the GUI the image can be build with the preferred port as an argument with the following command
-
-```
-docker build . -t nucleus_driver --build-arg PORT=5000
-```
-
-with the value following "`PORT=`" being your preferred port.
-
-The docker container can be executed with the following command
-
-```
-docker run --net=host --add-host=host.docker.internal:host-gateway -v /root/.config/blueos:/root/.config --name=nucleus_driver --restart=unless-stopped nucleus_driver
-```
-
-`--net=host` allows the container to share the network of the ROV which is necessary for it to communicate with the ROV and make the GUI available
-
-`-v /root/.config/blueos:/root/.config` maps the volume "/root/.config/blueos" from the Raspberry Pi into "/root/.config" in the container. This allows the container the store configuration data in-between runs.
-
-`--name=Nucleus-Driver` is the preferred name of the container.
-
-`--restart=unless-stopped` allows the extension to automatically start when the ROV is powered up
-
-With the docker container running, the GUI can be accessed in a browser by navigating to `blueos.local:<port>` (or `192.168.2.2:<port>`), where `<port>` is the specified port from the image creation. See [Using the extension](#using-the-extension) to learn about how to use the GUI.
-
 ## Using the extension
+
+Read the whole section before using the extension, there are critical settings for good performance described in the end.
 
 **N.B.** In order for the extension to work it is necessary to change certain controller parameters. Refer to "Controller parameters" section for more info
 
-**N.B.** In order for the "position hold" algorithm to perform well it might be necessary to change the ROV's PID parameters. Refer to "PID parameters" section for more info
+**N.B.** In order for the "position hold", "auto" and "guided" algorithm to perform well it might be necessary to change the ROV's PID parameters. Refer to "PID parameters" section for more info
 
-With the extension added, its user interface (GUI) can be found by navigating to Extensions -> Nucleus: Position hold in the BlueOS menu.
+**N.B.** In order to use the "auto" and "guided" features of the ROV, it is necessary for the Nucleus to output INS data, i.e. it needs to have an INS license.
 
-In the case of a manual installation through docker, the GUI can be found y navigating to `blueos.local:<port>` where `<port>` is he port specified when the docker image was created. 
+### GUI
 
-The GUI presents the user with a home page and two pages for parametrization. These pages can be navigated in-between using the navigation banner at the top of the GUI
+With the extension added, its user interface (GUI) can be found by navigating to Extensions -> Nucleus in the BlueOS menu.
 
-### Home
+The GUI presents the user with a home page that contains the relevant information for the extension
 
-The home screen presents the user with a status field which displays the results of various checks performed during the startup of the ROV. It is necessary for all of these checks to pass in order for extension to work. Some easy troubleshooting is presented in the home screen in case any of these checks were to fail
+The settings field is used to connect to the nucleus by specifying its hostname, i.e. `192.168.2.201`, and whether the extension should be enabled. If not enabled, the extension will still read and handle packets sent from the Nucleus, but it will not send any mavlink messages to the ROV. This means that if the Nucleus is connected and running, but it is not enabled, from the ROV's point of view the extension might as well not be present.
 
-The Nucleus hostname field is used to set the IP address used to connect to the Nucleus device. This IP address should be the same as the static IP configured on the Nucleus device.
+The status field contains information about certain checks that has to be OK in order for the extension to work properly. If any of these are not OK, it is unlikely that the ROV will receive any mavlink messages from the extension. If either `heartbeat` or `cable guy` is not OK, power cycle the ROV. If either `connected` or `configured` is not OK, (re)connect the Nucleus. If `GPS origin set` is not Ok, the ROV has not received its initial position, which is necessary in order to use the "auto" and "guided" feature. Set the GPS origin with the map in the GUI.
 
-It is also a field which allows the user to decide whether the driver is enabled. The driver must be enabled for it to feed velocity data to the ROV. If it is not enabled the driver is still running and extracting data from the Nucleus, but the velocity is not sent to the ROV.
+The packet counter keeps track of the packets sent to the ROV. "Sent" count how many packets where successfully sent, "Failed" count how many packets that failed to be sent, and "Skipped" count how many packets has not been sent, due to the extension not being enabled. Verifying that the "Sent" packet counter is increasing is a good indication that the extension is working.
 
-The packet counter field displays how many velocity data packets has been handled by the extension. Sent packages refers to packages that has been sent to the ROV, Failed packets refers to packets that for some reason failed to be sent, and Skipped packets are packets that were in good condition and ready to be sent, but weren't due to the driver not being enabled.
+Set vehicle location is used to set the latitude and longitude position in the ROV, and provides the initial position for the ROV when using the "auto" and "guided" features. Upon setting the vehicle location, the user should see the ROV move to the specified position in the map in QGroundControl.
+
+**N.B.** ArduSub only allows for setting the gps origin **ONLY ONCE(!)**. If GPS origin is incorrectly set, the user unfortunately has to power cycle the ROV.
+
+**N.B.** In order for the map to be visible in the user interface, internet is required.
+
+#### Start up procedure
+
+This is a recommended procedure for using the extension in order to use the "auto" feature:
+
+1. Power on the ROV
+2. If not already running, start the extension
+3. Open the extension GUI
+4. Open QGroundControl
+5. launch the ROV
+6. Drive the ROV to its initial position
+7. Set the vehicle position through the GUI (make sure you do this successfully on the first try)
+8. Connect to the Nucleus through the GUI
+
+With the initial position correctly set, and with the Nucleus streaming data to the ROV, you should now be able to see the ROV being correctly tracked in the QGroundControl map.
+
+The ROV is now ready to use the "auto" and "guided" feature.
+
+In order to use the "position hold" feature one simply has to connect the Nucleus through the GUI. This feature is not sensitive to properly setting up the ROV's initial position.
 
 ### PID parameters
 
 **N.B.** Adjusting any of these parameters **WILL** change the behavior of the ROV
 
-**N.B.** Neither the extension nor the ROV will remember the original values of these parameters in case they are changed. It is therefore the users responsibility to remember the original values in case they wish to revert back to the original parameterization.
+**N.B.** The ROV will not remember the original values of these parameters in case they are changed. It is therefore the users responsibility to remember the original values in case they wish to revert back to the original parameterization.
 
-The PID parameters page gives the user opportunity to modify selected PID parameters in the controller. Good parameterization is necessary for a good performance of the ROV. The correct parameters varies from vehicle to vehicle as the physical attributes of the ROV has an impact on its behavior. However, recommended parameters for a standard BlueROV2 with only the Nucleus being the third party installation is presented on this page.
+The PID parameters can be changed through the "Autopilot parameters" menu in the blueos.local home page. Good parameterization is necessary for a good performance of the ROV. The correct parameters varies from vehicle to vehicle as the physical attributes of the ROV has an impact on its behavior. However, recommended starting parameters for a standard BlueROV2 with only the Nucleus being the third party installation are as follows:
+
+| Parameter | Value |
+| ---| --- |
+| PSC_POSXY_P | 1.0 |
+| PSC_POSZ_P | 1.0 |
+| PSC_VELXY_P | 5.0 |
+| PSC_VELXY_I | 0.5 |
+| PSC_VELXY_D | 0.8 |
+| PSC_VELZ_P | 5.0 |
+
+While these parameters might provide a well performing ROV, they are most likely not optimal. It is recommended to adjust these parameters to get the desired ROV behavior.
 
 ### Controller parameters
 
 **N.B.** Adjusting any of these parameters may change the behavior of the ROV
 
-**N.B.** Neither the extension nor the ROV will remember the original values of these parameters in case they are changed. It is therefore the users responsibility to remember the original values in case they wish to revert back to the original parameterization.
+**N.B.** The ROV will not remember the original values of these parameters in case they are changed. It is therefore the users responsibility to remember the original values in case they wish to revert back to the original parameterization.
 
-In order for the controller to accept and utilize the velocity packets sent from the Nucleus, certain parameters has to be changed. The parameters and their required values are presented on this page. 
+In order for the controller to accept and utilize the velocity and position packets sent from the Nucleus, certain parameters has to be changed. The parameters can be changed in the "Autopilot parameters" menu in the blueos.local home page. 
 
 After these parameters has been changed it is necessary to power cycle the vehicle for these parameters to take effect
 
+The parameters and their required values are the following
+
+| Parameter | Value |
+| ---| --- |
+| SERIAL0_PROTOCOL | MAVLink2 |
+| EK3_ENABLE | Enabled |
+| AHRS_EKF_TYPE | Enable EKF3 |
+| EK2_ENABLE | Disable |
+| VISO_TYPE | MAVLink |
+| EK3_SRC1_POSXY | ExternalNav |
+| EK3_SRC1_VELXY | ExternalNav |
+| EK3_SRC1_YAW | ExternalN |
+| EK3_SRC2_YAW | Compass |
+
+Also, EK3 algorithm in the ROV may struggle in "auto" mode in terms of selecting the appropriate estimated positions. This has become apparent in testing and its noticed with "EKf3 lane switch" errors. As well as jumps in the estimated position which can be seen in the ROVs position in QGroundControl.
+
+If this is happening, a dirty fix is to adjust the "EKF3 Lane Relative Error Sensitivity Threshold", which is the threshold for how much error there can be in the estimates before the algorithm changes the "lane". By increasing this value the algorithm is less likely to change lanes while running and is likely to yield a better performance as these lane changes causes quite big jump it the estimate positions.
+
+During testing there were good results by setting this value to its maximum, that is:
+
+
+| Parameter | Value |
+| ---| --- |
+| EK3_ERR_THRESH | 1.0 |
