@@ -84,7 +84,7 @@ class Logger:
                       'fomBeam1', 'fomBeam2', 'fomBeam3', 'dtBeam1', 'dtBeam2', 'dtBeam3',
                       'timeVelBeam1', 'timeVelBeam2', 'timeVelBeam3',
                       'velocityX', 'velocityY', 'velocityZ', 'fomX', 'fomY', 'fomZ',
-                      'dtXYZ', 'timeVelXYZ']
+                      'dtXYZ']
 
         alti_fields = ['status.altimeterDistanceValid', 'status.altimeterQualityValid', 'status.pressureValid', 'status.temperatureValid',
                        'serialNumber', 'soundSpeed', 'temperature', 'pressure',

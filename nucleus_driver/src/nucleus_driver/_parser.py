@@ -169,12 +169,16 @@ class Parser:
                 self.logger.open_current_profile_writer(number_of_cells=int(packet['numberOfCells']))
 
             try:
+                
                 if packet['id'] == self.ID_CURRENT_PROFILE:
                     self.logger.current_profile_writer.writerow(packet)
+                elif packet['id'] == self.ID_SPECTRUM_ANALYZER:
+                    self.messages.warning('Spectrum analyzer packets are not logged.')
                 else:
                     self.logger.packet_writer.writerow(packet)
             except ValueError as exception:
                 self.messages.write_warning('Failed to write package to csv file: {}'.format(exception))
+                
 
             self.logger._writing_packet = False
 
@@ -575,8 +579,7 @@ class Parser:
                                   'fomX': unpack('<f', data[108:112])[0],
                                   'fomY': unpack('<f', data[112:116])[0],
                                   'fomZ': unpack('<f', data[116:120])[0],
-                                  'dtXYZ': unpack('<f', data[120:124])[0],
-                                  'timeVelXYZ': unpack('<f', data[124:128])[0]
+                                  'dtXYZ': unpack('<f', data[120:124])[0]
                                   }
 
                     if header_data['id'] == self.ID_ALTIMETER:
