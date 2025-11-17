@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 
-from interfaces.msg import BottomTrack
+from interfaces.msg import WaterTrack
 
 
 class SubscriberWaterTrackPackets(Node):
@@ -11,7 +11,7 @@ class SubscriberWaterTrackPackets(Node):
 
         super().__init__('water_track_packets')
 
-        self.subscription = self.create_subscription(BottomTrack, topic='nucleus_node/water_track_packets', callback=callback_function, qos_profile=qos_profile)
+        self.subscription = self.create_subscription(WaterTrack, topic='nucleus_node/water_track_packets', callback=callback_function, qos_profile=qos_profile)
 
     def subscribe(self):
 

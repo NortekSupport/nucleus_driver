@@ -46,4 +46,3 @@ float32 fom_x
 float32 fom_y
 float32 fom_z
 float32 dt_xyz
-float32 time_vel_xyz

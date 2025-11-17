@@ -425,7 +425,6 @@ class NucleusNode(Node):
                 bottom_track_packet.fom_y = packet["fomY"]
                 bottom_track_packet.fom_z = packet["fomZ"]
                 bottom_track_packet.dt_xyz = packet["dtXYZ"]
-                bottom_track_packet.time_vel_xyz = packet["timeVelXYZ"]
 
                 try:
                     self.bottom_track_publisher.publish(bottom_track_packet)
@@ -486,7 +485,6 @@ class NucleusNode(Node):
                 water_track_packet.fom_y = packet["fomY"]
                 water_track_packet.fom_z = packet["fomZ"]
                 water_track_packet.dt_xyz = packet["dtXYZ"]
-                water_track_packet.time_vel_xyz = packet["timeVelXYZ"]
 
                 try:
                     self.water_track_publisher.publish(water_track_packet)
