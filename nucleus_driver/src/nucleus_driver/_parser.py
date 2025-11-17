@@ -11,6 +11,41 @@ MAX_STREAMING_TIMEOUT = 5.0
 MIN_STREAMING_TIMEOUT = 0.1
 UPDATE_STREAMING_TIMEOUT = True
 
+
+def array_to_dict_extraction(data, sensor, format, rows, columns, data_type):
+
+    bin_format = format
+    if 'B' in format or 'b' in format or 'c' in format or '?' in format:
+        bins = 1
+    elif 'H' in format or 'h' in format or 'e' in format:
+        bins = 2
+    elif 'f' in format or 'i' in format or 'I' in format or 'l' in format or 'L' in format:
+        bins = 4
+    elif 'd' in format or 'q' in format or 'Q' in format:
+        bins = 8
+    else:
+        raise Exception("format not supported")
+
+    element_size = bins
+
+    for i in range(rows * columns):
+        offset = i * element_size
+        values = unpack(bin_format, data[offset:offset + element_size])[0]
+        sensor[f'{data_type}_{i}'] = values
+
+def array_to_dict_extraction_qc_data(data, sensor, rows, columns, data_type, func):
+
+    bin_format = '<B'
+    for i in range(rows * columns):
+        values = unpack(bin_format, data[i:i + 1])[0]
+        sensor[f'{data_type}_{i}.lowAmplitude'] = func(status_bits=values, bit=0)
+        sensor[f'{data_type}_{i}.lowCorrelation'] = func(status_bits=values, bit=1)
+        sensor[f'{data_type}_{i}.amplitudeSpike'] = func(status_bits=values, bit=2)
+        sensor[f'{data_type}_{i}.beyondSurfaceBottom'] = func(status_bits=values, bit=3)
+        sensor[f'{data_type}_{i}.sidelobeInterface'] = func(status_bits=values, bit=4)
+        sensor[f'{data_type}_{i}.velocitySpike'] = func(status_bits=values, bit=5)
+
+
 class Parser:
     FAMILY_ID_NUCLEUS = 0x20
     FAMILY_ID_DVL = 0x16
@@ -27,6 +62,7 @@ class Parser:
     ID_SPECTRUM_ANALYZER = 0x20
     ID_CURRENT_PROFILE = 0xC0
     ID_FAST_PRESSURE = 0x96
+    ID_ADCP = 0xC1
 
     DEFAULT_RESPONSE_TIMEOUT = 5
 
@@ -169,8 +205,7 @@ class Parser:
                 self.logger.open_current_profile_writer(number_of_cells=int(packet['numberOfCells']))
 
             try:
-                
-                if packet['id'] == self.ID_CURRENT_PROFILE:
+                if packet['id'] == self.ID_CURRENT_PROFILE or packet['id'] == self.ID_ADCP:
                     self.logger.current_profile_writer.writerow(packet)
                 elif packet['id'] == self.ID_SPECTRUM_ANALYZER:
                     self.messages.warning('Spectrum analyzer packets are not logged.')
@@ -599,7 +634,11 @@ class Parser:
 
                     if header_data['id'] == self.ID_CURRENT_PROFILE:
 
+                        config = unpack('<B', data[20:21])[0]
+
                         sensor = {'serialNumber': unpack('<I', data[16:20])[0],
+                                  'curProfConfig.bit0': _get_status(status_bits=config, bit=0),
+                                  'curProfConfig.bit1': _get_status(status_bits=config, bit=1),
                                   'soundVelocity': unpack('<f', data[24:28])[0],
                                   'temperature': unpack('<f', data[28:32])[0],
                                   'pressure': unpack('<f', data[32:36])[0],
@@ -608,26 +647,85 @@ class Parser:
                                   'numberOfCells': unpack('<H', data[44:46])[0],
                                   'ambiguityVelocity': unpack('<H', data[46:48])[0]}
 
-                        velocity_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'h')
+                        cells = sensor['numberOfCells']
                         velocity_data_offset = common_data['offsetOfData']
-                        velocity_data_size = 2 * 3 * sensor['numberOfCells']
-                        velocity_data = unpack(velocity_data_format, data[velocity_data_offset: velocity_data_offset + velocity_data_size])[:velocity_data_size]
-                        for index, velocity_cell in enumerate(velocity_data):
-                            sensor['velocityData_{}'.format(index)] = velocity_cell
+                        velocity_data_end = velocity_data_offset + cells * 6  # 3 beams * 2 bytes per value
+                        array_to_dict_extraction(data=data[velocity_data_offset:velocity_data_end],
+                                                 sensor=sensor,
+                                                 format='<h',
+                                                 rows=cells,
+                                                 columns=3,
+                                                 data_type="velocityData")
 
-                        amplitude_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'B')
-                        amplitude_data_offset = common_data['offsetOfData'] + 6 * sensor['numberOfCells']
-                        amplitude_data_size = 1 * 3 * sensor['numberOfCells']
-                        amplitude_data = unpack(amplitude_data_format, data[amplitude_data_offset: amplitude_data_offset + amplitude_data_size])[:amplitude_data_size]
-                        for index, amplitude_cell in enumerate(amplitude_data):
-                            sensor['amplitudeData_{}'.format(index)] = amplitude_cell
+                        amplitude_data_offset = velocity_data_end
+                        amplitude_data_end = amplitude_data_offset + cells * 3  # 3 beams * 1 byte per value
+                        array_to_dict_extraction(data=data[amplitude_data_offset:amplitude_data_end],
+                                                 sensor=sensor,
+                                                 format='<B',
+                                                 rows=cells,
+                                                 columns=3,
+                                                 data_type="amplitudeData")
 
-                        correlation_data_format = '<' + ''.ljust(3 * sensor['numberOfCells'], 'B')
-                        correlation_data_offset = common_data['offsetOfData'] + 9 * sensor['numberOfCells']
-                        correlation_data_size = 1 * 3 * sensor['numberOfCells']
-                        correlation_data = unpack(correlation_data_format, data[correlation_data_offset: correlation_data_offset + correlation_data_size])[:correlation_data_size]
-                        for index, correlation_cell in enumerate(correlation_data):
-                            sensor['correlationData_{}'.format(index)] = correlation_cell
+                        correlation_data_offset = amplitude_data_end
+                        correlation_data_end = correlation_data_offset + cells * 3  # 3 beams * 1 byte per value
+                        array_to_dict_extraction(data=data[correlation_data_offset:correlation_data_end],
+                                                 sensor=sensor,
+                                                 format='<B',
+                                                 rows=cells,
+                                                 columns=3,
+                                                 data_type="correlationData")
+
+                    if header_data['id'] == self.ID_ADCP:
+                        
+                        adcp_configuration = unpack('<B', data[20:21])[0]
+                        adcp_status = unpack('<B', data[21:22])[0]
+
+                        sensor = {'serialNumber': unpack('<I', data[16:20])[0],
+                                  'adcpConfig.bit0': _get_status(status_bits=adcp_configuration, bit=0),
+                                  'adcpConfig.bit1': _get_status(status_bits=adcp_configuration, bit=1),
+                                  'status.highTilt': _get_status(status_bits=adcp_status, bit=0),
+                                  'status.invalidVelocity': _get_status(status_bits=adcp_status, bit=1),
+                                  'status.estimatedPosition': _get_status(status_bits=adcp_status, bit=2),
+                                  'status.invalidEarthCoordinates': _get_status(status_bits=adcp_status, bit=3),
+                                  'status.vehicleVelRemoved': _get_status(status_bits=adcp_status, bit=4),
+                                  'status.binMapping': _get_status(status_bits=adcp_status, bit=6),
+                                  'status.posEnu': _get_status(status_bits=adcp_status, bit=7),
+                                  'soundVelocity': unpack('<f', data[24:28])[0],
+                                  'temperature': unpack('<f', data[28:32])[0],
+                                  'pressure': unpack('<f', data[32:36])[0],
+                                  'cellSize': unpack('<f', data[36:40])[0],
+                                  'blanking': unpack('<f', data[40:44])[0],
+                                  'numberOfCells': unpack('<H', data[44:46])[0],
+                                  'positionX': unpack('<f', data[48:52])[0],
+                                  'positionY': unpack('<f', data[52:56])[0],
+                                  'positionZ': unpack('<f', data[56:60])[0],
+                                  'Longitude': unpack('<d', data[60:68])[0], # is this correct ds say double?
+                                  'Latitude': unpack('<d', data[68:76])[0], # is this correct ds say double?
+                                  'roll': unpack('<f', data[76:80])[0],
+                                  'pitch': unpack('<f', data[80:84])[0],
+                                  'heading': unpack('<f', data[84:88])[0],
+                                  'depth': unpack('<f', data[88:92])[0],
+                                  'altitude': unpack('<f', data[92:96])[0],
+                                  }
+
+                        bins = sensor['numberOfCells']
+                        adcp_data_offset = common_data['offsetOfData']
+                        adcp_data_end = adcp_data_offset + bins * 6
+                        array_to_dict_extraction(data=data[adcp_data_offset:adcp_data_end],
+                                                 sensor=sensor,
+                                                 format='<H',
+                                                 rows=bins,
+                                                 columns=3,
+                                                 data_type="velocityData")
+
+                        QC_data_offset = adcp_data_end
+                        QC_data_end = QC_data_offset + bins * 3
+                        array_to_dict_extraction_qc_data(data=data[QC_data_offset:QC_data_end],
+                                                 sensor=sensor,
+                                                 rows=bins,
+                                                 columns=3,
+                                                 data_type="qcData",
+                                                 func=_get_status)
 
                     if header_data['id'] == self.ID_FIELD_CALIBRATION:
                         status = unpack('<I', data[12:16])[0]

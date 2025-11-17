@@ -253,11 +253,15 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
 
-        if self.nucleus_driver.parser.thread.is_alive() and 'APPLYTAG' not in command.upper():
-            self.nucleus_driver.messages.write_message('Can not send command to Nucleus while parser is running')
-            return
+        #if self.nucleus_driver.parser.thread.is_alive() and 'APPLYTAG' not in command.upper():
+        #    self.nucleus_driver.messages.write_message('Can not send command to Nucleus while parser is running')
+        #    return
 
-        reply = self.nucleus_driver.send_command(command)
+        nema = False
+        if command.startswith('$'):
+            nema = True
+
+        reply = self.nucleus_driver.send_command(command, nmea=nema)
 
         for entry in reply:
             try:

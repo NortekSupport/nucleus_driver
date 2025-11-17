@@ -88,8 +88,11 @@ class NucleusDriver:
 
         command = command.rstrip('\n').rstrip('\r')
 
-        if command.upper() in BLOCKED_COMMANDS:
-            self.messages.write_message(f'{command} is not supported as a command in this application. Use the applications functionality instead')
+        if any(blocked_command in command.upper() for blocked_command in BLOCKED_COMMANDS):
+            self.messages.write_message(f'{command} is not supported through the "command" method. Use the appropriate method for this command instead.')
+
+        #if command.upper() in BLOCKED_COMMANDS:
+        #    self.messages.write_message(f'{command} is not supported as a command in this application. Use the applications functionality instead')
 
         else:
 

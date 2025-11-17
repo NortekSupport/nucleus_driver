@@ -264,16 +264,6 @@ class Flash:
 
             time.sleep(80)
 
-            serial_number = self.connection.get_serial_number_from_tcp_hostname()
-
-            if 'Fusion' in self.nucleus_firmware_name:
-                condition = self.connection.set_tcp_hostname_from_serial_number(serial_number=serial_number, name='NortekFusion')
-            else:
-                condition = self.connection.set_tcp_hostname_from_serial_number(serial_number=serial_number, name='NORTEK')
-
-            if condition is not True:
-                self.messages.write_warning(message='Failed to retrieve hostname. Attempting to reconnect with old hostname')
-
             self.connection.connect(connection_type='tcp', password=password)
 
             if not self.connection.get_connection_status():

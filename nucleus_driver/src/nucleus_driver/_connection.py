@@ -19,6 +19,7 @@ class Connection:
 
     CONNECTION_TYPES = ['serial', 'tcp']
     TIMEOUT = 0.01  # This is not the timeout for the read function of this driver as that is handled in the read function, but rather the timeout of the actual pyserial and socket read function
+    #TIMEOUT = 10  # Increased timeout to 0.1 seconds to improve reliability
 
     @dataclass
     class SerialConfiguration:
@@ -428,17 +429,36 @@ class Connection:
 
             try:
                 data = command
+                max_wait_time = 30.0  # Maximum total time to wait for large transfers
+                start_time = time.perf_counter()
 
                 while len(data):
                     try:
                         sent = self.tcp.send(data)
                         data = data[sent:]
                     except socket.error as e:
-                        if e.errno != errno.EAGAIN:
+                        
+                        if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK or isinstance(e, socket.timeout):
+                            # Socket buffer is full, wait for it to be ready
+                            # Check if socket is ready for writing with 1 second timeout
+                            ready_to_write, _, error_sockets = select.select([], [self.tcp], [self.tcp], 1.0)
+                            
+                            if error_sockets:
+                                raise socket.error("Socket error during select")
+                            elif ready_to_write:
+                                continue  # Try sending again
+                            else:
+                                # Check if we've exceeded maximum wait time
+                                total_elapsed = time.perf_counter() - start_time
+                                if total_elapsed > max_wait_time:
+                                    raise socket.timeout(f"Overall send timeout after {total_elapsed:.1f}s")
+                                continue  # Try again
+                        else:
+                            # Some other socket error
                             raise e
-                        select.select([], [self.tcp], [])
 
                 return True
+                
             except Exception as exception:
                 self.messages.write_exception(message='Failed to send "{}" over tcp: {}'.format(command[:20], exception))
                 return False

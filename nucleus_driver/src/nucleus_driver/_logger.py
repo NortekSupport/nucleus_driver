@@ -163,19 +163,38 @@ class Logger:
             cp_fields = ['serialNumber', 'curProfConfig.bit0', 'curProfConfig.bit1', 'soundVelocity', 'temperature',
                          'pressure', 'cellSize', 'blanking', 'numberOfCells', 'ambiguityVelocity']
 
-            for index in range(number_of_cells * 3):
-                cp_fields.append('velocityData_{}'.format(index))
+            adcp_fields = ['serialNumber', 'adcpConfig.bit0', 'adcpConfig.bit1', 
+                           'status.highTilt', 'status.invalidVelocity',
+                           'status.estimatedPosition', 'status.invalidEarthCoordinates', 'status.vehicleVelRemoved', 
+                           'status.binMapping', 'status.posEnu', 'soundVelocity', 'temperature', 
+                           'pressure', 'cellSize', 'blanking', 'numberOfCells', 'positionX', 'positionY', 'positionZ', 
+                           'Longitude', 'Latitude', 'roll', 'pitch', 'heading', 'depth', 'altitude']
+            
+            cell_fields = []
 
             for index in range(number_of_cells * 3):
-                cp_fields.append('amplitudeData_{}'.format(index))
+                cell_fields.append('velocityData_{}'.format(index))
 
             for index in range(number_of_cells * 3):
-                cp_fields.append('correlationData_{}'.format(index))
+                cell_fields.append('amplitudeData_{}'.format(index))
+
+            for index in range(number_of_cells * 3):
+                cell_fields.append('correlationData_{}'.format(index))
+
+            for index in range(number_of_cells * 3):
+                cell_fields.append('qcData_{}.lowAmplitude'.format(index))
+                cell_fields.append('qcData_{}.lowCorrelation'.format(index))
+                cell_fields.append('qcData_{}.amplitudeSpike'.format(index))
+                cell_fields.append('qcData_{}.beyondSurfaceBottom'.format(index))
+                cell_fields.append('qcData_{}.sidelobeInterface'.format(index))
+                cell_fields.append('qcData_{}.velocitySpike'.format(index))
 
             data_fields = [header_fields,
                            common_fields,
                            driver_fields,
-                           cp_fields]
+                           cp_fields,
+                           adcp_fields,
+                           cell_fields]
 
             field_names = list()
             for fields in data_fields:
