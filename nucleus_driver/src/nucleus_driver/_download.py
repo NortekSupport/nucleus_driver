@@ -2,6 +2,8 @@ from pathlib import Path
 from binascii import crc32
 from datetime import datetime
 
+from nucleus_driver._progress import NucleusProgressBar
+
 
 class Download:
 
@@ -12,6 +14,7 @@ class Download:
         self.commands = kwargs.get('commands')
         self.parser = kwargs.get('parser')
         self.logger = kwargs.get('logger')
+        self._progress_bar = NucleusProgressBar(suffix='bytes')
 
         self._path = str(Path.cwd()) + '/download'
 
@@ -42,17 +45,6 @@ class Download:
 
             elif dvl_data[:2] != b'\x00\x00' and dvl_data[2:4] == b'\x00\x00' and int.from_bytes(dvl_data[:2], 'little') <= int.from_bytes(b'\x00\x40', 'little'):
                 return dvl_data, crc_fail_data
-
-    @staticmethod
-    def progress_bar(current, total, bar_length=20):
-        fraction = current / total
-
-        arrow = int(fraction * bar_length - 1) * '-' + '>'
-        padding = int(bar_length - len(arrow)) * ' '
-
-        ending = '\n' if current == total else '\r'
-
-        print(f'Progress: [{arrow}{padding}] {int(fraction * 100)}%', end=ending)
 
     def set_path(self, path):
 
@@ -471,7 +463,6 @@ class Download:
 
             self.dvl_download_statistics['successful bytes'] = 0
             self.dvl_download_statistics['failed bytes'] = 0
-            percentage_previous = -1
 
             if path is None:
                 path = self._path
@@ -485,19 +476,20 @@ class Download:
 
                 file.write(get_all)
 
+                total_bytes = max(1, download_parameters['end'] - download_parameters['sa'])
                 downloaded_bytes = 0
                 data = b''
+                self._progress_bar.reset()
                 for index in range(download_parameters['sa'], download_parameters['end'], packet_length):
 
                     status, package = _download_data()
 
                     downloaded_bytes += len(package)
-                    percentage = downloaded_bytes * 100 / (download_parameters['end'] - download_parameters['sa'])
-                    if percentage > percentage_previous + 1:
-                        if percentage > 99:
-                            percentage = 100
-                        self.progress_bar(percentage, 100)
-                        percentage_previous = int(percentage)
+                    self._progress_bar.display_loading_bar(
+                        iteration=downloaded_bytes,
+                        total=total_bytes,
+                        done=downloaded_bytes >= total_bytes,
+                    )
 
                     if not status:
                         break
@@ -506,7 +498,8 @@ class Download:
 
                     data = _write_data_to_file(data, file, fail_file)
 
-                self.messages.write_message('Downloaded and converted {} bytes of data. {} bytes of data failed conversion due to CRC checks'.format(self.dvl_download_statistics['successful bytes'], self.dvl_download_statistics['failed bytes']))
+                if self.dvl_download_statistics['failed bytes'] > 0:
+                    self.messages.write_message('Downloaded and converted {} bytes of data. {} bytes of data failed conversion due to CRC checks'.format(self.dvl_download_statistics['successful bytes'], self.dvl_download_statistics['failed bytes']))
 
         return status
 
@@ -597,19 +590,19 @@ class Download:
             with open(file_path + '/nucleus_data.nucleus', 'wb') as file:
                 
                 file.write(get_all)
-                percentage_previous = -1
+                total_bytes = max(1, download_parameters['end'] - download_parameters['sa'])
                 downloaded_bytes = 0
+                self._progress_bar.reset()
                 for index in range(download_parameters['sa'], download_parameters['end'], packet_length):
 
                     status, package = _download_data()
 
                     downloaded_bytes += len(package)
-                    percentage = downloaded_bytes * 100 / (download_parameters['end'] - download_parameters['sa'])
-                    if percentage > percentage_previous + 1:
-                        if percentage > 99:
-                            percentage = 100
-                        self.progress_bar(percentage, 100)
-                        percentage_previous = int(percentage)
+                    self._progress_bar.display_loading_bar(
+                        iteration=downloaded_bytes,
+                        total=total_bytes,
+                        done=downloaded_bytes >= total_bytes,
+                    )
 
                     if not status:
                         break
@@ -627,7 +620,7 @@ class Download:
         path_folder = Path(path).parent
 
         self.logger.set_path(path=str(path_folder) + '/nucleus_converted')
-
+ 
         self.logger.start(_converting=True)
 
         with open(path, 'rb') as raw_file:
@@ -636,19 +629,20 @@ class Download:
             file_length = raw_file.tell()
             raw_file.seek(0, 0)
 
-            percentage_previous = -1
+            total_bytes = max(1, file_length)
+            self._progress_bar.reset()
 
             while True:
                 data = raw_file.read(1)
+                current = raw_file.tell()
+                is_done = (data == b'')
+                self._progress_bar.display_loading_bar(
+                    iteration=current,
+                    total=total_bytes,
+                    done=is_done,
+                )
 
-                percentage = raw_file.tell() * 100 / file_length
-                if percentage > percentage_previous + 1:
-                    if percentage > 99:
-                        percentage = 100
-                    self.progress_bar(percentage, 100)
-                    percentage_previous = int(percentage)
-
-                if data == b'':
+                if is_done:
                     break
 
                 self.parser.add_data(data)
