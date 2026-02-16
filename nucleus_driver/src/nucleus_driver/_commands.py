@@ -7,7 +7,8 @@ class Commands:
 
     DHCP_STATIC = ['DHCP', 'STATIC']
     ON_OFF = ['ON', 'OFF']
-    MODES = ['FAST_ACQ', 'AUTO', 'CRAWLER']
+    BT_MODES = ['FAST_ACQ', 'AUTO', 'CRAWLER']
+    WT_MODES = ['FIXED', 'ESTCUR']
     PL_MODES = ['MAX', 'USER']
     TRIGGER_SOURCES = ['INTERNAL', 'EXTRISE', 'EXTFALL', 'EXTEDGES', 'COMMAND']
     ALTI_RANGE = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
@@ -818,7 +819,7 @@ class Commands:
         set_bt_command = b'SETBT'
 
         if mode is not None:
-            if isinstance(mode, str) and mode.upper() in self.MODES:
+            if isinstance(mode, str) and mode.upper() in self.BT_MODES:
                 set_bt_command += b',MODE="' + mode.upper().encode() + b'"'
             else:
                 self.messages.write_warning('Invalid value for MODE in SETBT command')
@@ -928,6 +929,171 @@ class Commands:
         self.connection.write(get_bt_lim_command)
 
         get_reply = self._handle_reply(command=get_bt_lim_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+    def set_wt(self, mode=None, curx=None, cury=None, curz=None) -> [bytes]:
+        '''
+        TODO: Add this to nucleus_driver when USEWT functionality is implemented and tested
+        '''
+        self._reset_buffer()
+
+        set_wt_command = b'SETWT'
+
+        if mode is not None:
+            if mode.upper() in self.WT_MODES:
+                set_wt_command += b',MODE="' + mode.upper().encode() + b'"'
+            else:
+                self.messages.write_warning('Invalid value for MODE in SETWT command')
+
+        if curx is not None:
+            if isinstance(curx, int) or isinstance(curx, float):
+                set_wt_command += b',CURX=' + str(curx).encode()
+            else:
+                self.messages.write_warning('Invalid value for CURX in SETWT command')
+
+        if cury is not None:
+            if isinstance(cury, int) or isinstance(cury, float):
+                set_wt_command += b',CURY=' + str(cury).encode()
+            else:
+                self.messages.write_warning('Invalid value for CURY in SETWT command')
+
+        if curz is not None:
+            if isinstance(curz, int) or isinstance(curz, float):
+                set_wt_command += b',CURZ=' + str(curz).encode()
+            else:
+                self.messages.write_warning('Invalid value for CURZ in SETWT command')
+
+        set_wt_command += b'\r\n'
+
+        self.connection.write(set_wt_command)
+
+        get_reply = self._handle_reply(command=set_wt_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+    def get_wt(self, mode=False, curx=False, cury=False, curz=False) -> [bytes]:
+        '''
+        TODO: Add this to nucleus_driver when USEWT functionality is implemented and tested
+        '''
+        self._reset_buffer()
+
+        get_wt_command = b'GETWT'
+
+        if mode is True:
+            get_wt_command += b',MODE'
+
+        if curx is True:
+            get_wt_command += b',CURX'
+
+        if cury is True:
+            get_wt_command += b',CURY'
+
+        if curz is True:
+            get_wt_command += b',CURZ'
+
+        get_wt_command += b'\r\n'
+
+        self.connection.write(get_wt_command)
+
+        get_reply = self._handle_reply(command=get_wt_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+    def get_wt_lim(self, mode=False, curx=False, cury=False, curz=False) -> [bytes]:
+        '''
+        TODO: Add this to nucleus_driver when USEWT functionality is implemented and tested
+        '''
+        self._reset_buffer()
+
+        get_wt_lim_command = b'GETWTLIM'
+
+        if mode is True:
+            get_wt_lim_command += b',MODE'
+
+        if curx is True:
+            get_wt_lim_command += b',CURX'
+
+        if cury is True:
+            get_wt_lim_command += b',CURY'
+
+        if curz is True:
+            get_wt_lim_command += b',CURZ'
+
+        get_wt_lim_command += b'\r\n'
+
+        self.connection.write(get_wt_lim_command)
+
+        get_reply = self._handle_reply(command=get_wt_lim_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+    def update_wt(self, mode=None, curx=None, cury=None, curz=None) -> [bytes]:
+        '''
+        TODO: Add this to nucleus_driver when USEWT functionality is implemented and tested
+        '''
+        self._reset_buffer()
+
+        update_wt_command = b'UPDATEWT'
+
+        if mode is not None:
+            if mode.upper() in self.WT_MODES:
+                update_wt_command += b',MODE="' + mode.upper().encode() + b'"'
+            else:
+                self.messages.write_warning('Invalid value for MODE in UPDATEWT command')
+
+        if curx is not None:
+            if isinstance(curx, int):
+                update_wt_command += b',CURX=' + str(curx).encode()
+            else:
+                self.messages.write_warning('Invalid value for CURX in UPDATEWT command')
+
+        if cury is not None:
+            if isinstance(cury, int):
+                update_wt_command += b',CURY=' + str(cury).encode()
+            else:
+                self.messages.write_warning('Invalid value for CURY in UPDATEWT command')
+
+        if curz is not None:
+            if isinstance(curz, int):
+                update_wt_command += b',CURZ=' + str(curz).encode()
+            else:
+                self.messages.write_warning('Invalid value for CURZ in UPDATEWT command')
+
+        update_wt_command += b'\r\n'
+
+        self.connection.write(update_wt_command)
+
+        get_reply = self._handle_reply(command=update_wt_command, terminator=b'OK\r\n')
+
+        return get_reply
+
+    def update_wt_lim(self, mode=False, curx=False, cury=False, curz=False) -> [bytes]:
+        '''
+        TODO: Add this to nucleus_driver when USEWT functionality is implemented and tested
+        '''
+
+        self._reset_buffer()
+
+        update_wt_lim_command = b'UPDATEWTLIM'
+
+        if mode is True:
+            update_wt_lim_command += b',MODE'
+
+        if curx is True:
+            update_wt_lim_command += b',CURX'
+
+        if cury is True:
+            update_wt_lim_command += b',CURY'
+
+        if curz is True:
+            update_wt_lim_command += b',CURZ'
+
+        update_wt_lim_command += b'\r\n'
+
+        self.connection.write(update_wt_lim_command)
+
+        get_reply = self._handle_reply(command=update_wt_lim_command, terminator=b'OK\r\n')
 
         return get_reply
 
