@@ -833,7 +833,7 @@ class Parser:
             else:
                 self.ascii_packet.append(value)
 
-            if len(self.binary_packet) > self.MAX_PACKAGE_LENGTH or len(self.binary_packet) > 5 and len(self.binary_packet) >= self.binary_packet[1] + (self.binary_packet[4] & 0xff) | ((self.binary_packet[5] & 0xff) << 8):
+            if len(self.binary_packet) > self.MAX_PACKAGE_LENGTH or (len(self.binary_packet) > 5 and len(self.binary_packet) >= self.binary_packet[1] + ((self.binary_packet[4] & 0xff) | ((self.binary_packet[5] & 0xff) << 8))):
                 self.binary_packet, self.ascii_packet, self.reading_packet = self.add_binary_packet(self.binary_packet, self.ascii_packet)
 
             if len(self.ascii_packet) >= 2 and self.ascii_packet[-2] == 0x0d and self.ascii_packet[-1] == 0x0a:
