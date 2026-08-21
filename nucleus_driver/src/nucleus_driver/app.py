@@ -149,7 +149,7 @@ class App(cmd2.Cmd):
             self.nucleus_driver.messages.write_message('\r\nSuccessfully connected to Nucleus device\r\n')
 
             if self.nucleus_driver.streaming_socket:
-                self.nucleus_driver.messages.write_warning('You are connected to the streaming port. Commands to Nucleus will not work and functionality of driver will be limited. Use port 9000 for commands and streaming.\r\n')
+                self.nucleus_driver.messages.write_warning('You are connected to the streaming port. Some driver functionality may be limited. Use port 9000 for commands and streaming.\r\n')
                 self.streaming_socket = True
             else:
                 self.nucleus_driver.messages.write_message('ID:    {}'.format(self.nucleus_driver.connection.nucleus_id))
@@ -244,7 +244,6 @@ class App(cmd2.Cmd):
 
     @with_argparser(command_parser)
     @with_category(CMD_CAT_COMMAND)
-    @block_if_streaming_socket
     def do_command(self, command_args):
 
         command = command_args.command
@@ -252,10 +251,6 @@ class App(cmd2.Cmd):
         if not self.nucleus_driver.connection.get_connection_status():
             self.nucleus_driver.messages.write_message('Nucleus not connected')
             return
-
-        #if self.nucleus_driver.parser.thread.is_alive() and 'APPLYTAG' not in command.upper():
-        #    self.nucleus_driver.messages.write_message('Can not send command to Nucleus while parser is running')
-        #    return
 
         nema = False
         if command.startswith('$'):

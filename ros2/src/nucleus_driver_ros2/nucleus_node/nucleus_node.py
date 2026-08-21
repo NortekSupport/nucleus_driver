@@ -175,7 +175,7 @@ class NucleusNode(Node):
             command = request.command
             nmea = request.nmea
 
-            reply = self.nucleus_driver.send_command(command=command, nmea=nmea)
+            reply = self.nucleus_driver.send_command(command=command, nmea=nmea, check_reply=False)
 
             try:
                 for entry in reply:

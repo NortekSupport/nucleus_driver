@@ -44,7 +44,11 @@ class Commands:
                 if ascii_packet is not None:
                     get_reply += ascii_packet['bytes']
 
-                if terminator is not None and terminator in get_reply:
+                if terminator is not None and (
+                        terminator in get_reply
+                        or b'ERROR\r\n' in get_reply
+                        or b'$PNOR,ERROR*77\r\n' in get_reply
+                    ):
                     break
 
         return get_reply
@@ -67,7 +71,7 @@ class Commands:
                 get_error_reply = self.get_error().rstrip(b'OK\r\n')
                 self.messages.write_exception(message='Received ERROR after sending {}: {}'.format(command, get_error_reply))
 
-    def _handle_reply(self, command, terminator: bytes = None, timeout: int = 1, nmea=False) -> [bytes]:
+    def _handle_reply(self, command, terminator: bytes = None, timeout: int = 1, nmea=False, check_reply=True) -> [bytes]:
 
         if nmea:
             terminator = b'$PNOR,' + terminator.rstrip(b'\r\n')
@@ -75,11 +79,12 @@ class Commands:
             terminator = terminator + b'*' + nmea_checksum + b'\r\n'
 
         get_reply = self._get_reply(terminator=terminator, timeout=timeout, command=command)
-        self._check_reply(data=get_reply, terminator=terminator, command=command)
+        if check_reply:
+            self._check_reply(data=get_reply, terminator=terminator, command=command)
 
         reply_list = [i + b'\r\n' for i in get_reply.split(b'\r\n') if i]
 
-        if nmea:
+        if nmea and check_reply:
             for reply in reply_list:
                 try:
                     reply_split = reply.split(b'*')

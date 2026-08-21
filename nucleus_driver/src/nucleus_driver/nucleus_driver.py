@@ -80,7 +80,7 @@ class NucleusDriver:
     # Command
     ###########################################
 
-    def send_command(self, command: str, nmea: bool = False) -> [bytes]:
+    def send_command(self, command: str, nmea: bool = False, check_reply: bool = True) -> [bytes]:
 
         reply = list()
 
@@ -102,7 +102,7 @@ class NucleusDriver:
 
             self.connection.write(command_encoded)
 
-            reply = self.commands._handle_reply(command=command_encoded, terminator=b'OK\r\n', timeout=1, nmea=nmea)
+            reply = self.commands._handle_reply(command=command_encoded, terminator=b'OK\r\n', timeout=1, nmea=nmea, check_reply=check_reply)
 
         return reply
 
