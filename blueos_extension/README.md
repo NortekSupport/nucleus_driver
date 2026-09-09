@@ -86,6 +86,17 @@ The PID parameters can be changed through the "Autopilot parameters" menu in the
 
 | Parameter | Value |
 | ---| --- |
+| PSC_NE_POS_P | 1.0 |
+| PSC_D_POS_P | 1.0 |
+| PSC_NE_VEL_P | 5.0 |
+| PSC_NE_VEL_I | 0.5 |
+| PSC_NE_VEL_D | 0.8 |
+| PSC_D_VEL_P | 5.0 |
+
+The naming of these parameters were upaded in version `4.7.0` of ArduSub, for previos versions, address the following table instead:
+
+| Parameter | Value |
+| ---| --- |
 | PSC_POSXY_P | 1.0 |
 | PSC_POSZ_P | 1.0 |
 | PSC_VELXY_P | 5.0 |
@@ -107,17 +118,23 @@ After these parameters has been changed it is necessary to power cycle the vehic
 
 The parameters and their required values are the following
 
+
 | Parameter | Value |
 | ---| --- |
 | SERIAL0_PROTOCOL | MAVLink2 |
 | EK3_ENABLE | Enabled |
 | AHRS_EKF_TYPE | Enable EKF3 |
-| EK2_ENABLE | Disable |
 | VISO_TYPE | MAVLink |
 | EK3_SRC1_POSXY | ExternalNav |
 | EK3_SRC1_VELXY | ExternalNav |
 | EK3_SRC1_YAW | ExternalN |
 | EK3_SRC2_YAW | Compass |
+
+The parameter `EK2_ENABLE` was removed in ArduSub version `4.7.0`. If running an older version, also set the the following:
+
+| Parameter | Value |
+| ---| --- |
+| EK2_ENABLE | Disable |
 
 Also, EK3 algorithm in the ROV may struggle in **AUTO** mode and its noticed with "EKf3 lane switch" errors. As well as jumps in the estimated position which can be seen in the ROVs position in QGroundControl.
 
@@ -190,6 +207,5 @@ The **gnss origin** must be set before that **AUTO** and **GUIDED** modes can be
 
 The map also displays the path traveled by the Nucleus based on its **INS** output.  
 An active internet connection is required for the map to display.
-
 
 
