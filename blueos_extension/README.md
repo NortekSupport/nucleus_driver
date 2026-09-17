@@ -11,7 +11,7 @@ Note: **AUTO** and **GUIDED** modes require the Nucleus to have the INS license.
 
 ## Nortek Nucleus integration
 
-To mount the Nucleus unto the BlueROV2 and connect it to its network, refer Nortek's [Nucleus integration guide](https://support.nortekgroup.com/hc/en-us/articles/8246995934748-Nucleus-integration-with-BlueROV2).
+To mount the Nucleus unto the BlueROV2 and connect it to its network, refer Nortek's [Nucleus integration guide](nucleus-integration-with-BlueROV2.md).
 
 ## setup
 
@@ -207,5 +207,4 @@ The **gnss origin** must be set before that **AUTO** and **GUIDED** modes can be
 
 The map also displays the path traveled by the Nucleus based on its **INS** output.  
 An active internet connection is required for the map to display.
-
 
