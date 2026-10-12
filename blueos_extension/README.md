@@ -49,7 +49,9 @@ The frequency of which bottom track data is collected is configured through the 
 SETTRIG,FREQ=4
 ```
 
-The trigger settings also handles the altimeter and current profile settings, which influences the trigger frequency. In addition, the frequency of the trigger settings is limited by the bottom track settings. Therefore, read the **MANUAL** and familiarize yourself with these settings before setting up the Nucleus for your use. For the extension, setting this value as high as you can afford for your configuration is advised.
+The trigger settings also handles the altimeter and current profile settings, which influences the trigger frequency. In addition, the frequency of the trigger settings is limited by the bottom track settings. Therefore, read the **MANUAL** and familiarize yourself with these settings before setting up the Nucleus for your use. 
+
+For the extension, setting this value as high as you can afford for your configuration is advised. There is, however, a trade-off between high pinging frequency and long range that has to be satisfied. For instance, if the range is configured to 50 meters, the maximum allowed pinging frequency is 2 Hz. It is therefore recommended to set the required range for your mission, and then set the maximum allowed pinging frequency available.
 
 #### AHRS
 
